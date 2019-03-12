@@ -3,8 +3,8 @@
 #
 #
 
-using Mosek
-#using SCS
+#using Mosek
+using SDPA
 
 function shcl_01(pde,relaxation_order)
 
@@ -15,7 +15,7 @@ x_max = pde[:bounds][:x_max]
 y_min = pde[:bounds][:y_min]
 y_max = pde[:bounds][:y_max]
 
-m = MomentModel(solver=MosekSolver())
+m = MomentModel(solver=SDPASolver())
 
 @polyvar t
 @polyvar x

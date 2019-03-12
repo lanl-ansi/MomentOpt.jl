@@ -208,16 +208,12 @@ function get_constraints(mmodel, order)
         append!(constraints[:mode], [tconstr[:mode] for i=1:length(tconstr[:RHS])])
         n_cons = length(tconstr[:RHS])
         for meas in mmodel[:meas_list]
-            append!(constraints[meas],get(tconstr[:cons],meas,zeros(Polynomial{true,Float64}, n_cons)))
+            # append!(constraints[meas],get(tconstr[:cons],meas,zeros(Polynomial{true,Float64}, n_cons)))
+	      append!(constraints[meas],get(tconstr[:cons],meas,zeros(n_cons)))
         end
-#println(tconstr[:RHS])
-#for meas in mmodel[:meas_list]
-#println(meas)
-#println(get(tconstr[:cons],meas,zeros(Polynomial{true,Float64}, n_cons)))
-#end 
     end
 # should give a warning when degree of constraints is higher than requested order
-println(constraints)
+# println(constraints)
     return constraints
 end
 
@@ -227,7 +223,7 @@ function mm_solve(mmodel,order)
         for sup_pol in mmodel[:supp_list][meas].p
             bool = bool && maxdegree(sup_pol)<=2*order
         end
-        bool = bool && maxdegree(get(mmodel[:objective],meas,Polynomial{true,Float64}(0)))<=2*order
+        bool = bool && maxdegree(get(mmodel[:objective],meas,convert(Polynomial{true,Float64},0)))<=2*order
     end
 
     if ~bool
@@ -253,14 +249,14 @@ function mm_solve(mmodel,order)
     if  (mmodel[:objective][:mode]==:Max)
         @objective m Min sum(p[i]*constraints[:RHS][i] for i in 1:n_cons)
         for meas in mmodel[:meas_list]
-            expr = sum(p[i]*constraints[meas][i] for i in 1:n_cons)-get(mmodel[:objective],meas,Polynomial{true,Float64}(0))
+            expr = sum(p[i]*constraints[meas][i] for i in 1:n_cons)-get(mmodel[:objective],meas,convert(Polynomial{true,Float64},0))
             supp = mmodel[:supp_list][meas]
             mmodel[:dual_list][meas] = PolyJuMP.addpolyconstraint!(m, expr, SOSCone(), supp , MonomialBasis; maxdegree = 2*order)
         end
     else
         @objective m Max sum(p[i]*constraints[:RHS][i] for i in 1:n_cons)
         for meas in mmodel[:meas_list]
-            expr = get(mmodel[:objective],meas,Polynomial{true,Float64}(0))-sum(p[i]*constraints[meas][i] for i in 1:n_cons)
+            expr = get(mmodel[:objective],meas,convert(Polynomial{true,Float64},0))-sum(p[i]*constraints[meas][i] for i in 1:n_cons)
             supp = mmodel[:supp_list][meas]
             mmodel[:dual_list][meas] = PolyJuMP.addpolyconstraint!(m, expr , SOSCone(), supp, MonomialBasis; maxdegree = 2*order)
         end

@@ -1,12 +1,12 @@
 #= how does q look like =#
 
 order = 6;
-
+using SDPA
 using Plots
 
 include("functions.jl")
 
-mm = MomentModel(solver = MosekSolver())
+mm = MomentModel(solver = SDPASolver())
 
 # polnomial variable
 @polyvar x
@@ -20,18 +20,18 @@ B = @set(1-x^2>=0)
 add_support!(mm, :mu, K)
 add_support!(mm, :nu, B)
 
-add_objective!(mm, :Max, [(Polynomial{true,Float64}(1),:mu)])
+add_objective!(mm, :Max, [(convert(Polynomial{true,Float64},1),:mu)])
 
 
 # maj constraint
-h(int) = Polynomial{true,Float64}(x^(int[1]))
+h(int) = polynomial(x^(int[1]))
 # normalized moments of Lebesgue measure on B
 leb_mom(int) = ((1-(-1)^(int[1]+1))/(int[1]+1))/2
 
 add_mfun_constraint!(mm, [(h,:mu), (h,:nu)], :eq, leb_mom,1)
 
 # stokes constraint
-s(int) = Polynomial{true,Float64}((int[1])*x^(int[1]-1)*(0.25-x^2) + x^(int[1])*(-2*x))
+s(int) = polynomial((int[1])*x^(int[1]-1)*(0.25-x^2) + x^(int[1])*(-2*x))
 # normalized moments of Lebesgue measure on B
 null_rhs(int) = 0
 add_mfun_constraint!(mm, [(s,:mu)], :eq, null_rhs,1)

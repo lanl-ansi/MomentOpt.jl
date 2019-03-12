@@ -3,8 +3,9 @@
 
 order = 4
 using Plots
+using SDPA
 include("functions.jl")
-mm = MomentModel(solver = MosekSolver())
+mm = MomentModel(solver = SDPASolver())
 
 # polnomial variable
 @polyvar x
@@ -18,17 +19,17 @@ add_support!(mm, :mu, K)
 add_support!(mm, :nu, K)
 
 # maj constraint
-hp(int) = Polynomial{true,Float64}(x^(int[1]))
-hm(int) = Polynomial{true,Float64}(-x^(int[1]))
+hp(int) = convert(Polynomial{true,Float64},x^(int[1]))
+hm(int) = convert(Polynomial{true,Float64},-x^(int[1]))
 zvec(int) = 0
 
 add_mfun_constraint!(mm, [(hp,:mu),(hm,:nu)], :eq, zvec,1)
-add_mconstraint!(mm,[([Polynomial{true,Float64}(1)],:mu),([Polynomial{true,Float64}(1)],:nu)],:eq, [1])
+add_mconstraint!(mm,[([convert(Polynomial{true,Float64},1)],:mu),([convert(Polynomial{true,Float64},1)],:nu)],:eq, [1])
 
 #q = 0.25*x^4-x^2 +1/10*x^2*y^2 +1/4*x*3 -1/2*y^2 + 1/4*x*y
 q = x^2*(x-1/10*y)*(y^2+x)
 
-add_objective!(mm, :Max, [(Polynomial{true,Float64}(q),:mu),(Polynomial{true,Float64}(-q),:nu)])
+add_objective!(mm, :Max, [(q,:mu),(-q,:nu)])
 
 
 mm_solve(mm,order)

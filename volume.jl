@@ -2,13 +2,13 @@
 test two cosntraint set up
 test mfun-constraint =#
 
-order = 6;
-
+order = 6
+using SDPA
 using Plots
 
 include("functions.jl")
 
-mm = MomentModel(solver = MosekSolver())
+mm = MomentModel(solver = SDPASolver())
 
 # polnomial variable
 @polyvar x
@@ -23,11 +23,11 @@ B = @set(1-x^2>=0 && 1-y^2>=0)
 add_support!(mm, :mu, K)
 add_support!(mm, :nu, B)
 
-add_objective!(mm, :Max, [(Polynomial{true,Float64}(1),:mu)])
+add_objective!(mm, :Max, [(convert(Polynomial{true,Float64},1),:mu)])
 
 
 # maj constraint
-h(i,j) = Polynomial{true,Float64}(x^i*y^j)
+h(i,j) = convert(Polynomial{true,Float64},x^i*y^j)
 # normalized moments of Lebesgue measure on B
 leb_mom(i,j) = ((1-(-1)^(i+1))/(i+1))*((1-(-1)^(j+1))/(j+1))/4
 

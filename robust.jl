@@ -2,9 +2,10 @@
 =#
 
 order = 5
+using SDPA
 using Plots
 include("functions.jl")
-mm = MomentModel(solver = MosekSolver())
+mm = MomentModel(solver = SDPASolver())
 
 # polnomial variable
 @polyvar x y
@@ -22,7 +23,7 @@ add_objective!(mm, :Max, [(Polynomial{true,Float64}(q),:mu)])
 
 
 # maj constraint
-h(int) = Polynomial{true,Float64}(x^(int[1]))
+h(int) = polynomial(x^(int[1]))
 # normalized moments of Lebesgue measure on B
 leb_mom(int) = ((1-(-1)^(int[1]+1))/(int[1]+1))/2
 

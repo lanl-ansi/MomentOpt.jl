@@ -1,10 +1,11 @@
 include("functions.jl")
+using SDPA
 using Plots
 
 order = 8
 
-m_over = MomentModel(solver = MosekSolver())
-m_linfty = MomentModel(solver = MosekSolver())
+m_over = MomentModel(solver = SDPASolver())
+m_linfty = MomentModel(solver = SDPASolver())
 
 # polnomial variable
 @polyvar x y
@@ -20,10 +21,10 @@ K = @set(1-x^2>=0 && 1-y^2>=0)
 add_measure!(m_over, :mu)
 add_support!(m_over, :mu, K)
 
-h(int) = Polynomial{true,Float64}(x^(int[1]))
+h(int) = polynomial(x^(int[1]))
 leb_mom(int) = ((1-(-1)^(int[1]+1))/(int[1]+1))/2
 add_mfun_constraint!(m_over, [(h,:mu)], :eq, leb_mom,1)
-add_objective!(m_over, :Max, [(Polynomial{true,Float64}(q),:mu)])
+add_objective!(m_over, :Max, [(polynomial(q),:mu)])
 mm_solve(m_over,order)
 
 p_over = sum(m_over[:sosmodel].colVal[i+1]*h(i) for i in 0:2*order)
@@ -35,13 +36,13 @@ add_support!(m_linfty, :mu, K)
 add_measure!(m_linfty, :nu)
 add_support!(m_linfty, :nu, K)
 
-hp(int) = Polynomial{true,Float64}(x^(int[1]))
-hm(int) = Polynomial{true,Float64}(-x^(int[1]))
+hp(int) = polynomial(x^(int[1]))
+hm(int) = polynomial(-x^(int[1]))
 zvec(int) = 0
 
 add_mfun_constraint!(m_linfty, [(hp,:mu),(hm,:nu)], :eq, zvec,1)
-add_mconstraint!(m_linfty,[([Polynomial{true,Float64}(1)],:mu),([Polynomial{true,Float64}(1)],:nu)],:eq, [1])
-add_objective!(m_linfty, :Max, [(Polynomial{true,Float64}(q),:mu),(Polynomial{true,Float64}(-q),:nu)])
+add_mconstraint!(m_linfty,[([convert(Polynomial{true,Int64},1)],:mu),([convert(Polynomial{true,Int64},1)],:nu)],:eq, [1])
+add_objective!(m_linfty, :Max, [(polynomial(q),:mu),(polynomial(-q),:nu)])
 mm_solve(m_linfty,order)
 p_linfty = sum(m_linfty[:sosmodel].colVal[i+1]*hp(i) for i in 0:2*order)
 
