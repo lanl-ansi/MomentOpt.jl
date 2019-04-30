@@ -1,4 +1,4 @@
-export MomObj, CMomObj, MomCon, CMomCon, MomCons 
+export MomObj, CMomObj, MomCon, CMomCon, MomCons
 export EmptyObjective
 # export NLMomObj
 
@@ -9,7 +9,7 @@ abstract type AbstractMomentConstraint end
 
 
 """
-(C)MomObj 
+(C)MomObj
 """
 mutable struct MomObj{PT<:AbstractPolynomialLike} <:AbstractMomentObjective
 	sense::Symbol
@@ -24,6 +24,13 @@ function MomObj(sense::Symbol, obj::Mom{PT}) where PT<:AbstractPolynomialLike
 	return MomObj(sense,convert(MomExpr{PT},obj))
 end
 
+function MomObj(sense::Symbol, pol::PT, meas::Measure) where PT<:Union{Number,AbstractPolynomialLike}
+	return MomObj(sense,Mom(pol,meas))
+end
+function MomObj(sense::Symbol, meas::Measure,pol::PT) where PT<:Union{Number,AbstractPolynomialLike}
+	return MomObj(sense,Mom(pol,meas))
+end
+
 mutable struct CMomObj{T<:Number} <:AbstractMomentObjective
 	sense::Symbol
 	obj::CMomExpr{T}
@@ -33,7 +40,6 @@ function MomObj(sense::Symbol, obj::CMom{T}) where T<:Number
 	return CMomObj(sense,convert(CMomExpr{T},obj))
 end
 
-
 function CMomObj(sense::Symbol, obj::CMom{PT}) where PT<:AbstractPolynomialLike
 	return MomObj(sense,convert(CMomExpr{PT},obj))
 end
@@ -42,7 +48,7 @@ function Base.show(io::IO,f::MO) where MO<:AbstractMomentObjective
 	if typeof(f)==EmptyObjective
 	print(io,"Feasability problem:")
 	else
-	print(io,"$(f.sense) $(f.obj)") 
+	print(io,"$(f.sense) $(f.obj)")
 	end
 end
 
@@ -51,7 +57,7 @@ function measures(f::MO) where MO<:AbstractMomentObjective
 end
 
 """
-NLMomObj 
+NLMomObj
 """
 #TODO: mutable struct NLMomObj <:AbstractMomentObjective end
 
@@ -176,7 +182,5 @@ function measures(mcv::Vector{M}) where M<:AbstractMomentConstraint
 	unique!(measv)
 end
 function measures(mcv::M) where M<:AbstractMomentConstraint
-	measures([mcv])	
+	measures([mcv])
 end
-
-

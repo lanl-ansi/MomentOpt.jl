@@ -24,7 +24,7 @@
 		ν = Measure("ν",[x])
 		@test Mom(y,ν) == nothing
 	end
-	
+
 	@testset "MomExpr" begin
 		@polyvar x y
 		μ = Measure("μ", [x,y])
@@ -36,8 +36,8 @@
 		@test MomExpr(Dict{Measure,Int}(μ=>1)) isa CMomExpr{Int}
 		@test MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
 		@test MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
-		me1 = MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+π)) 
-		me2 = MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π)) 
+		me1 = MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+π))
+		me2 = MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π))
 		@test 3*me1 isa MomExpr{Polynomial{true,Float64}}
 		@test me1+2*me2 isa MomExpr{Polynomial{true,Float64}}
 		@test me1-me2 isa MomExpr{Polynomial{true,Float64}}
@@ -45,10 +45,4 @@
 		mev = MomExpr([Mom(x+y,μ),Mom(1.5*x,μ)])
 		@test mev+2*mev isa Vector{MomExpr{Polynomial{true,Float64}}}
 	end
-
-	
 end
-
-
-
-

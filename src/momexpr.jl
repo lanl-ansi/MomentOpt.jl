@@ -5,11 +5,11 @@ abstract type AbstractMomentExpression <: AbstractMomentExpressionLike end
 abstract type AbstractMoment  <: AbstractMomentExpressionLike end
 
 """
-CMom 
+CMom
 """
 mutable struct CMom{T <: Number} <: AbstractMoment
 	meas::Measure
-       	mon::T 
+       	mon::T
 end
 
 function CMom(mon::T,meas::Measure) where T<: Number
@@ -44,13 +44,13 @@ Mom
 function compatible(meas::Measure,mon::PT) where PT<:Union{Number,AbstractPolynomialLike}
 	if typeof(mon)<:Number
 		return true
-	elseif isempty(setdiff(MP.variables(mon),variables(meas)))
+	elseif isempty(setdiff(variables(mon),variables(meas)))
 		return true
 	else
 		return false
 	end
 end
-	
+
 mutable struct Mom{PT<:AbstractPolynomialLike} <: AbstractMoment
 	meas::Measure
 	mon::PT
@@ -89,11 +89,15 @@ function Mom(monv::Vector{PT},meas::Measure) where PT <: Union{AbstractPolynomia
 	return Mom(meas,monv)
 end
 
+function Mom(mon::T) where T
+	println("The definition of a moment requires a measure and an integrand")
+	return nothing
+end
 # conversion and promotion
 function montype(m::MOM) where MOM <: AbstractMoment
 	return typeof(m.mon)
 end
- 
+
 function Base.convert(::Type{Mom{PT}}, m::M) where {PT<:AbstractPolynomialLike,M<:AbstractMoment}
 	return Mom(m.meas,convert(PT,m.mon))
 end
@@ -131,10 +135,10 @@ end
 
 
 """
-CMomExpr 
+CMomExpr
 """
 mutable struct CMomExpr{T<:Number} <: AbstractMomentExpression
-	momdict::Dict{Measure,T} 
+	momdict::Dict{Measure,T}
 end
 
 function CMomExpr(poly::T, mu::Measure) where T<:Number
@@ -155,7 +159,7 @@ function CMomExpr(meas::Measure,cv::Vector{T}) where T<:Number
 	for c in cv
 		push!(mev, CMomExpr(meas,c))
 	end
-	return mev 
+	return mev
 end
 
 function CMomExpr(cv::Vector{T},meas::Measure) where T<: Number
@@ -163,11 +167,11 @@ function CMomExpr(cv::Vector{T},meas::Measure) where T<: Number
 end
 
 function CMomExpr(mom::Vector{CMom{T}}) where T<:Number
-	mev = CMomExpr{T}[]        
+	mev = CMomExpr{T}[]
 	for m in mom
 		push!(mev, CMomExpr(m))
 	end
-	return mev 
+	return mev
 end
 
 
@@ -195,7 +199,7 @@ end
 
 
 """
-MomExpr 
+MomExpr
 """
 mutable struct MomExpr{PT<:AbstractPolynomialLike}  <: AbstractMomentExpression
 	momdict::Dict{Measure,PT}
@@ -242,7 +246,7 @@ function MomExpr(mom::Vector{MOM}) where MOM<:AbstractMoment
 	for m in mom
 		push!(mev, MomExpr(m))
 	end
-	return mev 
+	return mev
 end
 function MomExpr(meas::Measure,monv::Vector{PT}) where PT <: Union{AbstractPolynomialLike,Number}
 	MT = promote_type([montype(m) for m in mom]...)
@@ -306,10 +310,10 @@ function Base.:*(a::T, me::ME) where {T<:Number, ME<:AbstractMomentExpression}
 end
 
 function Base.:*(me::ME,a::T) where  {T<:Number, ME<:AbstractMomentExpression}
-	return a*me 
+	return a*me
 end
 
-function Base.:/(me::ME,a::T) where {T<:Number, ME<:AbstractMomentExpression} 
+function Base.:/(me::ME,a::T) where {T<:Number, ME<:AbstractMomentExpression}
 	return (1/a)*me
 end
 
@@ -444,5 +448,3 @@ end
 function Base.:/(mv::Vector{MEL},a::T) where {T<:Number, MEL<:AbstractMomentExpressionLike}
 	return mv*(1/a)
 end
-
-

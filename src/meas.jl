@@ -1,5 +1,7 @@
 export Measure, variables, support, certificate
 
+#TODO: problem with type inference (parametriyed measures instead Measure)
+
 mutable struct Measure{V<:MP.AbstractVariable,SAS<:AbstractBasicSemialgebraicSet,C<:PJ.PolynomialSet} #,PB<:PJ.AbstractPolynomialBasis}
 	name:: AbstractString	# name
 	vars:: Vector{V}# Vector of variables associated to the measure
@@ -14,7 +16,7 @@ function Measure(name::AbstractString, vars::Vector{V}; support = FullSpace(), c
 	return Measure(name,vars,support,certificate)
 end
 
-function variables(mu::Measure)
+function MP.variables(mu::Measure)
 	return mu.vars
 end
 
@@ -26,12 +28,7 @@ function certificate(mu::Measure)
 	return mu.cert
 end
 
-
 # printing
 function Base.show(io::IO, meas::Measure)
 	print(io, "$(meas.name)")
 end
-
-
-
-
