@@ -7,7 +7,7 @@
         @test typeof(MomObj(:Min, x^2,ν)) == MomObj{Monomial{true}}
         obj = MomObj(:max, Mom(μ, y)+Mom(ν, x))
         @test typeof(obj) == MomObj{Polynomial{true,Int}}
-        @test measures(obj) == [μ,ν]
+        @test_broken measures(obj) == [ν,μ]
     end
     @testset "MomCon" begin
         @polyvar x[1:3]

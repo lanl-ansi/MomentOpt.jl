@@ -1,5 +1,5 @@
 
-using .GMP
+using GMP
 using Test
 using DynamicPolynomials
 using SemialgebraicSets
