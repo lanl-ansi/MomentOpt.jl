@@ -7,7 +7,8 @@
         @test typeof(MomObj(:Min, x^2,ν)) == MomObj{Monomial{true}}
         obj = MomObj(:max, Mom(μ, y)+Mom(ν, x))
         @test typeof(obj) == MomObj{Polynomial{true,Int}}
-        @test_broken measures(obj) == [ν,μ]
+        @test ν in measures(obj)
+	@test μ in measures(obj)
     end
     @testset "MomCon" begin
         @polyvar x[1:3]
@@ -25,7 +26,8 @@
         @test typeof(MomCons(Mom(μ,1),:eq,0)) == CMomCon{Int,Int}
         momcon = MomCons([Mom(x[i]^i,μ) for i = 1:3],:eq, collect(1:3))
         @test typeof(momcon) == Vector{MomCon{Monomial{true},Int}}
-        @test_broken measures(momcon) == [μ,ν]
+        @test μ in measures(momcon)
+	@test !(ν in measures(momcon))
         @test typeof(MomCons([Mom(μ,x'*x),Mom(ν,x'*x)],[:geq,:leq],[0,1])) == Vector{MomCon{Polynomial{true,Int},Int}}
     end
 
