@@ -234,11 +234,6 @@ function MomExpr(mom::MOM) where MOM<:AbstractMoment
 	return MomExpr(Dict{Measure,typeof(mom.mon)}(mom.meas=>mom.mon))
 end
 
-
-function montype(m::MOM) where MOM <: AbstractMoment
-	return typeof(m.mon)
-end
-
 # constructors for vectors
 function MomExpr(mom::Vector{MOM}) where MOM<:AbstractMoment
 	MT = promote_type([montype(m) for m in mom]...)
@@ -277,10 +272,6 @@ function Base.convert(::Type{MomExpr{PT}}, m::ME) where {PT<:AbstractPolynomialL
 		momdict[meas] = convert(PT,m.momdict[meas])
 	end
 	return MomExpr(momdict)
-end
-
-function Base.promote_rule(::Type{CMomExpr{T1}},::Type{CMom{T2}}) where {T1<:Number,T2<:Number}
-	return CMomExpr{promote_type(T1,T2)}
 end
 
 function Base.promote_rule(::Type{MomExpr{PT}},::Type{CMom{T}}) where {T<:Number, PT<: AbstractPolynomialLike}

@@ -20,10 +20,6 @@ function MomObj(sense::Symbol, obj::Mom{PT}) where PT<:AbstractPolynomialLike
 	return MomObj(sense,convert(MomExpr{PT},obj))
 end
 
-function MomObj(sense::Symbol, obj::Mom{PT}) where PT<:AbstractPolynomialLike
-	return MomObj(sense,convert(MomExpr{PT},obj))
-end
-
 function MomObj(sense::Symbol, pol::PT, meas::Measure) where PT<:Union{Number,AbstractPolynomialLike}
 	return MomObj(sense,Mom(pol,meas))
 end
