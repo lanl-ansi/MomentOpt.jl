@@ -28,15 +28,11 @@
  K on B.
 """
 
-
-
-include("../src/GMP.jl")
-
 using DynamicPolynomials
 using SemialgebraicSets
 using SumOfSquares 
 
-using .GMP
+using MomentOpt
 
 using CSDP
 using Plots

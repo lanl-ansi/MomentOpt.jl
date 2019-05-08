@@ -1,4 +1,4 @@
-module GMP
+module MomentOpt 
 
 using MultivariatePolynomials
 const MP = MultivariatePolynomials

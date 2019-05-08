@@ -1,5 +1,5 @@
 
-using GMP
+using MomentOpt 
 using Test
 using DynamicPolynomials
 using SemialgebraicSets

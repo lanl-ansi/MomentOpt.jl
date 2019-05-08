@@ -18,13 +18,11 @@ The optimal measure in the GMP above will be atomic and each atom will be a glob
 of f on K. 
 """
 
-include("../src/GMP.jl")
-
 using DynamicPolynomials
 using SemialgebraicSets
 using SumOfSquares 
 
-using .GMP
+using MomentOpt
 
 using CSDP
 
