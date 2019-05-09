@@ -1,10 +1,10 @@
 """
- Approximate the volume of a semi algebraic set with GMP.jl.
+ Approximate the volume of a semi algebraic set with MomentOpt.jl.
  For theoretical background see : https://homepages.laas.fr/henrion/Papers/volume.pdf
 
  Let K ⊆ B ⊆ R^n be semialgebraic compact sets and the moments of a the Lebesgue meausre 
  on B be known. One is interested in computing the volume of K. This can be done by solving
- the GMP
+ the Generalized Moment Problem
 
   max <μ,1>
  	μ + ν = λ
@@ -39,8 +39,8 @@ using Plots
 pyplot()
 
 
-# relaxation order for the GMP
-order =6 
+# relaxation order for the Generalized Moment Problem
+order = 6
 
 # polnomial variables
 @polyvar x y

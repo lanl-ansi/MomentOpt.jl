@@ -1,14 +1,14 @@
 export GMPModel, add_measure!, measures, add_constraints!, add_constraint!
 
 """
-GMP 
+A Generalized Moment Problem
 """
 mutable struct GMPModel
 	objective::OBJ where OBJ<:AbstractMomentObjective
 	constraints::Vector{<:AbstractMomentConstraint}
 	measures::Vector{Measure}
 
-	dual::JuMP.Model		
+	dual::JuMP.Model
 	cref::Dict{Measure,Any}
 	dref::Dict{Any,Any}
 	dstatus::MathOptInterface.TerminationStatusCode
@@ -45,7 +45,7 @@ end
 
 function add_measure!(m::GMPModel, name::String, vars::Vector{V} ;kwargs...) where V<:MP.AbstractVariable
 	append!(m.measures,[Measure(name,vars;kwargs...)])
-end	
+end
 
 function measures(gmp::GMPModel)
 	return gmp.measures
@@ -99,7 +99,7 @@ function add_objective!(gmp::GMPModel,sense::Symbol,mu::Measure,pol::PT) where {
 	obj = MomObj(sense, Mom(pol,mu))
 	add_objective!(gmp,obj)
 end
-	
+
 function add_objective!(gmp::GMPModel,sense::Symbol,pol::T,mu::Measure) where {M<:AbstractMomentExpressionLike, T<:Number}
 	obj = MomObj(sense, CMom(pol,mu))
 	add_objective!(gmp,obj)
@@ -109,4 +109,4 @@ function add_objective!(gmp::GMPModel,sense::Symbol,mu::Measure,pol::T) where {M
 	obj = MomObj(sense, CMom(pol,mu))
 	add_objective!(gmp,obj)
 end
-	
+

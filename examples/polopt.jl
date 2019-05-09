@@ -1,5 +1,5 @@
 """
- Solve a global optimization problem with GMP.jl 
+ Solve a global optimization problem with MomentOpt.jl 
  For theortic background see : https://epubs.siam.org/doi/10.1137/S1052623400366802
 
  Let K be a basic semialgebraic compact set and f a polynomial function. We are intersted in 
@@ -8,13 +8,13 @@
  min f(x)
      x∈K
 
-An equivalent formulation of this problem as GMP is given by
+An equivalent formulation of this problem as Generalized Moment Problem is given by
 
 min <μ,f>
     <μ,1> = 1
      μ∈M(K)
 
-The optimal measure in the GMP above will be atomic and each atom will be a global minimizer 
+The optimal measure in the Generalized Moment Problem above will be atomic and each atom will be a global minimizer 
 of f on K. 
 """
 
