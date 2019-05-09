@@ -17,5 +17,6 @@ include("relax.jl")
 include("postproc.jl")
 include("macros.jl")
 
+bloop
 
 end# module
