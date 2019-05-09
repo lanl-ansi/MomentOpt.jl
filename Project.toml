@@ -13,12 +13,13 @@ SemialgebraicSets = "8e049039-38e8-557d-ae3a-bc521ccf6204"
 SumOfSquares = "4b9e565b-77fc-50a5-a571-1244f986bda1"
 
 [compat]
+DynamicPolynomials = "~0.2"
 JuMP = "~0.19"
 MathOptInterface = "~0.8"
 MultivariatePolynomials = "~0.2"
 PolyJuMP = "~0.3"
 SemialgebraicSets = "~0.1"
-SumOfSquares = "~0.3.0"
+SumOfSquares = "~0.3"
 
 [extras]
 DynamicPolynomials = "7c1d4256-1411-5781-91ec-d7bc3513ac07"
