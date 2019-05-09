@@ -1,4 +1,4 @@
-# GMP
+# MomentOpt
 
 Dev: [![Build Status](https://travis-ci.org/lanl-ansi/MomentOpt.jl.svg?branch=master)](https://travis-ci.org/lanl-ansi/MomentOpt.jl) [![codecov](https://codecov.io/gh/lanl-ansi/MomentOpt.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/lanl-ansi/MomentOpt.jl)
 
