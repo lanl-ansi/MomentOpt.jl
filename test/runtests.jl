@@ -4,7 +4,7 @@ using Test
 using DynamicPolynomials
 using SemialgebraicSets
 using SumOfSquares
-using CSDP
+#using CSDP
 
 
 @testset "MomentOpt Tests" begin
