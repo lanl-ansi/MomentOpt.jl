@@ -24,7 +24,7 @@ using SumOfSquares
 
 using MomentOpt
 
-using CSDP
+using MosekTools
 
 # Define polnomial variables
 @polyvar x y
@@ -51,7 +51,7 @@ gmp = GMPModel()
 
 
 # We solve the relaxation of order 2 with CSDP
-relax!(gmp, 2, with_optimizer(CSDP.Optimizer))
+relax!(gmp, 2, with_optimizer(Mosek.Optimizer))
 
 
 println("Relaxation order: $(2)")
@@ -61,7 +61,7 @@ opt = atomic(gmp,μ)
 println()
 
 # As we could not extract atoms from the solution, we increase the relaxation order
-relax!(gmp, 3, with_optimizer(CSDP.Optimizer))
+relax!(gmp, 3, with_optimizer(Mosek.Optimizer))
 
 println("Relaxation order: $(3)")
 println("Objective value: $(objective_value(gmp))")

@@ -34,7 +34,7 @@ using SumOfSquares
 
 using MomentOpt
 
-using CSDP
+using MosekTools
 using Plots
 pyplot()
 
@@ -82,7 +82,7 @@ cons = MomCons( Mom(pons,μ)+Mom(pons,ν),:eq,[leb_mom(mons.Z[i]...) for i = 1:l
 
 
 # In order to relax the problem, we need to specify the relaxation order and a solver factory:
-relax!(gmp,order,with_optimizer(CSDP.Optimizer))
+relax!(gmp,order,with_optimizer(Mosek.Optimizer))
 
 
 # The optimal value is an approximation to the volume of K (which is π in this case)

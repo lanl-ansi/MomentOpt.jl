@@ -4,9 +4,8 @@ function JuMP.objective_value(gmp::GMPModel)
 	return objective_value(gmp.dual)
 end
 
-function moments(gmp::GMPModel, measure::Measure)
-	return(moment_matrix(gmp.cref[measure]))
-	# should be replaced by the actual command
+function SumOfSquares.moments(gmp::GMPModel, measure::Measure)
+	return(SumOfSquares.moments(gmp.cref[measure]))
 end
 
 function dual_value(gmp::GMPModel,momcon::MomCon)
@@ -21,6 +20,35 @@ function dual_value(gmp::GMPModel,momcons::Vector{MomCon})
 	return dv
 end
 
+function JuMP.value(gmp::GMPModel, mom::CMom{T}) where T<:Number
+	moms = moments(gmp,mom.meas)
+	idx = findfirst(x->x==1,moms.x)
+	return mom.mon*moms.a[idx]
+end
+
+function JuMP.value(gmp::GMPModel,mom::Mom{T}) where T<:AbstractMonomialLike
+	moms = moments(gmp,mom.meas)
+	idx = findfirst(x->x==mom.mon,moms.x)
+	return moms.a[idx]
+end
+
+function JuMP.value(gmp::GMPModel,mom::Mom{T}) where T<:AbstractPolynomialLike
+	moms = moments(gmp,mom.meas)
+	vec = []
+	for mon in mom.mon.x
+		idx=findfirst(x->x==mon,moms.x)
+		push!(vec,moms.a[idx])
+	end
+	return sum(mom.mon.a[i]*vec[i] for i = 1:length(mom.mon.a))
+end
+
+function JuMP.value(gmp::GMPModel, vec::Vector{T}) where T<:AbstractMoment
+	val = []
+	for mom in vec
+	push!(val,value(gmp,mom))
+	end
+	return val
+end
 
 
 function atomic(gmp::GMPModel, measure::Measure)
