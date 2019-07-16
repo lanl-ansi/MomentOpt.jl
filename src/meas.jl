@@ -30,5 +30,5 @@ end
 
 # printing
 function Base.show(io::IO, meas::Measure)
-	print(io, "$(meas.name)")
+	print(io, meas.name)
 end
