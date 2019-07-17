@@ -30,7 +30,6 @@
 
 """
 
-
 using DynamicPolynomials
 using SemialgebraicSets
 using SumOfSquares 
@@ -39,7 +38,7 @@ using MomentOpt
 
 using MosekTools
 
-# Define problem specific data
+
 
 f(y) = 1/4*y^2
 T = [0,1]
@@ -66,11 +65,11 @@ rhs(i,j) = 0^i*(-(-1/2)^(j+1))/(j+1)+ (-1/2)^j/((i+1)*4)
 # DynamicPolynomials.jl provides the possibility to define a monomial vector.
 mons = monomials([t,x],0:2*order-1)
 # The monomial vector is not of a polynomial type, we need to convert it first.
-pons = convert(Vector{Polynomial{true,Int64}},mons)
+pons = polynomial.(mons)
 wpde = vec(differentiate(pons,[t]))*y + vec(differentiate(pons,[x]))*f(y) 
 
 # The fiels mons.Z provides the exponents of the monomials of mons (and pons)
-@mconstraints gmp MomCons( Mom(pons*y,μT)+Mom(pons*f(y),μR)-Mom(wpde,μ),:eq, [rhs(mons.Z[i]...) for i = 1:length(mons.Z)])  
+@mconstraints gmp MomCons( Mom.(pons*y,μT)+Mom.(pons*f(y),μR)-Mom.(wpde,μ),:eq, [rhs(mons.Z[i]...) for i = 1:length(mons.Z)])  
 
 # Right hand sides for the marginal constraints
 lebt(i) = (T[2]^(i+1)-T[1]^(i+1))/(i+1)
@@ -80,18 +79,20 @@ monstx = monomials([t,x],0:2*order)
 monsx= monomials(x,0:2*order)
 monst= monomials(t,0:2*order)
 
-@mconstraints gmp MomCons( Mom(convert(Vector{Polynomial{true,Float64}},monstx),μ),:eq, [lebtx(monstx.Z[i]...) for i =1:length(monstx.Z)])
-@mconstraints gmp MomCons( Mom(convert(Vector{Polynomial{true,Float64}},monsx),μT),:eq, [lebx(monsx.Z[i]...) for i =1:length(monsx.Z)])
-@mconstraints gmp MomCons( Mom(convert(Vector{Polynomial{true,Float64}},monst),μR),:eq, [lebt(monst.Z[i]...) for i =1:length(monst.Z)])
+@mconstraints gmp MomCons( Mom.(polynomial.(monstx),μ),:eq, [lebtx(monstx.Z[i]...) for i =1:length(monstx.Z)])
+@mconstraints gmp MomCons( Mom.(polynomial.(monsx),μT),:eq, [lebx(monsx.Z[i]...) for i =1:length(monsx.Z)])
+@mconstraints gmp MomCons( Mom.(polynomial.(monst),μR),:eq, [lebt(monst.Z[i]...) for i =1:length(monst.Z)])
 
 # The GMP formulation of the PDE does not have any objective function as the measures are uniquely determined by the
 # problem. However, when relaxing the problem the measures will not be unique anymore which is why we add an objective function.
 # Note that a GMPModel always needs an objective to be relaxed.
 # A common heuristic for an objective function is to minimize the trace of the moment matrix:
 
-mmons = convert(Vector{Polynomial{true,Float64}},monomials([t,x,y],0:order))
+mmons = polynomial.(monomials([t,x,y],0:order))
+trace = mmons'*mmons
 
-@mobjective gmp :Min Mom(mmons'*mmons,μ)+Mom(mmons'*mmons,μT)+Mom(mmons'*mmons,μR)
+@objective gmp Min Mom(trace,μ)+Mom(trace,μT)+Mom(trace,μR)
+
 
 relax!(gmp,order,with_optimizer(Mosek.Optimizer))
 

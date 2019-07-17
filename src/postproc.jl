@@ -20,7 +20,7 @@ function dual_value(gmp::GMPModel,momcons::Vector{MomCon})
 	return dv
 end
 
-function JuMP.value(gmp::GMPModel, mom::CMom{T}) where T<:Number
+function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:Number
 	moms = moments(gmp,mom.meas)
 	idx = findfirst(x->x==1,moms.x)
 	return mom.mon*moms.a[idx]

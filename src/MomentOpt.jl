@@ -9,6 +9,8 @@ using JuMP
 const PJ = PolyJuMP
 using SumOfSquares
 
+const MT = Union{Number,AbstractPolynomialLike}
+
 include("meas.jl")
 include("momexpr.jl")
 include("momcon.jl")

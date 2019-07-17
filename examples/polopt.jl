@@ -41,7 +41,7 @@ gmp = GMPModel()
 @measure gmp μ [x,y] support=K
 
 # Define the objective 
-@mobjective gmp :Min f μ
+@objective gmp Min Mom(f,μ)
 # This notation is a shorthand for 
 # @mobjective gmp :Min Mom(f,μ)
  

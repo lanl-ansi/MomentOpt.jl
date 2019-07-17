@@ -36,7 +36,6 @@ using MomentOpt
 
 using MosekTools
 using Plots
-pyplot()
 
 
 # relaxation order for the Generalized Moment Problem
@@ -57,7 +56,7 @@ gmp = GMPModel()
 
 
 # We want to maximize the mass of mu
-@mobjective gmp :Max Mom(μ,1)
+@objective gmp Max Mom(μ,1)
 
 # The constraint is mu + nu = Lebesgue on B
 # The normalized moments of Lebesgue measure on B
@@ -68,7 +67,7 @@ mons = monomials([x,y],0:2*order)
 # The monomial vector is not of a polynomial type, we need to convert it first.
 pons = convert(Vector{Polynomial{true,Int64}},mons)
 # The fiels mons.Z provides the exponents of the monomials of mons (and pons)
-cons = MomCons( Mom(pons,μ)+Mom(pons,ν),:eq,[leb_mom(mons.Z[i]...) for i = 1:length(mons.Z)])  
+cons = MomCons( Mom.(pons,μ)+Mom.(pons,ν),:eq,[leb_mom(mons.Z[i]...) for i = 1:length(mons.Z)])  
 
 # The constraints are added to the gmp model. Note that we gave a name to the constraints first 
 # in order to be able to refer to them later on
@@ -94,10 +93,10 @@ poly = sum(dual_value(gmp,cons[i])*pons[i] for i=1:length(mons))
 
 
 # We plot the one super level set of poly and the set K in B
-ds = 0.001; xx = -1:ds:1; yy = -1:ds:1;
+ds = 0.01; xx = -1:ds:1; yy = -1:ds:1;
 f(xx,yy) = convert(Int,(convert(Float64,subs(poly, x=>xx,y=>yy))>=1))+convert(Int,xx^2+yy^2<=1)
 # f returns 0 if poly< 1 outside of K
 # f returns 1 if poly⩾ 1 outside of K
 # f returns 2 if poly⩾ 1 inside of K
 p1 = contourf(xx, yy, f, levels = 3, color=:Greys)
-display(p1)
+

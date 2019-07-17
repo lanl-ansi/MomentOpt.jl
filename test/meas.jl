@@ -2,7 +2,7 @@
 	# test  Measure, variables, support, certificate
 	@polyvar x y
 	K = @set(x^2+y^2<=1 && x*y >=0)
-	μ = Measure("μ", [x,y],support = K)
+	μ = Measure("μ", [x,y], support = K)
 	@test variables(μ) == [x,y]
 	@test support(μ) == K
 	@test certificate(μ) == SOSCone()

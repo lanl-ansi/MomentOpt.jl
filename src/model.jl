@@ -3,20 +3,20 @@ export GMPModel, add_measure!, measures, add_constraints!, add_constraint!
 """
 A Generalized Moment Problem
 """
-mutable struct GMPModel
-	objective::OBJ where OBJ<:AbstractMomentObjective
+mutable struct GMPModel <:JuMP.AbstractModel
+    objective::Union{Nothing,AbstractMomentObjective}
 	constraints::Vector{<:AbstractMomentConstraint}
 	measures::Vector{Measure}
 
 	dual::JuMP.Model
-	cref::Dict{Measure,Any}
-	dref::Dict{Any,Any}
+    cref::Dict{Measure, JuMP.ConstraintRef{JuMP.Model}}
+	dref::Dict{Any,JuMP.VariableRef}
 	dstatus::MathOptInterface.TerminationStatusCode
 end
 
 
 function GMPModel() 
-	return GMPModel(EmptyObjective(),CMomCon{Int,Int}[],Measure[],Model(),Dict{Measure,Any}(),Dict{Any,Any}(), termination_status(Model()))
+    return GMPModel(EmptyObjective(),MomCon{Int,Int}[],Measure[],Model(),Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(),Dict{Any,JuMP.VariableRef}(), termination_status(Model()))
 end
 
 
@@ -34,8 +34,6 @@ function Base.show(io::IO,gmp::GMPModel)
 	println(io,gmp.dstatus)
 	
 end
-
-
 
 # add measures to GMPModel
 function add_measure!(m::GMPModel, mu::Measure)
@@ -76,37 +74,11 @@ function constraints(gmp::GMPModel)
 	return gmp.constraints
 end
 
-
-function add_objective!(gmp::GMPModel, obj::MO) where MO<:AbstractMomentObjective
-	if isempty(setdiff(measures(obj),measures(gmp)))
-	gmp.objective = obj
-	else
-		println("GMP does not involve $(setdiff(measures(gmp),measures(momcons)))")
-	end
+function JuMP.set_objective(gmp::GMPModel,sense::MOI.OptimizationSense,mom::AbstractMomentExpressionLike)
+    obj = MomObj(sense, mom)
+    if isempty(setdiff(measures(obj),measures(gmp)))
+        gmp.objective = obj
+    else
+        @error "The model does not involve $(setdiff(measures(gmp),measures(momcons)))"
+    end
 end
-
-function add_objective!(gmp::GMPModel,sense::Symbol,mom::M) where M<:AbstractMomentExpressionLike
-	obj = MomObj(sense, mom)
-	add_objective!(gmp,obj)
-end
-
-function add_objective!(gmp::GMPModel,sense::Symbol,pol::PT,mu::Measure) where {M<:AbstractMomentExpressionLike, PT<:AbstractPolynomialLike}
-	obj = MomObj(sense, Mom(pol,mu))
-	add_objective!(gmp,obj)
-end
-
-function add_objective!(gmp::GMPModel,sense::Symbol,mu::Measure,pol::PT) where {M<:AbstractMomentExpressionLike, PT<:AbstractPolynomialLike}
-	obj = MomObj(sense, Mom(pol,mu))
-	add_objective!(gmp,obj)
-end
-
-function add_objective!(gmp::GMPModel,sense::Symbol,pol::T,mu::Measure) where {M<:AbstractMomentExpressionLike, T<:Number}
-	obj = MomObj(sense, CMom(pol,mu))
-	add_objective!(gmp,obj)
-end
-
-function add_objective!(gmp::GMPModel,sense::Symbol,mu::Measure,pol::T) where {M<:AbstractMomentExpressionLike, T<:Number}
-	obj = MomObj(sense, CMom(pol,mu))
-	add_objective!(gmp,obj)
-end
-
