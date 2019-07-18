@@ -106,7 +106,7 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
 	    gmp.cref[meas] = @constraint(gmp.dual, p in meas.cert, domain = meas.supp, maxdegree = 2*order)
 	end
 
-        @objective(gmp.dual,sossense, sum(gmp.dref[momcon]*momcon.rhs for momcon in gmp.constraints))
+    @objective(gmp.dual,sossense, sum(gmp.dref[momcon]*constant(momcon) for momcon in gmp.constraints))
 
 	optimize!(gmp.dual)
 

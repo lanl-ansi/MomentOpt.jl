@@ -8,16 +8,8 @@ function SumOfSquares.moments(gmp::GMPModel, measure::Measure)
 	return(SumOfSquares.moments(gmp.cref[measure]))
 end
 
-function dual_value(gmp::GMPModel,momcon::MomCon)
-	return JuMP.value(gmp.dref[momcon])
-end
-
-function dual_value(gmp::GMPModel,momcons::Vector{MomCon})
-	dv = Float64[]
-	for momcon in momcons
-		push!(dv,JuMP.value(gmp.dref[momcon]))
-	end
-	return dv
+function dual_value(gmp::GMPModel, momcon::JuMP.ConstraintRef)
+    return JuMP.value(gmp.dref[gmp.constraints[momcon.index]])
 end
 
 function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:Number
@@ -26,13 +18,13 @@ function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:Number
 	return mom.mon*moms.a[idx]
 end
 
-function JuMP.value(gmp::GMPModel,mom::Mom{T}) where T<:AbstractMonomialLike
+function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:AbstractMonomialLike
 	moms = moments(gmp,mom.meas)
 	idx = findfirst(x->x==mom.mon,moms.x)
 	return moms.a[idx]
 end
 
-function JuMP.value(gmp::GMPModel,mom::Mom{T}) where T<:AbstractPolynomialLike
+function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:AbstractPolynomialLike
 	moms = moments(gmp,mom.meas)
 	vec = []
 	for mon in mom.mon.x
@@ -42,17 +34,8 @@ function JuMP.value(gmp::GMPModel,mom::Mom{T}) where T<:AbstractPolynomialLike
 	return sum(mom.mon.a[i]*vec[i] for i = 1:length(mom.mon.a))
 end
 
-function JuMP.value(gmp::GMPModel, vec::Vector{T}) where T<:AbstractMoment
-	val = []
-	for mom in vec
-	push!(val,value(gmp,mom))
-	end
-	return val
-end
-
-
-function atomic(gmp::GMPModel, measure::Measure)
-	optmeas = extractatoms(moment_matrix(gmp.cref[measure]),1e-03)
+function atomic(gmp::GMPModel, measure::Measure, args...)
+	optmeas = extractatoms(moment_matrix(gmp.cref[measure]), args...)
 	if typeof(optmeas)== Nothing
 		println("Could not detect finite support.")
 	else
@@ -66,7 +49,7 @@ function atomic(gmp::GMPModel, measure::Measure)
 end
 
 function graph(gmp::GMPModel, measure::Measure)
-println("Coming soon...")
+    println("Coming soon...")
 end
 
 

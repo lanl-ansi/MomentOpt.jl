@@ -84,7 +84,7 @@ function JuMP.function_string(mode, mc::MomCon)
 end
 
 function measures(mc::MomCon)
-    return measures(mc.func.momdict)
+    return measures(mc.func)
 end
 
 function measures(mcv::Vector{MomCon})
@@ -95,5 +95,14 @@ function measures(mcv::Vector{MomCon})
     return measv
 end
 
+function constant(mc::MomCon)
+    return constant(mc.set)
+end
+
 #TODO: remove when fixed in MOI
 Base.broadcastable(set::MOI.AbstractScalarSet) = Ref(set)
+constant(s::MOI.EqualTo) = s.value
+constant(s::MOI.LessThan) = s.upper
+constant(s::MOI.GreaterThan) = s.lower
+
+

@@ -15,6 +15,7 @@ mutable struct GMPModel <:JuMP.AbstractModel
 	dstatus::MathOptInterface.TerminationStatusCode
 end
 
+Base.broadcastable(gmp::GMPModel) = Ref(gmp)
 
 function GMPModel() 
     return GMPModel(EmptyObjective(),MomCon{Int}[],String[],Measure[],Model(),Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(),Dict{Any,JuMP.VariableRef}(), termination_status(Model()))
@@ -52,10 +53,6 @@ function measures(gmp::GMPModel)
 	return gmp.measures
 end
 
-function measures(gmp::GMPModel, id::Int)
-	return gmp.measures[id]
-end
-
 # add constraints to GMPModel
 function constraints(gmp::GMPModel)
 	return gmp.constraints
@@ -66,6 +63,12 @@ JuMP.constraint_object(cref::JuMP.ConstraintRef{GMPModel}) = cref.model.constrai
 function JuMP.add_constraint(gmp::GMPModel, momcon::MomCon, name::String)
     push!(constraints(gmp), momcon)
     push!(gmp.constraint_names, name)
+    return ConstraintRef(gmp,length(constraints(gmp)), MomConShape())
+end
+
+function JuMP.add_constraint(gmp::GMPModel, momcon::MomCon)
+    push!(constraints(gmp), momcon)
+    push!(gmp.constraint_names, "noname")
     return ConstraintRef(gmp,length(constraints(gmp)), MomConShape())
 end
 

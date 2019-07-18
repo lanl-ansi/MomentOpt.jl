@@ -7,7 +7,7 @@
     @objective gmp Min Mom(f,μ)
     @constraint gmp Mom(1,μ) == 1
     relax!(gmp, 2, with_optimizer(CSDP.Optimizer))
-    @test atomic(gmp,μ) == nothing
+    @test atomic(gmp, μ, 1e-03) == nothing
     @test objective_value(gmp) isa Float64
     @test value(gmp,Mom(μ,x^2+y+1)) isa Float64
 end

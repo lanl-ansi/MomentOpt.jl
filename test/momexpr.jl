@@ -49,7 +49,7 @@
         μ = Measure("μ", [x,y])
         ν = Measure("ν",[x])
         m = Mom(1.5*y,μ)
-        me = Mom(1.5*y,μ)- Mom(1.5*x,ν)
+        me = (Mom(1.5*y,μ)- Mom(1.5*x,ν))/3
         ae1 = AffMomExpr(me,1)
         @test m+1 isa AffMomExpr{Term{true,Float64},Int64}
         @test me+1 isa AffMomExpr{Polynomial{true,Float64},Int64}

@@ -9,18 +9,9 @@
         @test typeof(@measure gmp λ) ==  Vector{Measure}
         @test typeof(@objective gmp Max Mom(μ,x) + Mom(ν,y)) == MomExpr{Polynomial{true,Float64}}
         @test typeof(@constraint gmp Mom(μ,y) == 1) == ConstraintRef{GMPModel,Int64,MomentOpt.MomConShape}
-        @test typeof(@constraint gmp c[i=1:5] Mom(λ,x^(i-1)) == 1/i) 
+        @test typeof(@constraint gmp c[i=1:5] Mom(λ,x^(i-1)) == 1/i) == Array{ConstraintRef{GMPModel,Int64,MomentOpt.MomConShape},1}
     end
 end
 
-
-
-@constraint(gmp, c[i=1:5], Mom(λ,x^(i-1))==1/i)
-ERROR: MethodError: no method matching object_dictionary(::GMPModel)
-Closest candidates are:
-  object_dictionary(::Model) at /home/tweisser/.julia/packages/JuMP/ibcEh/src/JuMP.jl:407
-Stacktrace:
- [1] _error_if_cannot_register(::GMPModel, ::Symbol) at /home/tweisser/.julia/packages/JuMP/ibcEh/src/macros.jl:307
- [2] top-level scope at /home/tweisser/.julia/packages/JuMP/ibcEh/src/macros.jl:336
 
 

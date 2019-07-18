@@ -2,7 +2,8 @@ MomentOpt.jl Change Log
 =======================
 
 ### Staged
-- nothing
+- JuMP syntax
+- broadcastable functions 
 
 ### v0.0.1
 - Initial release
