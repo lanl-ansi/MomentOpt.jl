@@ -40,7 +40,7 @@ end
 """
     relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
 
-Computes the Lasserre relaxation.
+Computes the a relaxation of the generlized moment problem according to the certificates specified for each measure. 
 """
 function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
     	# construct dual
@@ -69,24 +69,23 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
 	end
 
     for momcon in gmp.constraints
-        if momcon.mode ==:eq
+        if momcon.set isa MOI.EqualTo
             gmp.dref[momcon] = @variable(gmp.dual)
-        elseif momcon.mode ==:leq
+        elseif momcon.set isa MOI.LessThan
             if gmp.objective.sense == MOI.MIN_SENSE
                 gmp.dref[momcon] = @variable(gmp.dual, upper_bound=0)
             else
                 gmp.dref[momcon] = @variable(gmp.dual, lower_bound=0)
             end
-        elseif momcon.mode ==:geq
+        elseif momcon.set isa MOI.GreaterThan
             if gmp.objective.sense == MOI.MIN_SENSE
                 gmp.dref[momcon] = @variable(gmp.dual, lower_bound=0) 
             else
                 gmp.dref[momcon] = @variable(gmp.dual, upper_bound=0)
             end
         end
-        for meas in keys(momcon.lhs.momdict)
-            drhs[meas] = add_prod!(drhs[meas], momcon.lhs.momdict[meas], gmp.dref[momcon])
-            #drhs[meas] = drhs[meas] + gmp.dref[momcon]*momcon.lhs.momdict[meas]
+        for meas in measures(momcon)
+            drhs[meas] = add_prod!(drhs[meas], momcon.func.momdict[meas], gmp.dref[momcon])
         end
     end
 

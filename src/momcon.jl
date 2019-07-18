@@ -3,9 +3,7 @@ export MomObj, MomCon, MomCons
 
 abstract type AbstractMomentObjective end
 struct EmptyObjective <: AbstractMomentObjective end
-
-abstract type AbstractMomentConstraint end
-
+struct MomConShape <: JuMP.AbstractShape end
 
 """
 MomObj
@@ -50,93 +48,52 @@ NLMomObj
 """
 MomCon
 """
-mutable struct MomCon{PT<:MT,T<:Number} <:AbstractMomentConstraint
-	lhs::MomExpr{PT}
-	mode::Symbol
-	rhs::T
+mutable struct MomCon{PT<:MT} <: JuMP.AbstractConstraint
+	func::MomExpr{PT}
+    set::MOI.AbstractScalarSet
 end
 
-function MomCon(lhs::Mom{PT}, mode::Symbol, rhs::T) where {T<:Number, PT<:MT}
-	return MomCon{PT,T}(convert(MomExpr{PT},lhs),mode,rhs)
+function MomCon(func::AffMomExpr, set::MOI.AbstractScalarSet)
+    return MomCon(momexpr(func), MOI.Utilities.shift_constant(set, -constant(func)))
 end
 
-function MomCon(meas::Measure,pol::PT,mode::Symbol,rhs::T) where {T<:Number,PT<:MT}
-	return MomCon(Mom(meas,pol),mode,rhs)
+function MomCon(func::Mom, set::MOI.AbstractScalarSet)
+    return MomCon(MomExpr(func), set)
 end
 
-function  MomCon(pol::PT,meas::Measure,mode::Symbol,rhs::T) where {T<:Number,PT<:MT}
-	return MomCon(Mom(meas,pol),mode,rhs)
+function Base.convert(::Type{MomCon{PT1}},mc::MomCon) where {PT1<:MT}
+    return MomCon{PT1}(convert(MomExpr{PT1},mc.func),mc.set)
 end
 
-function Base.convert(::Type{MomCon{PT1,T1}},mc::MomCon) where {T1<:Number, PT1<:MT}
-	return MomCon{PT1,T1}(convert(MomExpr{PT1},mc.lhs),mc.mode,convert(T1,mc.rhs))
+function Base.promote_rule(::Type{MomCon{PT1}},::Type{MomCon{PT2}})  where {PT1<:MT, PT2<:MT}
+    return MomCon{promote_type{PT1,PT2}}
 end
 
+JuMP.jump_function(con::MomCon) = con.func
+JuMP.moi_set(con::MomCon) = con.set
+JuMP.shape(con::MomCon) = MomConShape()
+JuMP.reshape_vector(expr::MomExpr, ::MomConShape) = expr
+JuMP.reshape_set(set::MOI.AbstractScalarSet, ::MomConShape) = set
 
-function Base.promote_rule(::Type{MomCon{PT1,T1}},::Type{MomCon{PT2,T2}})  where {T1<:Number,T2<:Number, PT1<:MT, PT2<:MT}
-	return MomCon{promote_type{PT1,PT2},promote_type{T1,T2}}
+function Base.show(io::IO, mc::MomCon)
+    print(io, JuMP.constraint_string(JuMP.REPLMode, mc))
 end
 
-function Base.show(io::IO,mc::MC) where MC <: AbstractMomentConstraint
-	if mc.mode == :eq
-		print(io,"$(mc.lhs) = $(mc.rhs)")
-	elseif mc.mode ==:leq
-		print(io,"$(mc.lhs) ⩽  $(mc.rhs)")
-	elseif mc.mode ==:geq
-		print(io,"$(mc.lhs) ⩾ $(mc.rhs)")
-	end
+function JuMP.function_string(mode, mc::MomCon)
+    return string(mc.func)
 end
 
-"""
-MomCons
-"""
-
-function MomCons(lhs::M,mode::Symbol,rhs::T) where {M<:AbstractMomentExpressionLike, T<:Number}
-	return MomCon(lhs,mode,rhs)
+function measures(mc::MomCon)
+    return measures(mc.func.momdict)
 end
 
-function MomCons(lhs::Vector{M},mode::Vector{Symbol},rhs::Vector{T}) where {M<:AbstractMomentExpressionLike, T<:Number}
-	MT = promote_type([montype(l) for l in lhs]...)
-	mc = MomCon{MT,T}[]
-	for i in 1:length(rhs)
-		push!(mc,MomCon(lhs[i],mode[i],rhs[i]))
-	end
-	return mc
-end
-
-function MomCons(lhs::Vector{M},mode::Symbol,rhs::Vector{T}) where {M<:AbstractMomentExpressionLike, T<:Number}
-	MT = promote_type([montype(l) for l in lhs]...)
-	mc = MomCon{MT,T}[]
-	for i in 1:length(rhs)
-		append!(mc,[MomCon(lhs[i],mode,rhs[i])])
-	end
-	return mc
-end
-
-function MomCons(lhs::Vector{M},mode::Symbol,rhs::T) where {M<:AbstractMomentExpressionLike, T<:Number}
- 	MT = promote_type([montype(l) for l in lhs]...)
-	mc = MomCon{MT,T}[]
-	for i in 1:length(rhs)
-		append!(mc,[MomCon(lhs[i],mode,rhs)])
-	end
-	return mc
-end
-
-
-# pretty printing
-function Base.show(io::IO,momcons::Vector{M}) where M<:AbstractMomentConstraint
-	for i=1:length(momcons)
-		println(io, "$(momcons[i])")
-	end
-end
-
-function measures(mcv::Vector{M}) where M<:AbstractMomentConstraint
-	measv = Measure[]
+function measures(mcv::Vector{MomCon})
+    measv = Set{Measure}()
 	for mc in mcv
-		append!(measv,measures(mc.lhs))
+        union!(measv, measures(mc))
 	end
-	unique!(measv)
+    return measv
 end
-function measures(mcv::M) where M<:AbstractMomentConstraint
-	measures([mcv])
-end
+
+#TODO: remove when fixed in MOI
+Base.broadcastable(set::MOI.AbstractScalarSet) = Ref(set)

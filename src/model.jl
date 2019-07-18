@@ -5,7 +5,8 @@ A Generalized Moment Problem
 """
 mutable struct GMPModel <:JuMP.AbstractModel
     objective::Union{Nothing,AbstractMomentObjective}
-	constraints::Vector{<:AbstractMomentConstraint}
+	constraints::Vector{MomCon}
+    constraint_names::Vector{String}
 	measures::Vector{Measure}
 
 	dual::JuMP.Model
@@ -16,9 +17,11 @@ end
 
 
 function GMPModel() 
-    return GMPModel(EmptyObjective(),MomCon{Int,Int}[],Measure[],Model(),Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(),Dict{Any,JuMP.VariableRef}(), termination_status(Model()))
+    return GMPModel(EmptyObjective(),MomCon{Int}[],String[],Measure[],Model(),Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(),Dict{Any,JuMP.VariableRef}(), termination_status(Model()))
 end
 
+JuMP.object_dictionary(gmp::GMPModel) = JuMP.object_dictionary(gmp.dual)
+JuMP.constraint_type(::GMPModel) = JuMP.ConstraintRef{GMPModel,Int,MomConShape}
 
 # printing
 function Base.show(io::IO, gmp::GMPModel)
@@ -37,12 +40,12 @@ end
 
 # add measures to GMPModel
 function add_measure!(m::GMPModel, mu::Measure)
-	append!(m.measures,[mu])
+	push!(m.measures,mu)
 	unique!(m.measures)
 end
 
 function add_measure!(m::GMPModel, name::String, vars::Vector{V} ;kwargs...) where V<:MP.AbstractVariable
-	append!(m.measures,[Measure(name,vars;kwargs...)])
+	push!(m.measures,Measure(name,vars;kwargs...))
 end
 
 function measures(gmp::GMPModel)
@@ -54,27 +57,24 @@ function measures(gmp::GMPModel, id::Int)
 end
 
 # add constraints to GMPModel
-function add_constraints!(gmp::GMPModel, momcons::Vector{M}) where M<:AbstractMomentConstraint
-		if length(gmp.constraints)==0
-			gmp.constraints = momcons
-		else
-			try convert(typeof(gmp.constraints),momcons)
-			catch error 
-			gmp.constraints = convert(Vector{M},gmp.constraints)
-			end
-			append!(gmp.constraints, momcons)			
-		end
-end
-
-function add_constraint!(gmp::GMPModel,momcon::M) where M<:AbstractMomentConstraint
-	add_constraints!(gmp,[momcon])
-end
-
 function constraints(gmp::GMPModel)
 	return gmp.constraints
 end
+JuMP.name(cref::JuMP.ConstraintRef{GMPModel}) = cref.model.constraint_names[cref.index]
+JuMP.constraint_object(cref::JuMP.ConstraintRef{GMPModel}) = cref.model.constraints[cref.index]
 
-function JuMP.set_objective(gmp::GMPModel,sense::MOI.OptimizationSense,mom::AbstractMomentExpressionLike)
+function JuMP.add_constraint(gmp::GMPModel, momcon::MomCon, name::String)
+    push!(constraints(gmp), momcon)
+    push!(gmp.constraint_names, name)
+    return ConstraintRef(gmp,length(constraints(gmp)), MomConShape())
+end
+
+function JuMP.build_constraint(_error::Function,ae::AffMomExpr,set::MOI.AbstractScalarSet)
+    return MomCon(ae,set)
+end
+
+# set objective of GMPModel
+function JuMP.set_objective(gmp::GMPModel, sense::MOI.OptimizationSense, mom::AbstractMomentExpressionLike)
     obj = MomObj(sense, mom)
     if isempty(setdiff(measures(obj),measures(gmp)))
         gmp.objective = obj

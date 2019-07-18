@@ -43,4 +43,21 @@
         mev = MomExpr.([Mom(x+y,μ),Mom(1.5*x,μ)])
         @test mev+2*mev isa Vector{MomExpr{Polynomial{true,Float64}}}
     end
+
+    @testset "AffMomExpr" begin
+        @polyvar x y
+        μ = Measure("μ", [x,y])
+        ν = Measure("ν",[x])
+        m = Mom(1.5*y,μ)
+        me = Mom(1.5*y,μ)- Mom(1.5*x,ν)
+        ae1 = AffMomExpr(me,1)
+        @test m+1 isa AffMomExpr{Term{true,Float64},Int64}
+        @test me+1 isa AffMomExpr{Polynomial{true,Float64},Int64}
+        @test ae1+1 isa AffMomExpr{Polynomial{true,Float64},Int64}
+        @test ae1+m isa AffMomExpr{Polynomial{true,Float64},Int64}
+        @test ae1-me isa AffMomExpr{Polynomial{true,Float64},Int64}
+        ae2 = AffMomExpr(m,1)
+        @test ae1-ae2 isa AffMomExpr{Polynomial{true,Float64},Int64}
+        @test ae1+2*ae2 isa AffMomExpr{Polynomial{true,Float64},Int64}
+    end
 end

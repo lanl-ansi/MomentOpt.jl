@@ -1,4 +1,3 @@
-
 using MomentOpt
 using Test
 using DynamicPolynomials
