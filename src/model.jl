@@ -21,17 +21,17 @@ end
 
 
 # printing
-function Base.show(io::IO,gmp::GMPModel)
-	println("GMPModel:")
+function Base.show(io::IO, gmp::GMPModel)
+	println(io, "GMPModel:")
 	println(io,gmp.objective)
-	println("s.t.")
-	println(io,gmp.constraints)
-	print("Unknowns: ")
+	println(io, "s.t.")
+	println(io, gmp.constraints)
+	print(io, "Unknowns:")
 	for μ in gmp.measures
-	print("$μ ")
+	    print(io, " $μ")
 	end
-	println()
-	println(io,gmp.dstatus)
+	println(io)
+	println(io, gmp.dstatus)
 	
 end
 

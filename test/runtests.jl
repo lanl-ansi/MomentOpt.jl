@@ -1,5 +1,5 @@
 
-using MomentOpt 
+using MomentOpt
 using Test
 using DynamicPolynomials
 using SemialgebraicSets
@@ -12,5 +12,6 @@ include("meas.jl")
 include("momexpr.jl")
 include("momcon.jl")
 include("macros.jl")
+include("show.jl")
 
 end
