@@ -1,13 +1,15 @@
 language: julia
 os:
-  - linux
-  - osx
+    - linux
+    - osx
 julia:
-  - 1.0
-  - 1.1
-  - nightly
+    - 1.0
+    - 1.1
+    - nightly
 matrix:
-  allow_failures:
-    - julia: nightly
+    allow_failures:
+        - julia: nightly
+before_sript:
+    - julia -e 'using Pkg;  Pkg.add(PackageSpec(name="PolyJuMP", rev="master")); Pkg.add(PackageSpec(name="SumOfSquares", rev="master"))'
 after_success:
-  - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
+    - julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'
