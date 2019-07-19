@@ -5,9 +5,13 @@
     gmp = GMPModel()
     @measure gmp μ [x,y] support=K
     @objective gmp Min Mom(f,μ)
-    @constraint gmp Mom(1,μ) == 1
-    relax!(gmp, 2, with_optimizer(CSDP.Optimizer))
+    @constraint gmp c Mom(1,μ) == 1
+    relax!(gmp, 2, with_optimizer(CSDP.Optimizer, printlevel=0))
+    @test value(gmp, Mom(μ,1)) isa Float64
+    @test dual_value(gmp, c) isa Float64
     @test atomic(gmp, μ, 1e-03) == nothing
     @test objective_value(gmp) isa Float64
     @test value(gmp,Mom(μ,x^2+y+1)) isa Float64
+    relax!(gmp, 3, with_optimizer(CSDP.Optimizer, printlevel=0))
+    @test atomic(gmp, μ, 1e-03) isa Dict{Int, Vector{Float64}}
 end

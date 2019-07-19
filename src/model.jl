@@ -4,21 +4,23 @@ export GMPModel, add_measure!, measures, add_constraints!, add_constraint!
 A Generalized Moment Problem
 """
 mutable struct GMPModel <:JuMP.AbstractModel
-    objective::Union{Nothing,AbstractMomentObjective}
+    objective::Union{Nothing, MomObj}
 	constraints::Vector{MomCon}
     constraint_names::Vector{String}
 	measures::Vector{Measure}
 
 	dual::JuMP.Model
     cref::Dict{Measure, JuMP.ConstraintRef{JuMP.Model}}
-	dref::Dict{Any,JuMP.VariableRef}
-	dstatus::MathOptInterface.TerminationStatusCode
+    dref::Dict{Any,JuMP.VariableRef}
+    dstatus::MathOptInterface.TerminationStatusCode
 end
 
 Base.broadcastable(gmp::GMPModel) = Ref(gmp)
 
 function GMPModel() 
-    return GMPModel(EmptyObjective(),MomCon{Int}[],String[],Measure[],Model(),Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(),Dict{Any,JuMP.VariableRef}(), termination_status(Model()))
+    model = Model()
+    return GMPModel(nothing, MomCon{Int}[], String[], Measure[],
+                    model, Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(),Dict{Any,JuMP.VariableRef}(), termination_status(model))
 end
 
 JuMP.object_dictionary(gmp::GMPModel) = JuMP.object_dictionary(gmp.dual)
@@ -26,49 +28,53 @@ JuMP.constraint_type(::GMPModel) = JuMP.ConstraintRef{GMPModel,Int,MomConShape}
 
 # printing
 function Base.show(io::IO, gmp::GMPModel)
-	println(io, "GMPModel:")
-	println(io,gmp.objective)
-	println(io, "s.t.")
-	println(io, gmp.constraints)
-	print(io, "Unknowns:")
-	for μ in gmp.measures
-	    print(io, " $μ")
-	end
-	println(io)
-	println(io, gmp.dstatus)
-	
+    println(io, "GMPModel:")
+    if gmp.objective === nothing
+        println(io, "Feasibility problem:")
+    else
+        println(io, gmp.objective)
+    end
+    if !isempty(constraints(gmp))
+        println(io, "s.t.")
+    end
+    for i in eachindex(constraints(gmp))
+        con = gmp.constraints[i]
+        name = gmp.constraint_names[i]
+        println(io, JuMP.constraint_string(JuMP.REPLMode, name, con))
+    end
+    print(io, "Unknowns:")
+    for μ in gmp.measures
+        print(io, " $μ")
+    end
+    println(io)
+    println(io, gmp.dstatus)
+
 end
 
 # add measures to GMPModel
 function add_measure!(m::GMPModel, mu::Measure)
-	push!(m.measures,mu)
-	unique!(m.measures)
+    push!(m.measures,mu)
+    unique!(m.measures)
 end
 
 function add_measure!(m::GMPModel, name::String, vars::Vector{V} ;kwargs...) where V<:MP.AbstractVariable
-	push!(m.measures,Measure(name,vars;kwargs...))
+    push!(m.measures,Measure(name,vars;kwargs...))
 end
 
 function measures(gmp::GMPModel)
-	return gmp.measures
+    return gmp.measures
 end
 
 # add constraints to GMPModel
 function constraints(gmp::GMPModel)
-	return gmp.constraints
+    return gmp.constraints
 end
 JuMP.name(cref::JuMP.ConstraintRef{GMPModel}) = cref.model.constraint_names[cref.index]
 JuMP.constraint_object(cref::JuMP.ConstraintRef{GMPModel}) = cref.model.constraints[cref.index]
 
-function JuMP.add_constraint(gmp::GMPModel, momcon::MomCon, name::String)
+function JuMP.add_constraint(gmp::GMPModel, momcon::MomCon, name::String="noname")
     push!(constraints(gmp), momcon)
     push!(gmp.constraint_names, name)
-    return ConstraintRef(gmp,length(constraints(gmp)), MomConShape())
-end
-
-function JuMP.add_constraint(gmp::GMPModel, momcon::MomCon)
-    push!(constraints(gmp), momcon)
-    push!(gmp.constraint_names, "noname")
     return ConstraintRef(gmp,length(constraints(gmp)), MomConShape())
 end
 

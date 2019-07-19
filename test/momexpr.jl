@@ -1,7 +1,7 @@
 # test Mom, MomExpr
 # test +,-,*,/
 
-@testset "Moment Arithmetic" begin
+@testset "Moment Arith" begin
     @testset "Mom" begin
         @polyvar x y
         μ = Measure("μ", [x,y])
@@ -31,11 +31,11 @@
         @test Mom.(μ, [1,x^2])+Mom.(μ,[y,y]) isa Vector{MomExpr{Polynomial{true,Int}}}
         @test MomExpr(1,μ) isa MomExpr{Int}
         @test MomExpr(μ,x) isa MomExpr{PolyVar{true}}
-        @test MomExpr(Dict{Measure,Int}(μ=>1)) isa MomExpr{Int}
-        @test MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
-        @test MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
-        me1 = MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+π))
-        me2 = MomExpr(Dict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π))
+        @test MomExpr(OrderedDict{Measure,Int}(μ=>1)) isa MomExpr{Int}
+        @test MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
+        @test MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
+        me1 = MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+π))
+        me2 = MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π))
         @test 3*me1 isa MomExpr{Polynomial{true,Float64}}
         @test me1+2*me2 isa MomExpr{Polynomial{true,Float64}}
         @test me1-me2 isa MomExpr{Polynomial{true,Float64}}

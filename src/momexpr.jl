@@ -68,8 +68,8 @@ end
 Type to represent a linear combination of Mom.
 """
 mutable struct MomExpr{PT<:MT} <: AbstractMomentExpression
-    momdict::Dict{Measure,PT}
-    function MomExpr(momdict::Dict{Measure,PT}) where PT<:MT
+    momdict::OrderedDict{Measure,PT}
+    function MomExpr(momdict::OrderedDict{Measure,PT}) where PT<:MT
         if all(args->compatible(args...),momdict)
             new{PT}(momdict)
         else
@@ -78,21 +78,21 @@ mutable struct MomExpr{PT<:MT} <: AbstractMomentExpression
     end
 end
 
-function MomExpr(momdict::Dict{<:Measure,PT}) where PT<:MT
-    return MomExpr(convert(Dict{Measure,PT},momdict))
+function MomExpr(momdict::OrderedDict{<:Measure,PT}) where PT<:MT
+    return MomExpr(convert(OrderedDict{Measure,PT},momdict))
 end
 
 # backwards compatibility of constructor
 function MomExpr(poly::PT, mu::Measure) where PT<:MT
-    return MomExpr(Dict{Measure,PT}(mu => poly))
+    return MomExpr(OrderedDict{Measure,PT}(mu => poly))
 end
 
 function MomExpr(mu::Measure,poly::PT) where PT<:MT
-    return MomExpr(Dict{Measure,PT}(mu => poly))
+    return MomExpr(OrderedDict{Measure,PT}(mu => poly))
 end
 
 function MomExpr(mom::Mom)    
-    return MomExpr(Dict{Measure,montype(mom)}(mom.meas => mom.mon))
+    return MomExpr(OrderedDict{Measure,montype(mom)}(mom.meas => mom.mon))
 end
 
 # conversion and promotion
@@ -101,11 +101,11 @@ function montype(m::ME) where ME <:AbstractMomentExpression
 end
 
 function Base.convert(::Type{MomExpr{PT}},m::Mom) where PT<:MT
-    return MomExpr(Dict{Measure,PT}(m.meas => convert(PT,m.mon)))
+    return MomExpr(OrderedDict{Measure,PT}(m.meas => convert(PT,m.mon)))
 end
 
 function Base.convert(::Type{MomExpr{PT}}, m::AbstractMomentExpression) where PT<:MT
-    momdict = Dict{Measure,PT}()
+    momdict = OrderedDict{Measure,PT}()
     for meas in keys(m.momdict)
         momdict[meas] = convert(PT,m.momdict[meas])
     end
@@ -204,12 +204,14 @@ function Base.:-(mom::Mom)
 end
 
 # MomExpr
-function Base.:*(a::Number, me::MomExpr)
-    return MomExpr(Dict(meas => a*poly for (meas,poly) in me.momdict))
+function Base.:*(a::Number, me::MomExpr{PT}) where PT
+    PU = typeof(one(typeof(a)) * one(PT))
+    return MomExpr(OrderedDict{Measure, PU}(meas => a*poly for (meas,poly) in me.momdict))
 end
 
-function Base.:-(me::MomExpr)
-    return MomExpr(Dict(meas => -poly for (meas, poly) in me.momdict))
+function Base.:-(me::MomExpr{PT}) where PT
+    PU = typeof(-one(PT))
+    return MomExpr(OrderedDict{Measure, PU}(meas => -poly for (meas, poly) in me.momdict))
 end
 
 # AffMomExpr
@@ -242,7 +244,7 @@ end
 
 function Base.sum(mev::Vector{<:Mom})
     T = add_mom_type(mev)
-    momdict = Dict{Measure,T}()
+    momdict = OrderedDict{Measure,T}()
     for me in mev
         if haskey(momdict,me.meas)
             momdict[me.meas] = momdict[me.meas] + me.mon
@@ -255,7 +257,7 @@ end
 
 function Base.sum(mev::Vector{<:MomExpr})
     T = add_mom_type(mev)
-    momdict = Dict{Measure,T}()
+    momdict = OrderedDict{Measure,T}()
     for me in mev
         merge!(+, momdict, me.momdict)
     end

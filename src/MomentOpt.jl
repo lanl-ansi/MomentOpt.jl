@@ -8,6 +8,7 @@ using PolyJuMP
 using JuMP
 const PJ = PolyJuMP
 using SumOfSquares
+using OrderedCollections
 
 const MT = Union{Number,AbstractPolynomialLike}
 

@@ -39,7 +39,7 @@ function atomic(gmp::GMPModel, measure::Measure, args...)
 	if typeof(optmeas)== Nothing
 		println("Could not detect finite support.")
 	else
-		optimizers = Dict()
+        optimizers = Dict{Int, Vector{Float64}}()
 		for i = 1:length(optmeas.atoms)
 		optimizers[i] = optmeas.atoms[i].center
 		end

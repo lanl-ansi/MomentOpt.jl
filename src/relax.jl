@@ -47,7 +47,7 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
 	gmp.dual = SOSModel(optimizer)
 
 
-	if typeof(gmp.objective) == EmptyObjective	
+    if gmp.objective === nothing	
 		println("Please define an objective")
 		return
 	elseif gmp.objective.sense == MOI.MIN_SENSE

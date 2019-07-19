@@ -1,14 +1,15 @@
 export MomObj, MomCon, MomCons
 # export NLMomObj
 
-abstract type AbstractMomentObjective end
-struct EmptyObjective <: AbstractMomentObjective end
 struct MomConShape <: JuMP.AbstractShape end
+Base.broadcastable(shape::MomConShape) = Ref(shape)
 
 """
-MomObj
+    MomObj
+
+Moment objective.
 """
-mutable struct MomObj{PT<:MT} <:AbstractMomentObjective
+mutable struct MomObj{PT<:MT}
 	sense::MOI.OptimizationSense
 	obj::MomExpr{PT}
 end
@@ -25,17 +26,16 @@ function MomObj(sense::MOI.OptimizationSense, meas::Measure, pol::PT) where PT<:
 	return MomObj(sense,Mom(pol,meas))
 end
 
-function Base.show(io::IO,f::MO) where MO<:AbstractMomentObjective
-    if typeof(f) == EmptyObjective
-        print(io,"Feasability problem:")
-    elseif f.sense == MOI.MAX_SENSE
+function Base.show(io::IO, f::MomObj)
+    if f.sense == MOI.MAX_SENSE
         print(io,"Maximize $(f.obj)")
     else
+        @assert f.sense == MOI.MIN_SENSE
         print(io,"Minimize $(f.obj)")
     end
 end
 
-function measures(f::MO) where MO<:AbstractMomentObjective
+function measures(f::MomObj)
 	return collect(keys(f.obj.momdict))
 end
 
@@ -99,7 +99,7 @@ function constant(mc::MomCon)
     return constant(mc.set)
 end
 
-#TODO: remove when fixed in MOI
+#TODO: remove when JuMP is version 0.20 
 Base.broadcastable(set::MOI.AbstractScalarSet) = Ref(set)
 constant(s::MOI.EqualTo) = s.value
 constant(s::MOI.LessThan) = s.upper
