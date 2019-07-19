@@ -37,6 +37,10 @@ using SumOfSquares
 using MomentOpt
 
 using MosekTools
+using Plots
+
+# Choose relaxation order
+order = 6 
 
 f(y) = 1/4*y^2
 T = [0,1]
@@ -45,9 +49,6 @@ Y = [0,1]
 
 # Define polynomial variables
 @polyvar t x y
-
-# Choose relaxation order
-order = 8 
 
 gmp = GMPModel()
 # Add measures
@@ -94,7 +95,15 @@ trace = mmons'*mmons
 
 relax!(gmp,order,with_optimizer(Mosek.Optimizer))
 
-graph(gmp,μ)
+ch = christoffel(gmp, μ)
+
+T = range(0, stop = 1, length = 100)
+X = range(-1/2, stop = 1/2, length = 100)
+Y = range(0, stop = 1, length =  10)
+
+pyplot()
+f(tt,xx) = min_val(([t,x]=>[tt,xx]), ch)
+plot(T, X, f, st= :surface)
 
 
 

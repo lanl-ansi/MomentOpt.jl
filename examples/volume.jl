@@ -36,7 +36,7 @@ using MomentOpt
 
 using MosekTools
 using Plots
-
+pyplot()
 
 # relaxation order for the Generalized Moment Problem
 order = 8 
@@ -81,16 +81,12 @@ relax!(gmp,order,with_optimizer(Mosek.Optimizer))
 # The optimal value is an approximation to the volume of K (which is π in this case)
 println("Volume of approximation: $(objective_value(gmp)*4)")
 
-# We want to investigate the polynomial over approximation of the indicator function, which can be defined
+# The polynomial over approximation of the indicator function can be defined
 # from the dual solution as follows:
 poly = sum(dual_value(gmp,cons[i])*pons[i] for i=1:length(mons))
 
-
-# We plot the one super level set of poly and the set K in B
-ds = 0.01; xx = -1:ds:1; yy = -1:ds:1;
-f(xx,yy) = convert(Int,(convert(Float64,subs(poly, x=>xx,y=>yy))>=1))+convert(Int,xx^2+yy^2<=1)
-# f returns 0 if poly< 1 outside of K
-# f returns 1 if poly⩾ 1 outside of K
-# f returns 2 if poly⩾ 1 inside of K
-p1 = contourf(xx, yy, f, levels = 3, color=:Greys)
+# Plot 
+xx = yy = range(-1, stop = 1, length = 100)
+f(xx,yy) = poly(x=>xx,y=>yy)
+plot(xx, yy, f, st= :surface)
 

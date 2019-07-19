@@ -30,7 +30,7 @@ using MosekTools
 @polyvar x y
 
 # Polynomial to optimize 
-f =x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1 
+f = x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1 
 
 # Define semi algebraic support for the measure 
 K = @set(1-x>=0 && x+1>=0 && 1-y>=0 && y+1>=0)
@@ -57,7 +57,7 @@ relax!(gmp, 2, with_optimizer(Mosek.Optimizer))
 println("Relaxation order: $(2)")
 println("Objective value: $(objective_value(gmp))")
 # We try to extract atoms from the relaxed moment sequence of μ
-opt = atomic(gmp, μ 1e-03)
+opt = atomic(gmp, μ,  1e-03)
 println()
 
 # As we could not extract atoms from the solution, we increase the relaxation order

@@ -1,7 +1,11 @@
-export moments, atomic, graph, dual_value
+export moments, atomic, graph, dual_value, christoffel, min_val
 
 function JuMP.objective_value(gmp::GMPModel)
 	return objective_value(gmp.dual)
+end
+
+function MultivariateMoments.moment_matrix(gmp::GMPModel, measure::Measure)
+    return moment_matrix(gmp.cref[measure])
 end
 
 function SumOfSquares.moments(gmp::GMPModel, measure::Measure)
@@ -35,7 +39,7 @@ function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:AbstractPolynomialLike
 end
 
 function atomic(gmp::GMPModel, measure::Measure, args...)
-	optmeas = extractatoms(moment_matrix(gmp.cref[measure]), args...)
+	optmeas = extractatoms(moment_matrix(gmp,measure), args...)
 	if typeof(optmeas)== Nothing
 		println("Could not detect finite support.")
 	else
@@ -48,8 +52,31 @@ function atomic(gmp::GMPModel, measure::Measure, args...)
 	end
 end
 
-function graph(gmp::GMPModel, measure::Measure)
-    println("Coming soon...")
+function christoffel(gmp::GMPModel, measure::Measure ; regpar = 1e-8)
+    M = moment_matrix(gmp,measure)
+    eva,eve = eigen(Matrix(M.Q))
+    return sum( (dot(eve[:, i] / √(eva[i] + regpar),M.x))^2 for i = 1:length(eva))
 end
 
+function min_val(x::Pair{<:Vector{<:MP.AbstractVariable}, <:Vector{<:Number}},
+                 poly::AbstractPolynomialLike)
+    p = subs(poly, x)
+    if nvariables(p) != 1
+        error()
+    end
+    t = first(variables(p))
+    set = algebraicset([differentiate(p, t)])
+    Y = [sol[1] for sol in set]
+    return Y[argmin([p(t => y) for y in Y])]
+end
 
+function min_val_slow(x::Pair{<:Vector{<:MP.AbstractVariable}, <:Vector{<:Number}},
+                 Y::StepRangeLen,
+                 poly::AbstractPolynomialLike)
+    p = subs(poly, x)
+    if nvariables(p) != 1
+        error()
+    end
+    t = first(variables(p))
+    return Y[argmin([p(t => y) for y in Y])]
+end
