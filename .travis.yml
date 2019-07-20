@@ -16,4 +16,4 @@ matrix:
     allow_failures:
         - julia: nightly
 before_script:
-    - julia -e 'using Pkg;  Pkg.add(PackageSpec(name="PolyJuMP", rev="master")); Pkg.add(PackageSpec(name="SumOfSquares", rev="master"))'
+    - julia -e 'using Pkg; Pkg.add(PackageSpec(name="SumOfSquares", rev="master"))'
