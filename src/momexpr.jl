@@ -40,11 +40,11 @@ function Mom(mon::PT,meas::Measure) where PT<:MT
     return Mom(meas,mon)
 end
 
-function Base.dot(mon::PT, meas:Measure) where PT<:MT
+function LinearAlgebra.dot(mon::PT, meas::Measure) where PT<:MT
     return Mom(meas, mom)
 end
 
-function Base.dor(meas::Measure, mon::PT) where PT <: MT
+function LinearAlgebra.dot(meas::Measure, mon::PT) where PT <: MT
     return Mom(meas, mom)
 end
 
