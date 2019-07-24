@@ -40,58 +40,46 @@ end
 """
     relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
 
-Computes the a relaxation of the generlized moment problem according to the certificates specified for each measure. 
+Computes the a relaxation of the generlized moment problem according to the certificates specified for each measure.
 """
 function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
-    	# construct dual
-	gmp.dual = SOSModel(optimizer)
+    # construct dual
+    gmp.dual = SOSModel(optimizer)
 
+    if gmp.objective === nothing
+        println("Please define an objective")
+        return
+    elseif gmp.objective.sense == MOI.MIN_SENSE
+        sossense = MOI.MAX_SENSE
+    else
+        sossense = MOI.MIN_SENSE
+    end
 
-    if gmp.objective === nothing	
-		println("Please define an objective")
-		return
-	elseif gmp.objective.sense == MOI.MIN_SENSE
-		sossense = MOI.MAX_SENSE
-		sign1 =  1
-	else
-		sossense = MOI.MIN_SENSE
-		sign1 = -1
-	end
+    if isempty(gmp.constraints)
+        @error "Define at least one moment constraint!"
+    end
 
-	if isempty(gmp.constraints)
-		@error "Define at least one moment constraint!"
-	end
-	
     PT = polynomialtype(variabletype(first(gmp.measures)), JuMP.AffExpr)
-    drhs = Dict{Measure, PT}()
-	for meas in gmp.measures
-        drhs[meas] = zero(PT)
-	end
+    dlhs = Dict{Measure, PT}()
+    for meas in gmp.measures
+        dlhs[meas] = zero(PT)
+    end
 
     for momcon in gmp.constraints
         if momcon.set isa MOI.EqualTo
             gmp.dref[momcon] = @variable(gmp.dual)
-        elseif momcon.set isa MOI.LessThan
-            if gmp.objective.sense == MOI.MIN_SENSE
-                gmp.dref[momcon] = @variable(gmp.dual, upper_bound=0)
-            else
-                gmp.dref[momcon] = @variable(gmp.dual, lower_bound=0)
-            end
-        elseif momcon.set isa MOI.GreaterThan
-            if gmp.objective.sense == MOI.MIN_SENSE
-                gmp.dref[momcon] = @variable(gmp.dual, lower_bound=0) 
-            else
-                gmp.dref[momcon] = @variable(gmp.dual, upper_bound=0)
-            end
+        elseif xor(momcon.set isa MOI.LessThan, gmp.objective.sense == MOI.MIN_SENSE)
+            gmp.dref[momcon] = @variable(gmp.dual, lower_bound=0)
+        else
+            gmp.dref[momcon] = @variable(gmp.dual, upper_bound=0)
         end
         for meas in measures(momcon)
-            drhs[meas] = add_prod!(drhs[meas], momcon.func.momdict[meas], gmp.dref[momcon])
+            dlhs[meas] = add_prod!(dlhs[meas], momcon.func.momdict[meas], gmp.dref[momcon])
         end
     end
 
-    # bookkeeping 
-	for meas in gmp.measures
-        p = drhs[meas]
+    for meas in gmp.measures
+        p = dlhs[meas]
         if sossense == MOI.MAX_SENSE
             p = -p
         end
@@ -100,15 +88,15 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
             if sossense == MOI.MIN_SENSE
                 obj = -obj
             end
-            # Modifies drhs[meas] but it's ok since it not used anywhere else
+            # Modifies dlhs[meas] but it's ok since it not used anywhere else
             p = add_prod!(p, obj)
         end
-	    gmp.cref[meas] = @constraint(gmp.dual, p in meas.cert, domain = meas.supp, maxdegree = 2*order)
-	end
+        gmp.cref[meas] = @constraint(gmp.dual, p in meas.cert, domain = meas.supp, maxdegree = 2*order)
+    end
 
     @objective(gmp.dual,sossense, sum(gmp.dref[momcon]*constant(momcon) for momcon in gmp.constraints))
 
-	optimize!(gmp.dual)
+    optimize!(gmp.dual)
 
-	gmp.dstatus = termination_status(gmp.dual)
+    gmp.dstatus = termination_status(gmp.dual)
 end
