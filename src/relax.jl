@@ -35,7 +35,16 @@ function add_prod!(p::AbstractPolynomial{JuMP.AffExpr}, q::Number, args...)
     add_prod!(p, constantterm(q, p), args...)
 end
 
-
+function dual_variable(dual::JuMP.Model, momcon::MomCon, sense::MOI.OptimizationSense)
+    if momcon.set isa MOI.EqualTo
+        variable = @variable(dual)
+    elseif xor(momcon.set isa MOI.LessThan, sense == MOI.MIN_SENSE)
+        variable = @variable(dual, lower_bound=0)
+    else
+        variable = @variable(dual, upper_bound=0)
+    end
+    return variable
+end
 
 """
     relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
@@ -65,16 +74,11 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
         dlhs[meas] = zero(PT)
     end
 
-    for momcon in gmp.constraints
-        if momcon.set isa MOI.EqualTo
-            gmp.dref[momcon] = @variable(gmp.dual)
-        elseif xor(momcon.set isa MOI.LessThan, gmp.objective.sense == MOI.MIN_SENSE)
-            gmp.dref[momcon] = @variable(gmp.dual, lower_bound=0)
-        else
-            gmp.dref[momcon] = @variable(gmp.dual, upper_bound=0)
-        end
+    gmp.dref = [dual_variable(gmp.dual, con, gmp.objective.sense) for con in gmp.constraints]
+
+    for (momcon, variable) in zip(gmp.constraints, gmp.dref)
         for meas in measures(momcon)
-            dlhs[meas] = add_prod!(dlhs[meas], momcon.func.momdict[meas], gmp.dref[momcon])
+            dlhs[meas] = add_prod!(dlhs[meas], momcon.func.momdict[meas], variable)
         end
     end
 
@@ -94,7 +98,7 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
         gmp.cref[meas] = @constraint(gmp.dual, p in meas.cert, domain = meas.supp, maxdegree = 2*order)
     end
 
-    @objective(gmp.dual,sossense, sum(gmp.dref[momcon]*constant(momcon) for momcon in gmp.constraints))
+    @objective(gmp.dual,sossense, sum(variable * constant(momcon) for (momcon, variable) in zip(gmp.constraints, gmp.dref)))
 
     optimize!(gmp.dual)
 

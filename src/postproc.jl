@@ -13,29 +13,17 @@ function SumOfSquares.moments(gmp::GMPModel, measure::Measure)
 end
 
 function dual_value(gmp::GMPModel, momcon::JuMP.ConstraintRef)
-    return JuMP.value(gmp.dref[gmp.constraints[momcon.index]])
+    return JuMP.value(gmp.dref[momcon.index])
 end
 
-function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:Number
-	moms = moments(gmp,mom.meas)
-	idx = findfirst(x->x==1,moms.x)
-	return mom.mon*moms.a[idx]
+function JuMP.value(gmp::GMPModel, mom::Mom{<:Number})
+	moms = moments(gmp, mom.meas)
+    return dot(moms, constantterm(mom.mon, eltype(monomials(moms))))
 end
 
-function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:AbstractMonomialLike
+function JuMP.value(gmp::GMPModel, mom::Mom)
 	moms = moments(gmp,mom.meas)
-	idx = findfirst(x->x==mom.mon,moms.x)
-	return moms.a[idx]
-end
-
-function JuMP.value(gmp::GMPModel, mom::Mom{T}) where T<:AbstractPolynomialLike
-	moms = moments(gmp,mom.meas)
-	vec = []
-	for mon in mom.mon.x
-		idx=findfirst(x->x==mon,moms.x)
-		push!(vec,moms.a[idx])
-	end
-	return sum(mom.mon.a[i]*vec[i] for i = 1:length(mom.mon.a))
+    return dot(moms, mom.mon)
 end
 
 function atomic(gmp::GMPModel, measure::Measure, args...)

@@ -11,16 +11,16 @@ mutable struct GMPModel <:JuMP.AbstractModel
 
 	dual::JuMP.Model
     cref::Dict{Measure, JuMP.ConstraintRef{JuMP.Model}}
-    dref::Dict{Any,JuMP.VariableRef}
+    dref::Vector{JuMP.VariableRef}
     dstatus::MathOptInterface.TerminationStatusCode
 end
 
 Base.broadcastable(gmp::GMPModel) = Ref(gmp)
 
-function GMPModel() 
+function GMPModel()
     model = Model()
     return GMPModel(nothing, MomCon{Int}[], String[], Measure[],
-                    model, Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(),Dict{Any,JuMP.VariableRef}(), termination_status(model))
+                    model, Dict{Measure,JuMP.ConstraintRef{JuMP.Model}}(), JuMP.VariableRef[], termination_status(model))
 end
 
 JuMP.object_dictionary(gmp::GMPModel) = JuMP.object_dictionary(gmp.dual)
@@ -75,7 +75,7 @@ JuMP.constraint_object(cref::JuMP.ConstraintRef{GMPModel}) = cref.model.constrai
 function JuMP.add_constraint(gmp::GMPModel, momcon::MomCon, name::String="noname")
     push!(constraints(gmp), momcon)
     push!(gmp.constraint_names, name)
-    return ConstraintRef(gmp,length(constraints(gmp)), MomConShape())
+    return ConstraintRef(gmp, length(constraints(gmp)), MomConShape())
 end
 
 function JuMP.build_constraint(_error::Function,ae::AffMomExpr,set::MOI.AbstractScalarSet)

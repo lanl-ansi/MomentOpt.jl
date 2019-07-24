@@ -99,7 +99,7 @@ function MomExpr(mu::Measure,poly::PT) where PT<:MT
     return MomExpr(OrderedDict{Measure,PT}(mu => poly))
 end
 
-function MomExpr(mom::Mom)    
+function MomExpr(mom::Mom)
     return MomExpr(OrderedDict{Measure,montype(mom)}(mom.meas => mom.mon))
 end
 
@@ -125,7 +125,7 @@ function Base.promote_rule(::Type{MomExpr{PT1}},::Type{Mom{PT2}}) where {PT1<:MT
 end
 
 # pretty printing
-function Base.show(io::IO,me::MomExpr) 
+function Base.show(io::IO,me::MomExpr)
     n = length(me.momdict)
     for m in keys(me.momdict)
         print(io, Mom(m,me.momdict[m]))
