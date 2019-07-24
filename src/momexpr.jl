@@ -40,6 +40,14 @@ function Mom(mon::PT,meas::Measure) where PT<:MT
     return Mom(meas,mon)
 end
 
+function Base.dot(mon::PT, meas:Measure) where PT<:MT
+    return Mom(meas, mom)
+end
+
+function Base.dor(meas::Measure, mon::PT) where PT <: MT
+    return Mom(meas, mom)
+end
+
 # conversion and promotion
 function montype(m::Mom)
     return typeof(m.mon)
