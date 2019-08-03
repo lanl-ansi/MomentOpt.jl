@@ -20,7 +20,6 @@ of f on K.
 
 using DynamicPolynomials
 using SemialgebraicSets
-using SumOfSquares 
 
 using MomentOpt
 

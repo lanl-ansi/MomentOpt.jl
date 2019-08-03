@@ -2,7 +2,7 @@ name = "MomentOpt"
 uuid = "5036cc39-ae6e-5f00-bcd6-dacb213bf05a"
 authors = ["Tillmann Weisser"]
 repo = "https://github.com/lanl-ansi/MomentOpt.jl"
-version = "0.1"
+version = "0.1.0"
 
 [deps]
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
@@ -11,6 +11,7 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 MultivariatePolynomials = "102ac46a-7ee4-5c85-9060-abc95bfdeaa3"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 PolyJuMP = "ddf597a6-d67e-5340-b84c-e37d84115374"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SemialgebraicSets = "8e049039-38e8-557d-ae3a-bc521ccf6204"
 SumOfSquares = "4b9e565b-77fc-50a5-a571-1244f986bda1"
 

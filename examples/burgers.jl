@@ -32,7 +32,6 @@
 
 using DynamicPolynomials
 using SemialgebraicSets
-using SumOfSquares 
 
 using MomentOpt
 

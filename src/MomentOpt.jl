@@ -1,13 +1,15 @@
-module MomentOpt 
+module MomentOpt
+
+import Reexport
 
 using MultivariatePolynomials
 const MP = MultivariatePolynomials
 using SemialgebraicSets
 using MathOptInterface
 using PolyJuMP
-using JuMP
+Reexport.@reexport using JuMP
 const PJ = PolyJuMP
-using SumOfSquares
+Reexport.@reexport using SumOfSquares
 using OrderedCollections
 using LinearAlgebra
 
