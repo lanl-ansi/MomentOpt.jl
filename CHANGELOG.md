@@ -1,7 +1,9 @@
 MomentOpt.jl Change Log
 =======================
+### stagged
+- change measures after definition
 
-### Staged
+### v 0.1.0
 - JuMP syntax
 - broadcastable functions 
 

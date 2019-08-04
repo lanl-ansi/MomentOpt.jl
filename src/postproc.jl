@@ -26,8 +26,8 @@ function JuMP.value(gmp::GMPModel, mom::Mom)
     return dot(moms, mom.mon)
 end
 
-function atomic(gmp::GMPModel, measure::Measure, args...)
-	optmeas = extractatoms(moment_matrix(gmp,measure), args...)
+function atomic(gmp::GMPModel, measure::Measure; tol=1e-3)
+	optmeas = extractatoms(moment_matrix(gmp,measure), tol)
 	if typeof(optmeas)== Nothing
 		println("Could not detect finite support.")
 	else
