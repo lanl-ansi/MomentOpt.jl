@@ -29,7 +29,6 @@
 """
 
 using DynamicPolynomials
-using SemialgebraicSets
 
 using MomentOpt
 
@@ -88,4 +87,14 @@ poly = sum(dual_value(gmp,cons[i])*pons[i] for i=1:length(mons))
 xx = yy = range(-1, stop = 1, length = 100)
 f(xx,yy) = poly(x=>xx,y=>yy)
 plot(xx, yy, f, st= :surface)
+
+# The convergence can be improved by adding "Stokes" constraints.
+@constraint gmp stokes_x[i=1:length(exponents)] Mom(differentiate(pons[i]*(1-x^2-y^2), x), μ) == 0
+@constraint gmp stokes_y[i=1:length(exponents)] Mom(differentiate(pons[i]*(1-x^2-y^2), y), μ) == 0
+
+relax!(gmp,order,with_optimizer(Mosek.Optimizer))
+println("Approximation with Stokes: $(objective_value(gmp)*4)")
+
+
+
 

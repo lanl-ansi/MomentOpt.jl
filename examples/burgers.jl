@@ -31,7 +31,6 @@
 """
 
 using DynamicPolynomials
-using SemialgebraicSets
 
 using MomentOpt
 
