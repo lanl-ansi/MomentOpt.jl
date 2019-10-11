@@ -48,6 +48,10 @@ function LinearAlgebra.dot(meas::Measure, mon::PT) where PT <: MT
     return Mom(meas, mom)
 end
 
+function measures(m::Mom)
+    return [m.meas]
+end
+
 # conversion and promotion
 function montype(m::Mom)
     return typeof(m.mon)

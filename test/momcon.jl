@@ -1,10 +1,10 @@
-@testset "MomCon Tests" begin
+@testset "MomCon Test" begin
     @testset "MomObj" begin
         @polyvar x y
         μ = Measure("μ", [x,y])
         ν = Measure("ν",[x])
-        @test typeof(MomObj(MOI.MAX_SENSE, μ, 1)) == MomObj{Int}
-        @test typeof(MomObj(MOI.MIN_SENSE, x^2, ν)) == MomObj{Monomial{true}}
+        @test MomObj(MOI.MAX_SENSE, μ, 1) isa MomObj{Int}
+        @test MomObj(MOI.MIN_SENSE, x^2, ν) isa MomObj{Monomial{true}}
         obj = MomObj(MOI.MAX_SENSE, Mom(μ, y) + Mom(ν, x))
         @test typeof(obj) == MomObj{Polynomial{true, Int}}
         @test ν in measures(obj)

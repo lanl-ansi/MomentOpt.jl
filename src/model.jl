@@ -1,4 +1,4 @@
-export GMPModel, add_measure!, measures, add_constraints!, add_constraint!
+export GMPModel, add_measure!, measures, constraints, add_constraints!, add_constraint!
 
 """
 A Generalized Moment Problem
@@ -88,6 +88,6 @@ function JuMP.set_objective(gmp::GMPModel, sense::MOI.OptimizationSense, mom::Ab
     if isempty(setdiff(measures(obj),measures(gmp)))
         gmp.objective = obj
     else
-        @error "The model does not involve $(setdiff(measures(gmp),measures(momcons)))"
+        @error "The model does not involve $(setdiff(measures(mom),measures(gmp)))"
     end
 end
