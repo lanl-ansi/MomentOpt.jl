@@ -4,6 +4,8 @@ using DynamicPolynomials
 using SemialgebraicSets
 using SumOfSquares
 using OrderedCollections
+using LinearAlgebra
+
 
 using CSDP
 
@@ -13,4 +15,4 @@ include("momcon.jl")
 include("model.jl")
 include("macros.jl")
 include("show.jl")
-include("relax.jl")
+#include("relax.jl")

@@ -1,6 +1,6 @@
 @testset "Model Test" begin 
     m = GMPModel()
-    @test Base.RefValue{GMPModel} == Base.RefValue{GMPModel}
+    @test Base.broadcastable(m) isa Base.RefValue{GMPModel}
     @test JuMP.object_dictionary(m) isa Dict
     @test JuMP.constraint_type(m) == ConstraintRef{GMPModel, Int64, MomentOpt.MomConShape}
     @polyvar x

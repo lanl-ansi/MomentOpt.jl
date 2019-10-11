@@ -40,12 +40,19 @@ function Mom(mon::PT,meas::Measure) where PT<:MT
     return Mom(meas,mon)
 end
 
-function LinearAlgebra.dot(mon::PT, meas::Measure) where PT<:MT
-    return Mom(meas, mom)
+function LinearAlgebra.dot(mon::AbstractPolynomialLike, meas::Measure) 
+    return Mom(meas, mon)
 end
 
-function LinearAlgebra.dot(meas::Measure, mon::PT) where PT <: MT
-    return Mom(meas, mom)
+function LinearAlgebra.dot(meas::Measure, mon::AbstractPolynomialLike) 
+    return Mom(meas, mon)
+end
+function LinearAlgebra.dot(mon::Number, meas::Measure) 
+    return Mom(meas, mon)
+end
+
+function LinearAlgebra.dot(meas::Measure, mon::Number) 
+    return Mom(meas, mon)
 end
 
 function measures(m::Mom)

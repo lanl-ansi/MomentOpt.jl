@@ -22,7 +22,7 @@ function MomObj(sense::MOI.OptimizationSense, pol::PT, meas::Measure) where PT<:
     return MomObj(sense,Mom(pol,meas))
 end
 
-function MomObj(sense::MOI.OptimizationSense, meas::Measure, pol::PT) where PT<:Union{Number,AbstractPolynomialLike}
+function MomObj(sense::MOI.OptimizationSense, meas::Measure, pol::PT) where PT<:MT
 	return MomObj(sense,Mom(pol,meas))
 end
 
@@ -66,7 +66,7 @@ function Base.convert(::Type{MomCon{PT1}},mc::MomCon) where {PT1<:MT}
 end
 
 function Base.promote_rule(::Type{MomCon{PT1}},::Type{MomCon{PT2}})  where {PT1<:MT, PT2<:MT}
-    return MomCon{promote_type{PT1,PT2}}
+    return MomCon{promote_type(PT1,PT2)}
 end
 
 JuMP.jump_function(con::MomCon) = con.func
@@ -87,12 +87,12 @@ function measures(mc::MomCon)
     return measures(mc.func)
 end
 
-function measures(mcv::Vector{MomCon})
+function measures(mcv::Array{MomCon{T}}) where T<: MT
     measv = Set{Measure}()
 	for mc in mcv
         union!(measv, measures(mc))
 	end
-    return measv
+    return collect(measv)
 end
 
 function constant(mc::MomCon)
