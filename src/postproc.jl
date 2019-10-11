@@ -26,16 +26,20 @@ function JuMP.value(gmp::GMPModel, mom::Mom)
     return dot(moms, mom.mon)
 end
 
-function atomic(gmp::GMPModel, measure::Measure; tol=1e-3)
+function atomic(gmp::GMPModel, measure::Measure; tol=1e-3, print_level = 1)
 	optmeas = extractatoms(moment_matrix(gmp,measure), tol)
 	if typeof(optmeas)== Nothing
-		println("Could not detect finite support.")
+        if print_level ==1
+		    println("Could not detect finite support.")
+        end
 	else
         optimizers = Dict{Int, Vector{Float64}}()
 		for i = 1:length(optmeas.atoms)
 		optimizers[i] = optmeas.atoms[i].center
 		end
-		println("Atomic extraction successful.")
+        if print_level ==1 
+	    	println("Atomic extraction successful.")
+        end
 		return optimizers
 	end
 end

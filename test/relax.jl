@@ -9,9 +9,9 @@
     relax!(gmp, 2, with_optimizer(CSDP.Optimizer, printlevel=0))
     @test value(gmp, Mom(μ,1)) isa Float64
     @test dual_value(gmp, c) isa Float64
-    @test atomic(gmp, μ, tol = 1e-03) == nothing
+    @test atomic(gmp, μ, tol = 1e-03, print_level = 0) == nothing
     @test objective_value(gmp) isa Float64
     @test value(gmp,Mom(μ,x^2+y+1)) isa Float64
     relax!(gmp, 3, with_optimizer(CSDP.Optimizer, printlevel=0))
-    @test atomic(gmp, μ, tol = 1e-03) isa Dict{Int, Vector{Float64}}
+    @test atomic(gmp, μ, tol = 1e-03, print_level = 0) isa Dict{Int, Vector{Float64}}
 end
