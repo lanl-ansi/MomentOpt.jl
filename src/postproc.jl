@@ -62,13 +62,3 @@ function min_val(x::Pair{<:Vector{<:MP.AbstractVariable}, <:Vector{<:Number}},
     return Y[argmin([p(t => y) for y in Y])]
 end
 
-function min_val_slow(x::Pair{<:Vector{<:MP.AbstractVariable}, <:Vector{<:Number}},
-                 Y::StepRangeLen,
-                 poly::AbstractPolynomialLike)
-    p = subs(poly, x)
-    if nvariables(p) != 1
-        error()
-    end
-    t = first(variables(p))
-    return Y[argmin([p(t => y) for y in Y])]
-end

@@ -38,6 +38,7 @@
         m1 = Mom(1,μ)
         @test MomentOpt.montype(m1) == Int
         m2 = Mom(μ, x*y)
+        @test Base.promote_rule(typeof(m1), typeof(m2)) == Mom{Term{true,Int64}}
         @test typeof([m1, m2]) == Vector{Mom{Term{true,Int}}}
     end
 
@@ -69,6 +70,7 @@
         end
         me3 = MomExpr(OrderedDict{Measure,Polynomial{true,Int}}(μ=>x^2+1))
         @test MomentOpt.montype(me3) == Polynomial{true,Int}
+        @test Base.promote_rule(typeof(me1), typeof(Mom(1,μ))) == MomExpr{Polynomial{true,Float64}}
         @test promote_type(typeof(me1),typeof(me2)) == MomExpr{Polynomial{true,Float64}}
     end
 
@@ -78,7 +80,14 @@
         ν = Measure("ν",[x])
         m = Mom(y,μ)
         me = (Mom(1.5*y,μ)- Mom(1.5*x,ν))/3
+
+        @test MomentOpt.add_mom_type([Mom(1,ν), Mom(μ,2)]) == Int
+        @test MomentOpt.add_mom_type([m,me]) == Polynomial{true,Float64}
+        @test me - 1 isa AffMomExpr{Polynomial{true,Float64},Int64}
+        @test 1 - me isa AffMomExpr{Polynomial{true,Float64},Int64} 
+        
         ae1 = AffMomExpr(me,1)
+        
         @test m+1 isa AffMomExpr{PolyVar{true},Int}
         @test ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
         @test ae1+1 isa AffMomExpr{Polynomial{true,Float64},Int}
@@ -88,14 +97,16 @@
         @test 1+ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
         @test m+ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
         @test me-ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
+        
 
         ae2 = AffMomExpr(m,1)
         @test sprint(show, ae2) == "AffMomExpr{PolyVar{true},Int64}(⟨μ, y⟩, 1)" 
+        @test sprint(show, -ae2) == "AffMomExpr{Term{true,Int64},Int64}(⟨μ, -y⟩, -1)" 
         @test ae1-ae2 isa AffMomExpr{Polynomial{true,Float64},Int}
         @test ae1+2*ae2 isa AffMomExpr{Polynomial{true,Float64},Int}
 
         @test promote_type(typeof(ae1),typeof(ae2)) == AffMomExpr{Polynomial{true,Float64},Int64}
 
-
+        
     end
 end
