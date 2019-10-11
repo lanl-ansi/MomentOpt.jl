@@ -80,10 +80,15 @@
         me = (Mom(1.5*y,μ)- Mom(1.5*x,ν))/3
         ae1 = AffMomExpr(me,1)
         @test m+1 isa AffMomExpr{PolyVar{true},Int}
-        @test me+1 isa AffMomExpr{Polynomial{true,Float64},Int}
+        @test ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
         @test ae1+1 isa AffMomExpr{Polynomial{true,Float64},Int}
         @test ae1+m isa AffMomExpr{Polynomial{true,Float64},Int}
-        @test ae1-me isa AffMomExpr{Polynomial{true,Float64},Int}
+        @test ae1-me isa AffMomExpr{Polynomial{true,Float64},Int}        
+        @test 1+m isa AffMomExpr{PolyVar{true},Int}
+        @test 1+ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
+        @test m+ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
+        @test me-ae1 isa AffMomExpr{Polynomial{true,Float64},Int}
+
         ae2 = AffMomExpr(m,1)
         @test sprint(show, ae2) == "AffMomExpr{PolyVar{true},Int64}(⟨μ, y⟩, 1)" 
         @test ae1-ae2 isa AffMomExpr{Polynomial{true,Float64},Int}
