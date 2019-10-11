@@ -31,7 +31,8 @@
     gmp = GMPModel()
     @measure gmp μ [x,y] support=K
     @objective gmp Max Mom(f,μ)
-    @constraint gmp c Mom(1,μ) == 1
+    @constraint gmp Mom(1,μ) <= 1
+    @constraint gmp Mom(1,μ) >= 1
     relax!(gmp, 2, with_optimizer(CSDP.Optimizer, printlevel=0))
 
 end

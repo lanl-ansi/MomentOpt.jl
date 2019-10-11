@@ -199,7 +199,7 @@ function Base.convert(::Type{AffMomExpr{PT,T}}, mom::Mom) where {PT<:MT, T<:Numb
 end
 
 # pretty printing
-function Base.show(ae::AffMomExpr)
+function Base.show(io::IO, ae::AffMomExpr)
     if constant(ae)>0
         print(io,"$(momexpr(ae)) + $(constant(ae))")
     elseif constant(ae)<0
