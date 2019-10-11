@@ -1,7 +1,8 @@
 @testset "MomCon Test" begin
 
     @testset "MomObj" begin
-        @test Base.broadcastable(MomentOpt.MomConShape()) isa Base.RefValue{MomentOpt.MomConShape}(MomentOpt.MomConShape())
+        s = MomentOpt.MomConShape()
+        @test Base.broadcastable(s) isa Base.RefValue{MomentOpt.MomConShape}
         @polyvar x y
         μ = Measure("μ", [x,y])
         ν = Measure("ν",[x])
