@@ -102,13 +102,13 @@
         ae2 = AffMomExpr(m,1)
         @test sprint(show, ae2) == "⟨μ, y⟩ + 1"
         @test sprint(show, -ae2) == "⟨μ, -y⟩ - 1"
+        @test sprint(show, AffMomExpr(m,0)) == "⟨μ, y⟩"
         @test ae1-ae2 isa AffMomExpr{Polynomial{true,Float64},Int}
         @test ae1+2*ae2 isa AffMomExpr{Polynomial{true,Float64},Int}
 
-        @test promote_type(AffMomExpr{Polynomial{true,Int}, Int},AffMomExpr{Polynomial{true,Float64},Float64})== AffMomExpr{Polynomial{true,Float64},Float64}
-        @test promote_type(typeof(ae1),typeof(ae2)) == AffMomExpr{Polynomial{true,Float64},Int64}
-        @test promote_type(typeof(ae1),typeof(m)) == AffMomExpr{Polynomial{true,Float64},Int64}
-        @test promote_type(typeof(ae1),typeof(me)) == AffMomExpr{Polynomial{true,Float64},Int64}
+        @test promote_rule(AffMomExpr{Polynomial{true,Int}, Int}, AffMomExpr{Polynomial{true,Float64},Float64})== AffMomExpr{Polynomial{true,Float64},Float64}
+        @test promote_rule(typeof(ae1),typeof(m)) == AffMomExpr{Polynomial{true,Float64},Int64}
+        @test promote_rule(typeof(ae1),typeof(me)) == AffMomExpr{Polynomial{true,Float64},Int64}
 
         
     end

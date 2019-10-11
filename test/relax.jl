@@ -30,10 +30,27 @@
 
     gmp = GMPModel()
     @measure gmp μ [x,y] support=K
+
+    ERR = ErrorException("Please define an objective")
+    try relax!(gmp, 2, with_optimizer(CSDP.Optimizer, printlevel=0))
+    catch err
+        @test err == ERR
+    end
     @objective gmp Max Mom(f,μ)
+    
+    ERR = ErrorException( "Define at least one moment constraint!")
+    try relax!(gmp, 2, with_optimizer(CSDP.Optimizer, printlevel=0))
+    catch err
+        @test err == ERR
+    end
+    
     @constraint gmp Mom(1,μ) <= 1
     @constraint gmp Mom(1,μ) >= 1
     relax!(gmp, 2, with_optimizer(CSDP.Optimizer, printlevel=0))
+
+
+
+
 
 end
 

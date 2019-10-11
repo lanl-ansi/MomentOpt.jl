@@ -97,9 +97,9 @@ mutable struct MomExpr{PT<:MT} <: AbstractMomentExpression
     end
 end
 
-function MomExpr(momdict::OrderedDict{<:Measure,PT}) where PT<:MT
-    return MomExpr(convert(OrderedDict{Measure,PT},momdict))
-end
+#function MomExpr(momdict::OrderedDict{<:Measure,PT}) where PT<:MT
+#    return MomExpr(convert(OrderedDict{Measure,PT},momdict))
+#end
 
 # backwards compatibility of constructor
 function MomExpr(poly::PT, mu::Measure) where PT<:MT
