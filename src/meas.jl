@@ -1,6 +1,6 @@
 export Measure, variables, support, certificate
 
-#TODO: problem with type inference (parametrzied measures instead Measure)
+#TODO: problem with type inference (parametrized measures instead Measure)
 
 mutable struct Measure{V<:MP.AbstractVariable,SAS<:AbstractBasicSemialgebraicSet,C<:PJ.PolynomialSet} #,PB<:PJ.AbstractPolynomialBasis}
 	name:: String	# name
