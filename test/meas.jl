@@ -1,4 +1,4 @@
-@testset "Measure Tests" begin
+@testset "Measure Test" begin
 	# test  Measure, variables, support, certificate
 	@polyvar x y
 	K = @set(x^2+y^2<=1 && x*y>=0)

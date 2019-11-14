@@ -56,7 +56,7 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
     gmp.dual = SOSModel(optimizer)
 
     if gmp.objective === nothing
-        println("Please define an objective")
+        @error("Please define an objective")
         return
     elseif gmp.objective.sense == MOI.MIN_SENSE
         sossense = MOI.MAX_SENSE
@@ -65,7 +65,8 @@ function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
     end
 
     if isempty(gmp.constraints)
-        @error "Define at least one moment constraint!"
+        @error("Define at least one moment constraint!")
+        return
     end
 
     PT = polynomialtype(variabletype(first(gmp.measures)), JuMP.AffExpr)

@@ -40,12 +40,23 @@ function Mom(mon::PT,meas::Measure) where PT<:MT
     return Mom(meas,mon)
 end
 
-function LinearAlgebra.dot(mon::PT, meas::Measure) where PT<:MT
-    return Mom(meas, mom)
+function LinearAlgebra.dot(mon::AbstractPolynomialLike, meas::Measure) 
+    return Mom(meas, mon)
 end
 
-function LinearAlgebra.dot(meas::Measure, mon::PT) where PT <: MT
-    return Mom(meas, mom)
+function LinearAlgebra.dot(meas::Measure, mon::AbstractPolynomialLike) 
+    return Mom(meas, mon)
+end
+function LinearAlgebra.dot(mon::Number, meas::Measure) 
+    return Mom(meas, mon)
+end
+
+function LinearAlgebra.dot(meas::Measure, mon::Number) 
+    return Mom(meas, mon)
+end
+
+function measures(m::Mom)
+    return [m.meas]
 end
 
 # conversion and promotion
@@ -86,9 +97,9 @@ mutable struct MomExpr{PT<:MT} <: AbstractMomentExpression
     end
 end
 
-function MomExpr(momdict::OrderedDict{<:Measure,PT}) where PT<:MT
-    return MomExpr(convert(OrderedDict{Measure,PT},momdict))
-end
+#function MomExpr(momdict::OrderedDict{<:Measure,PT}) where PT<:MT
+#    return MomExpr(convert(OrderedDict{Measure,PT},momdict))
+#end
 
 # backwards compatibility of constructor
 function MomExpr(poly::PT, mu::Measure) where PT<:MT
@@ -188,7 +199,7 @@ function Base.convert(::Type{AffMomExpr{PT,T}}, mom::Mom) where {PT<:MT, T<:Numb
 end
 
 # pretty printing
-function Base.show(ae::AffMomExpr)
+function Base.show(io::IO, ae::AffMomExpr)
     if constant(ae)>0
         print(io,"$(momexpr(ae)) + $(constant(ae))")
     elseif constant(ae)<0

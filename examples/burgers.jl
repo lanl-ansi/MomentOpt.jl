@@ -101,7 +101,6 @@ X = range(-1/2, stop = 1/2, length = 10)
 pyplot()
 f(tt,xx) = min_val(([t,x]=>[tt,xx]), ch)
 plot(T, X, f, st=:surface,camera=(-40,30))
-png("/mnt/c/Users/tillm/Desktop/talks/JuliaCon2019/burgers.png")
 
 
 
