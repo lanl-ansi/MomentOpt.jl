@@ -96,13 +96,5 @@ function measures(mcv::Array{MomCon{T}}) where T<: MT
 end
 
 function constant(mc::MomCon)
-    return constant(mc.set)
+    return MOI.constant(mc.set)
 end
-
-#TODO: remove when JuMP is version 0.20 
-Base.broadcastable(set::MOI.AbstractScalarSet) = Ref(set)
-constant(s::MOI.EqualTo) = s.value
-constant(s::MOI.LessThan) = s.upper
-constant(s::MOI.GreaterThan) = s.lower
-
-

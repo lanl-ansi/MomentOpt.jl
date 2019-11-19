@@ -38,10 +38,5 @@
         mm = [mc, mc1]
         @test mm isa Array{MomCon{Term{true, Float64}},1}
         @test measures(mm) == Measure[μ]
-
-        @test MomentOpt.constant(MOI.EqualTo(1)) == 1
-        @test MomentOpt.constant(MOI.LessThan(1)) == 1
-        @test MomentOpt.constant(MOI.GreaterThan(1)) == 1
-
     end
 end
