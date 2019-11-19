@@ -12,6 +12,10 @@
         @test typeof(obj) == MomObj{Polynomial{true, Int}}
         @test ν in measures(obj)
         @test μ in measures(obj)
+
+		monvec = [x,y]
+		momvec = Mom.(monvec, μ)
+		@test momvec isa Array{Mom{PolyVar{true}},1}
     end
 
     @testset "MomCon" begin
@@ -26,8 +30,8 @@
 
         mc = MomCon(Mom(μ, x[1]), MOI.EqualTo(1))
         mc1 = MomCon(Mom(μ, 1.0*x[1]), MOI.EqualTo(1))
-        
-        @test sprint(show, mc) == "⟨μ, x[1]⟩ = 1" 
+       
+	   	@test sprint(show, mc) == "⟨μ, x[1]⟩ = 1" 
         @test MomentOpt.constant(mc) == 1
         @test JuMP.jump_function(mc) isa MomExpr
         @test JuMP.shape(mc) == MomentOpt.MomConShape()
