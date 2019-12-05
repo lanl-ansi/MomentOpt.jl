@@ -55,7 +55,7 @@ relax!(gmp, 2, with_optimizer(Mosek.Optimizer))
 println("Relaxation order: $(2)")
 println("Objective value: $(objective_value(gmp))")
 # We try to extract atoms from the relaxed moment sequence of μ
-opt = atomic(gmp, μ,  1e-03)
+opt = atomic(gmp, μ, tol = 1e-03)
 println()
 
 # As we could not extract atoms from the solution, we increase the relaxation order
@@ -63,7 +63,7 @@ relax!(gmp, 3, with_optimizer(Mosek.Optimizer))
 
 println("Relaxation order: $(3)")
 println("Objective value: $(objective_value(gmp))")
-opt = atomic(gmp, μ, tol = 1e-04)
+opt = atomic(gmp, μ, tol = 1e-03)
 
 # This time the atom extraction succeeds, which proves optimality of the moment relaxation. 
 
