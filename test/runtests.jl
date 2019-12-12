@@ -1,11 +1,12 @@
-using MomentOpt
 using Test
+
+using MomentOpt
+
 using DynamicPolynomials
 using SemialgebraicSets
 using SumOfSquares
 using OrderedCollections
 using LinearAlgebra
-
 
 using CSDP
 
