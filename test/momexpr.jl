@@ -52,10 +52,10 @@
         @test MomExpr(1,μ) isa MomExpr{Int}
         @test MomExpr(μ,x) isa MomExpr{PolyVar{true}}
         @test MomExpr(OrderedDict{Measure,Int}(μ=>1)) isa MomExpr{Int}
-        @test MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
-        @test MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π)) isa MomExpr{Polynomial{true,Float64}}
-        me1 = MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+π))
-        me2 = MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+π))
+        @test MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+1.2)) isa MomExpr{Polynomial{true,Float64}}
+        @test MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+1.2)) isa MomExpr{Polynomial{true,Float64}}
+        me1 = MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+1.2))
+        me2 = MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>x^2+1.2))
         @test 3*me1 isa MomExpr{Polynomial{true,Float64}}
         @test me1+2*me2 isa MomExpr{Polynomial{true,Float64}}
         @test me1-me2 isa MomExpr{Polynomial{true,Float64}}
@@ -64,7 +64,7 @@
         @test mev+2*mev isa Vector{MomExpr{Polynomial{true,Float64}}}
 
         ERR = ErrorException("Measures and moments are not compatible.")
-        try MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>y^2+π))
+        try MomExpr(OrderedDict{Measure,Polynomial{true,Float64}}(μ=>x^2+y,ν=>y^2+1.2))
         catch err
             @test err==ERR
         end
