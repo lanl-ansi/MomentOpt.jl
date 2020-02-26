@@ -19,9 +19,7 @@ of f on K.
 """
 
 using DynamicPolynomials
-
 using MomentOpt
-
 using MosekTools
 
 # Define polnomial variables
@@ -33,7 +31,6 @@ f = x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1
 # Define semi algebraic support for the measure 
 K = @set(1-x>=0 && x+1>=0 && 1-y>=0 && y+1>=0)
 
-
 gmp = GMPModel()
 # Add measure to the model
 @measure gmp μ [x,y] support=K
@@ -43,17 +40,14 @@ gmp = GMPModel()
 # This notation is a shorthand for 
 # @mobjective gmp :Min Mom(f,μ)
  
-
 # Constrain μ to be a probablity measure
 @constraint gmp Mom(1,μ) == 1
-
 
 # We solve the relaxation of order 2 with CSDP
 relax!(gmp, 2, with_optimizer(Mosek.Optimizer))
 
-
 println("Relaxation order: $(2)")
-println("Objective value: $(objective_value(gmp))")
+println("Lower bound: $(objective_value(gmp))")
 # We try to extract atoms from the relaxed moment sequence of μ
 opt = atomic(gmp, μ, tol = 1e-03)
 println()
@@ -62,10 +56,7 @@ println()
 relax!(gmp, 3, with_optimizer(Mosek.Optimizer))
 
 println("Relaxation order: $(3)")
-println("Objective value: $(objective_value(gmp))")
+println("Lower bound: $(objective_value(gmp))")
 opt = atomic(gmp, μ, tol = 1e-03)
 
 # This time the atom extraction succeeds, which proves optimality of the moment relaxation. 
-
-
-
