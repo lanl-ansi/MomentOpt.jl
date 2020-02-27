@@ -1,46 +1,43 @@
 """
- Approximating a discontinuous soltution to Burgers equation with GMP.jl
- For theoretical background see : http://aimsciences.org/article/doi/10.3934/mcrf.2019032
+Approximating a discontinuous soltution to Burgers equation with GMP.jl
+For theoretical background see : http://aimsciences.org/article/doi/10.3934/mcrf.2019032
 
- Let f(y)= 1/4y^2, y_0(x) = 1 if x<0 and 0 if x>0. We want to find a solution y(t,x) for 
+Let f(y)= 1/4y^2, y_0(x) = 1 if x<0 and 0 if x>0. We want to find a solution y(t,x) for 
 
- ∂_t y(t,x) + ∂_x f(y(t,x)) = 0
-	y(0,x) = y_0(x)
+∂_t y(t,x) + ∂_x f(y(t,x)) = 0
+y(0,x) = y_0(x)
 
- on T×X = [0,1]×[-1/2,1/2]. In this example we can and will impose that y(-1/2,t)=1. In
- addition, based on the initial condition, we can derive that y(t,x)∈[0,1] on T×X.
+on T×X = [0,1]×[-1/2,1/2]. In this example we can and will impose that y(-1/2,t)=1. In
+addition, based on the initial condition, we can derive that y(t,x)∈[0,1] on T×X.
 
- This problem can be equivalently defined as
+This problem can be equivalently defined as
 
- find μ,μ_T,μ_R
-    <μ_T, φ(t,x)y> + <μ_R, φ(t,x)f(y)> - <μ,∂_tφ(t,x) y + ∂_xφ(t,x) f(y)> = ∫φ(0,y_0(x) dx + ∫φ(t,f(1)) dt
-     <μ,φ(t,x)> = ∫φ(t,x) dt dx
-     <μ_T,φ(x)> = ∫φ(x) dx
-     <μ_R,φ(t)> = ∫φ(t) dt     	
-     μ  ∈ M(T×X×Y)
-     μ_T∈ M({1}×X×Y))
-     μ_R∈ M(T×{-1/2}×Y))
+find μ,μ_T,μ_R
+<μ_T, φ(t,x)y> + <μ_R, φ(t,x)f(y)> - <μ,∂_tφ(t,x) y + ∂_xφ(t,x) f(y)> = ∫φ(0,y_0(x) dx + ∫φ(t,f(1)) dt
+<μ,φ(t,x)> = ∫φ(t,x) dt dx
+<μ_T,φ(x)> = ∫φ(x) dx
+<μ_R,φ(t)> = ∫φ(t) dt     	
+μ  ∈ M(T×X×Y)
+μ_T∈ M({1}×X×Y))
+μ_R∈ M(T×{-1/2}×Y))
 
- where the intgral with respect to x is from -1/2 to 1/2 and the integral with respect to t
- is from 0 to 1. 
- 
+where the intgral with respect to x is from -1/2 to 1/2 and the integral with respect to t
+is from 0 to 1. 
 
- From the moments of the measure μ the graph of the solution y(t,x) can be extracted via 
- an approach described in : http://www.optimization-online.org/DB_HTML/2019/03/7146.html
+
+From the moments of the measure μ the graph of the solution y(t,x) can be extracted via 
+an approach described in : http://www.optimization-online.org/DB_HTML/2019/03/7146.html
 
 """
 
 using DynamicPolynomials
-
 using MomentOpt
-
 using MosekTools
-using Plots
 
 # Choose relaxation order
 order = 6 
 
-f(y) = 1/4*y^2
+flux(y) = 1/4*y^2
 T = [0,1]
 X = [-1/2,1/2]
 Y = [0,1]
@@ -63,10 +60,10 @@ rhs(i,j) = 0^i*(-(-1/2)^(j+1))/(j+1)+ (-1/2)^j/((i+1)*4)
 mons = monomials([t,x],0:2*order-1)
 # The monomial vector is not of a polynomial type, we need to convert it first.
 pons = polynomial.(mons)
-wpde = vec(differentiate(pons,[t]))*y + vec(differentiate(pons,[x]))*f(y) 
+wpde = vec(differentiate(pons,[t]))*y + vec(differentiate(pons,[x]))*flux(y) 
 
 # The fiels mons.Z provides the exponents of the monomials of mons (and pons)
-@constraint gmp Mom.(pons*y,μT)+Mom.(pons*f(y),μR)-Mom.(wpde,μ) .== [rhs(mons.Z[i]...) for i = 1:length(mons.Z)] 
+@constraint gmp Mom.(pons*y,μT)+Mom.(pons*flux(y),μR)-Mom.(wpde,μ) .== [rhs(mons.Z[i]...) for i = 1:length(mons.Z)] 
 
 # Right hand sides for the marginal constraints
 lebt(i) = (T[2]^(i+1)-T[1]^(i+1))/(i+1)
@@ -98,13 +95,13 @@ ch = christoffel(gmp, μ)
 T = range(0, stop = 1, length = 10)
 X = range(-1/2, stop = 1/2, length = 10)
 
+
+println(
+"""
+The approximated function can be plotted, e.g., using the following commands:
+
+using Plots
 pyplot()
 f(tt,xx) = min_val(([t,x]=>[tt,xx]), ch)
 plot(T, X, f, st=:surface,camera=(-40,30))
-
-
-
-
-
-
-
+""")
