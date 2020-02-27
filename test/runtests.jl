@@ -8,7 +8,7 @@ using SumOfSquares
 using OrderedCollections
 using LinearAlgebra
 
-using CSDP
+using SCS
 
 include("meas.jl")
 include("momexpr.jl")

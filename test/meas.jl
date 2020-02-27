@@ -10,4 +10,5 @@
 	ν = Measure("ν", [x], certificate = DSOSCone())
 	@test support(ν) ==  FullSpace()
 	@test certificate(ν) == DSOSCone()
+    @test variables.([μ,ν]) isa Vector{Vector{PolyVar{true}}}
 end
