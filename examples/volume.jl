@@ -29,12 +29,9 @@
 """
 
 using DynamicPolynomials
-
 using MomentOpt
-
 using MosekTools
-using Plots
-pyplot()
+
 
 # relaxation order for the Generalized Moment Problem
 order = 8 
@@ -83,10 +80,16 @@ println("Volume of approximation: $(objective_value(gmp)*4)")
 # from the dual solution as follows:
 poly = sum(dual_value(gmp,cons[i])*pons[i] for i=1:length(mons))
 
-# Plot 
+println(
+"""
+The approximated function can be plotted, e.g., using the following commands:
+
+using Plots
+pyplot()
 xx = yy = range(-1, stop = 1, length = 100)
 f(xx,yy) = poly(x=>xx,y=>yy)
 plot(xx, yy, f, st= :surface)
+""")
 
 # The convergence can be improved by adding "Stokes" constraints.
 @constraint gmp stokes_x[i=1:length(exponents)] Mom(differentiate(pons[i]*(1-x^2-y^2), x), μ) == 0
@@ -94,7 +97,3 @@ plot(xx, yy, f, st= :surface)
 
 relax!(gmp,order,with_optimizer(Mosek.Optimizer))
 println("Approximation with Stokes: $(objective_value(gmp)*4)")
-
-
-
-
