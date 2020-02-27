@@ -2,6 +2,9 @@ module MomentOpt
 
 import Reexport
 
+import MutableArithmetics
+const MA = MutableArithmetics
+
 using MultivariatePolynomials
 const MP = MultivariatePolynomials
 using SemialgebraicSets
