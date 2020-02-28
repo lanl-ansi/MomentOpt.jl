@@ -3,6 +3,8 @@
 	@polyvar x y
 	K = @set(x^2+y^2<=1 && x*y>=0)
 	μ = Measure("μ", [x,y], support = K)
+    
+    @test Base.broadcastable(μ) isa Base.RefValue
 	@test variables(μ) == [x,y]
     @test MomentOpt.variabletype(μ) == PolyVar{true}
 	@test support(μ) == K
