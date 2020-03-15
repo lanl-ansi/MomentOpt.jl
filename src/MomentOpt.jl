@@ -19,6 +19,8 @@ using LinearAlgebra
 
 const MT = Union{Number,AbstractPolynomialLike}
 
+include("conics.jl")
+
 include("meas.jl")
 include("momexpr.jl")
 include("momcon.jl")

@@ -1,5 +1,4 @@
 export MomObj, MomCon, MomCons
-# export NLMomObj
 
 struct MomConShape <: JuMP.AbstractShape end
 Base.broadcastable(shape::MomConShape) = Ref(shape)
