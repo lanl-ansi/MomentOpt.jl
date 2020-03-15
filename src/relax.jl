@@ -16,10 +16,10 @@ end
 
 Computes the a relaxation of the generlized moment problem according to the certificates specified for each measure.
 """
-function relax!(gmp::GMPModel, order::Int, optimizer::OptimizerFactory)
+function relax!(gmp::GMPModel, order::Int, optimizer)
     # construct dual
-    gmp.dual = SOSModel(optimizer)
-
+    gmp.dual = SOSModel()
+    set_optimizer(gmp.dual, optimizer)
     if gmp.objective === nothing
         @error("Please define an objective")
         return

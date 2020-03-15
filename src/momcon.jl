@@ -52,8 +52,8 @@ mutable struct MomCon{PT<:MT} <: JuMP.AbstractConstraint
     set::MOI.AbstractScalarSet
 end
 
-function MomCon(func::AffMomExpr, set::MOI.AbstractScalarSet)
-    return MomCon(momexpr(func), MOI.Utilities.shift_constant(set, -constant(func)))
+function MomCon(func::AffMomExpr, set::Union{MOI.EqualTo{T}, MOI.LessThan{T}, MOI.GreaterThan{T}}) where T
+    return MomCon(momexpr(func), MOI.Utilities.shift_constant(set, convert(T,-constant(func))))
 end
 
 function MomCon(func::Mom, set::MOI.AbstractScalarSet)

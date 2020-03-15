@@ -9,7 +9,8 @@ using OrderedCollections
 using LinearAlgebra
 
 using SCS
-factory =  with_optimizer(SCS.Optimizer, verbose = 0, eps = 1e-16)
+factory = SCS.Optimizer
+
 
 include("meas.jl")
 include("momexpr.jl")

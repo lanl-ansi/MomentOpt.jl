@@ -47,7 +47,7 @@ end
 function christoffel(gmp::GMPModel, measure::Measure ; regpar = 1e-8)
     M = moment_matrix(gmp,measure)
     eva,eve = eigen(Matrix(M.Q))
-    return sum( (dot(eve[:, i] / √(eva[i] + regpar),M.x))^2 for i = 1:length(eva))
+    return sum( (dot(eve[:, i] / √(eva[i] + regpar), M.basis.monomials))^2 for i = 1:length(eva))
 end
 
 function min_val(x::Pair{<:Vector{<:MP.AbstractVariable}, <:Vector{<:Number}},
@@ -61,4 +61,3 @@ function min_val(x::Pair{<:Vector{<:MP.AbstractVariable}, <:Vector{<:Number}},
     Y = [sol[1] for sol in set]
     return Y[argmin([p(t => y) for y in Y])]
 end
-

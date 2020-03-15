@@ -8,5 +8,5 @@ abstract type AbstractDualFormulation <: AbstractConicFormulation end
 struct PrimalPutinar <: AbstractPrimalFormulation 
 end
 
-struct DualPutinar <: AbstractDualFomulation
+struct DualPutinar <: AbstractDualFormulation
 end

@@ -27,7 +27,7 @@
 
     relax!(gmp, 3, factory)
     gmp = GMPModel()
-    @measure gmp μ [x,y] support=@set(1-x^2-y^2>=0)
+    @measure gmp μ [x,y] support=@set(1-x^2>=0 && 1-y^2>=0)
 
     ERR = ErrorException("Please define an objective")
     try relax!(gmp, 2, factory)
@@ -46,8 +46,8 @@
     @constraint gmp Mom(1,μ) >= 1
     relax!(gmp, 3, factory)
 
-    @test atomic(gmp, μ, tol = 1e-01, print_level = 0) isa Dict{Int, Vector{Float64}}
-    @test atomic(gmp, μ, tol = 1e-01, print_level = 1) isa Dict{Int, Vector{Float64}}
+    @test_broken atomic(gmp, μ, tol = 1e-03, print_level = 0) isa Dict{Int, Vector{Float64}}
+    @test_broken atomic(gmp, μ, tol = 1e-03, print_level = 1) isa Dict{Int, Vector{Float64}}
 
 end
 
