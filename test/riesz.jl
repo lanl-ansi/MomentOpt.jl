@@ -18,10 +18,6 @@ end
 
 @testset "riesz functional" begin
     @polyvar x y
-    ms = moment_sequence(maxdegree_basis(ChebyshevBasis, [x], 1), ones(2))
-    @test sprint(show, ms) == "Dict(x=>1.0,1.0=>1.0)"
-    @test_throws AssertionError moment_sequence(maxdegree_basis(ChebyshevBasis, [x], 2), ones(4))
-
     f = x^3 + x^2*y - x^2 - x*y + x - 1
     ms = moment_sequence(maxdegree_basis(ChebyshevBasis, [x, y], 3), ones(10))
     @test riesz(ms, f) == sum(coefficients(f))

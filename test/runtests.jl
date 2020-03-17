@@ -11,7 +11,8 @@ using LinearAlgebra
 using SCS
 factory = SCS.Optimizer
 
-
+include("momentsequences.jl")
+include("riesz.jl")
 include("meas.jl")
 include("momexpr.jl")
 include("momcon.jl")

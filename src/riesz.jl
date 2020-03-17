@@ -1,9 +1,3 @@
-using MultivariatePolynomials
-const MP = MultivariatePolynomials
-using MultivariateBases
-const MB = MultivariateBases
-using MultivariateMoments
-const MM = MultivariateMoments
 
 using DynamicPolynomials
 
@@ -53,34 +47,6 @@ function basis_polynomial(basis_type::Type{<:MB.AbstractPolynomialBasis}, f::MP.
 end
 
 MP.polynomial(f::BasisPolynomial) = MP.polynomial(i -> coefficients(f)[i], f.basis)
-
-"""
-    MomentSequence{T, PT <: MP.AbstractPolynomialLike, BT<:Type{<:MB.AbstractPolynomialBasis}}
-
-Represends a truncated moment sequence in a particular basis.
-"""
-struct MomentSequence{T, PT <: MP.AbstractPolynomialLike, BT<:MB.AbstractPolynomialBasis}
-    basis::BT
-    moments::Dict{PT, T}
-end
-
-Base.broadcastable(ms::MomentSequence) = Ref(ms)
-"""
-    moment_sequence(basis::MB.AbstractPolynomialBasis, values::Vector{T})
-Constructs a MomentSequence. 
-"""
-function moment_sequence(basis::MB.AbstractPolynomialBasis, values::Vector{T}) where T
-    @assert length(basis) == length(values)
-    return MomentSequence(basis, Dict( b => v for (b,v) in zip(monomials(basis), values)))
-end
-MM.moments(ms::MomentSequence) = ms.moments
-MP.monomials(ms::MomentSequence) = monomials(ms.basis)
-MP.maxdegree(ms::MomentSequence) = maximum(maxdegree.(monomials(ms)))
-basistype(ms::MomentSequence) = typeof(ms.basis)
-
-function Base.show(io::IO, ms::MomentSequence)
-    print(io, moments(ms))
-end
 
 """
     riesz(ms::MomentSequence, f::MP.AbstractPolynomialLike)
