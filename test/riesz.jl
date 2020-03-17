@@ -38,7 +38,7 @@ end
     ms = moment_sequence(maxdegree_basis(ChebyshevBasis, [x, y], 3), monomials(ChebyshevBasis, [x, y], 0:3))
     @test riesz(ms, f) == f
     ms = moment_sequence(maxdegree_basis(MonomialBasis, [x], 4), [1/5, 1/4, 1/3, 1/2, 1])
-    mv = monomials(maxdegree_basis(LaguerreBasis, [x], 2))
+    mv = monomials(LaguerreBasis, [x], 0:2)
     mm = mv*transpose(mv)
     @test riesz.(ms, mm) ≈ [13/60 25/120 1/6; 25/120 1/3 1/2; 1/6 1/2 1]
 

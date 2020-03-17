@@ -1,5 +1,4 @@
-
-using DynamicPolynomials
+export basis_polynomial, riesz 
 
 Base.collect(basis::MB.AbstractPolynomialVectorBasis) = basis.polynomials
 Base.collect(basis::MB.AbstractMonomialBasis) = basis.monomials
@@ -20,7 +19,7 @@ mutable struct BasisPolynomial{T, BT <: MB.AbstractPolynomialBasis}
 end
 
 MP.coefficients(f::BasisPolynomial) = f.coeffs
-MP.monomials(f::BasisPolynomial) = MP.monomials(f.basis)
+MP.monomials(f::BasisPolynomial) = MP.collect(f.basis)
 
 function Base.show(io::IO, f::BasisPolynomial)
     l = length(coefficients(f))
@@ -41,7 +40,12 @@ function basis_polynomial(basis_type::Type{<:MB.AbstractPolynomialBasis}, f::MP.
     basis = basis_covering_monomials(basis_type, monomials(f))
     for p in collect(basis)
         c, r = divrem(r, p)
-        push!(coeffs, c)
+        if isempty(coefficients(c))
+            c = 0.0
+        elseif length(coefficients(c))==1
+            c = first(coefficients(c))
+        end
+        push!(coeffs, float(c))
     end
     return BasisPolynomial(coeffs, basis)
 end

@@ -22,7 +22,7 @@ using LinearAlgebra
 
 const MT = Union{Number, AbstractPolynomialLike}
 
-include("momentsequences.jl")
+include("momentsequence.jl")
 include("riesz.jl")
 include("relaxationtypes.jl")
 include("meas.jl")
