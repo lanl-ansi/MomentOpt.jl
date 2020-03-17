@@ -25,7 +25,11 @@ MP.maxdegree(ms::MomentSequence) = maximum(maxdegree.(monomials(ms)))
 basistype(ms::MomentSequence) = typeof(ms.basis)
 
 function Base.show(io::IO, ms::MomentSequence)
-    print(io, moments(ms))
+    println(io, "MomentSequence:")
+    for (k,v) in  moments(ms)
+        print(io, "$k => $v, ")
+    end
+    println()
 end
 
 struct VariableBox{T<:Number, VT<:MP.AbstractVariable}
