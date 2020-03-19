@@ -1,7 +1,8 @@
 export MeasureVariable, Measure
 
 abstract type AbstractRelaxationType end
-struct Putinar <: AbstractRelaxationType end #TODO move
+struct Putinar <: AbstractRelaxationType end #TODO move and change
+struct Handelman <: AbstractRelaxationType end #TODO move and change
 
 mutable struct _MeasureInfoExpr
     poly_variables::Any
@@ -11,22 +12,21 @@ mutable struct _MeasureInfoExpr
 end
 
 function _is_measure_info_keyword(kw::Expr)
-    kw.args[1] in [:support, :momentbasis, :relaxtype]
+    kw.args[1] in [:support, :moment_basis, :relax_type]
 end
 
-function _MeasureInfoExpr(;
-                          polyvars = [], 
-                          support = FullSpace(),
-                          momentbasis = MB.MonomialBasis,
-                          relaxtype = Putinar)
-    return _MeasureInfoExpr(polyvars, support, momentbasis, relaxtype)
+function _MeasureInfoExpr(polyvars;
+                          support = :(FullSpace()),
+                          moment_basis = :(MB.MonomialBasis),
+                          relax_type = :(Putinar()))
+        _MeasureInfoExpr(polyvars, support, moment_basis, relax_type)
 end
 
-mutable struct MeasureInfo{PT, SAS, BT, ART}
-    poly_variables::Vector{PT}
-    support::SAS
-    moment_basis::BT
-    relax_type::ART
+mutable struct MeasureInfo
+    poly_variables
+    support
+    moment_basis
+    relax_type
 end
 
 function JuMP._constructor_expr(info::_MeasureInfoExpr)

@@ -1,7 +1,7 @@
 export MeasureRef
 export poly_variables, set_poly_variables
 export support, set_support
-export relax_type, set_relx_type
+export relax_type, set_relax_type
 export moment_basis, set_moment_basis
 
 
@@ -24,8 +24,8 @@ function Base.isequal(v1::MeasureRef, v2::MeasureRef)
     return owner_model(v1) === owner_model(v2) && index(v1) == index(v2)
 end
 
-function MeasureRef(m::Model)
-    index = add_variable(model_info(m))
+function MeasureRef(m::GMPModel)
+    index = MOI.add_variable(model_info(m))
     return MeasureRef(m, index)
 end
 
@@ -66,15 +66,15 @@ _info(v::MeasureRef) = model_data(owner_model(v)).variables[v].info
 
 Get variables measure is acting on.
 """
-poly_variables(v::MeasureRef) = _info(v).poly.variables
+poly_variables(v::MeasureRef) = _info(v).poly_variables
 
 """
     set_poly_variables(v::MeasureRef, pv::Vector{MP.AbstractVariable})
 
 Set variables measure is acting on.
 """
-function set_poly_variables(v::MeasureRef, pv::Vector{MP.AbstractVariable}) 
-    _info(v).poly.variables = pv
+function set_poly_variables(v::MeasureRef, pv::Vector{<:MP.AbstractVariable}) 
+    _info(v).poly_variables = pv
     return v
 end
 
