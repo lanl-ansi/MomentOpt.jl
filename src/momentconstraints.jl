@@ -38,10 +38,16 @@ function measures(f::MomObj)
 	return collect(keys(f.obj.momdict))
 end
 
+
+"""
+NLMomObj
+"""
+#TODO: mutable struct NLMomObj <:AbstractMomentObjective end
+
 """
 MomCon
 """
-mutable struct MomCon{PT<:MT} <: AbstractGMPConstraint
+mutable struct MomCon{PT<:MT} <: JuMP.AbstractConstraint
 	func::MomExpr{PT}
     set::MOI.AbstractScalarSet
 end

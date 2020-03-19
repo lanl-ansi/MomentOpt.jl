@@ -1,7 +1,7 @@
 export @measure, @mconstraint, @mconstraints
 
 
-macro measure(gmp,mu)
+macro measure(gmp, mu)
     Expr(:block,:(add_measure!($(esc(gmp)),$(esc(mu)))))
 end
 
@@ -31,4 +31,3 @@ macro mconstraints(gmp,momcons)
         add_constraints!($(esc(gmp)),$(esc(momcons)))
     end
 end
-

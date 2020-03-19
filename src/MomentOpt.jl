@@ -2,17 +2,24 @@ module MomentOpt
 
 import Reexport
 
-import MutableArithmetics
+using MutableArithmetics
 const MA = MutableArithmetics
+
 using MultivariatePolynomials
 const MP = MultivariatePolynomials
+
 using MultivariateBases
 const MB = MultivariateBases
+
 using MultivariateMoments
 const MM = MultivariateMoments
 
 using SemialgebraicSets
+
 using MathOptInterface
+const MOI = MathOptInterface
+const MOIU = MOI.Utilities
+
 using PolyJuMP
 Reexport.@reexport using JuMP
 const PJ = PolyJuMP
@@ -22,15 +29,32 @@ using LinearAlgebra
 
 const MT = Union{Number, AbstractPolynomialLike}
 
+
+include("measurevariable.jl")
+include("momexpr.jl")
+
+abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
+include("momentconstraints.jl")
+include("measureconstraints.jl")
+include("substitutionconstraints.jl")
+
+abstract type AbstractGMPConstraintRef end
+include("gmpmodel.jl")
+
+include("measureref.jl")
+include("constraintref.jl")
+
+include("measuremacro.jl")
+#=
+include("momcon.jl")
+
 include("momentsequence.jl")
 include("riesz.jl")
 include("relaxationtypes.jl")
 include("meas.jl")
-include("momexpr.jl")
-include("momcon.jl")
 include("model.jl")
 include("relax.jl")
 include("postproc.jl")
 include("macros.jl")
-
+=#
 end# module
