@@ -1,92 +1,49 @@
-export MomObj, MomCon, MomCons
+export MomentConstraint
 
-struct MomConShape <: JuMP.AbstractShape end
-Base.broadcastable(shape::MomConShape) = Ref(shape)
-
-"""
-    MomObj
-
-Moment objective.
-"""
-mutable struct MomObj{PT<:MT}
-	sense::MOI.OptimizationSense
-	obj::MomExpr{PT}
-end
-
-function MomObj(sense::MOI.OptimizationSense, obj::Mom{PT}) where PT<:MT
-    return MomObj(sense,convert(MomExpr{PT},obj))
-end
-
-function MomObj(sense::MOI.OptimizationSense, pol::PT, meas::Measure) where PT<:MT
-    return MomObj(sense,Mom(pol,meas))
-end
-
-function MomObj(sense::MOI.OptimizationSense, meas::Measure, pol::PT) where PT<:MT
-	return MomObj(sense,Mom(pol,meas))
-end
-
-function Base.show(io::IO, f::MomObj)
-    if f.sense == MOI.MAX_SENSE
-        print(io,"Maximize $(f.obj)")
-    else
-        @assert f.sense == MOI.MIN_SENSE
-        print(io,"Minimize $(f.obj)")
-    end
-end
-
-function measures(f::MomObj)
-	return collect(keys(f.obj.momdict))
-end
-
+struct MomentConstraintShape <: JuMP.AbstractShape end
+Base.broadcastable(shape::MomentConstraintShape) = Ref(shape)
 
 """
-NLMomObj
-"""
-#TODO: mutable struct NLMomObj <:AbstractMomentObjective end
+    MomentConstraint
 
+Type representing a moment constraint, i.e., a constraint setting a moment expression in relation to a number.     
 """
-MomCon
-"""
-mutable struct MomCon{PT<:MT} <: JuMP.AbstractConstraint
-	func::MomExpr{PT}
+mutable struct MomentConstraint{T <: Number, PT<:MT} <: AbstractGMPConstraint
+	func::MomentExpr{T, PT}
     set::MOI.AbstractScalarSet
 end
 
-function MomCon(func::AffMomExpr, set::Union{MOI.EqualTo{T}, MOI.LessThan{T}, MOI.GreaterThan{T}}) where T
-    return MomCon(momexpr(func), MOI.Utilities.shift_constant(set, convert(T,-constant(func))))
+function MomentConstraint(func::AffineMomentExpr, set::Union{MOI.EqualTo{T}, MOI.LessThan{T}, MOI.GreaterThan{T}}) where T
+    return MomentConstraint(momexpr(func), MOI.Utilities.shift_constant(set, convert(T,-constant(func))))
 end
 
-function MomCon(func::Mom, set::MOI.AbstractScalarSet)
-    return MomCon(MomExpr(func), set)
+function Base.promote_rule(::Type{MomentConstraint{T1, PT1}},::Type{MomentConstraint{T2, PT2}})  where {T1 <: Number, T2 <: Number, PT1<:MT, PT2<:MT}
+    return MomentConstraint{promote_type(T1, T2), promote_type(PT1, PT2)}
 end
 
-function Base.convert(::Type{MomCon{PT1}},mc::MomCon) where {PT1<:MT}
-    return MomCon{PT1}(convert(MomExpr{PT1},mc.func),mc.set)
+function Base.convert(::Type{MomentConstraint{T, PT1}}, mc::MomentConstraint) where {T <: Number, PT1 <: MT}
+    return MomentConstraint{T, PT1}(convert(MomentExpr{T, PT1}, mc.func), mc.set)
 end
 
-function Base.promote_rule(::Type{MomCon{PT1}},::Type{MomCon{PT2}})  where {PT1<:MT, PT2<:MT}
-    return MomCon{promote_type(PT1,PT2)}
-end
+JuMP.jump_function(con::MomentConstraint) = con.func
+JuMP.moi_set(con::MomentConstraint) = con.set
+JuMP.shape(con::MomentConstraint) = MomentConstraintShape()
+JuMP.reshape_vector(expr::MomentExpr, ::MomentConstraintShape) = expr
+JuMP.reshape_set(set::MOI.AbstractScalarSet, ::MomentConstraintShape) = set
 
-JuMP.jump_function(con::MomCon) = con.func
-JuMP.moi_set(con::MomCon) = con.set
-JuMP.shape(con::MomCon) = MomConShape()
-JuMP.reshape_vector(expr::MomExpr, ::MomConShape) = expr
-JuMP.reshape_set(set::MOI.AbstractScalarSet, ::MomConShape) = set
-
-function Base.show(io::IO, mc::MomCon)
+function Base.show(io::IO, mc::MomentConstraint)
     print(io, JuMP.constraint_string(JuMP.REPLMode, mc))
 end
 
-function JuMP.function_string(mode, mc::MomCon)
+function JuMP.function_string(mode, mc::MomentConstraint)
     return string(mc.func)
 end
 
-function measures(mc::MomCon)
+function measures(mc::MomentConstraint)
     return measures(mc.func)
 end
 
-function measures(mcv::Array{MomCon{T}}) where T<: MT
+function measures(mcv::Array{MomentConstraint{T}}) where T<: MT
     measv = Set{Measure}()
 	for mc in mcv
         union!(measv, measures(mc))
@@ -94,6 +51,6 @@ function measures(mcv::Array{MomCon{T}}) where T<: MT
     return collect(measv)
 end
 
-function constant(mc::MomCon)
+function constant(mc::MomentConstraint)
     return MOI.constant(mc.set)
 end
