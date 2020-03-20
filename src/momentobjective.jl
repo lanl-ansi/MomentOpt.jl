@@ -3,35 +3,23 @@ export MomentObjective
 """
     MomentObjective
 
-Moment objective.
+Type holding a moment objective.
 """
-mutable struct MomObj{PT<:MT}
+mutable struct MomentObjective{T <: Number, PT <: MT}
 	sense::MOI.OptimizationSense
-	obj::MomExpr{PT}
+	obj::MomentExpr{T, PT}
 end
 
-function MomObj(sense::MOI.OptimizationSense, obj::Mom{PT}) where PT<:MT
-    return MomObj(sense,convert(MomExpr{PT},obj))
-end
+JuMP.objective_function(mo::MomentObjective) = mo.obj
+JuMP.objective_sense(mo::MomentObjective) = mo.sense
+measures(f::MomentObjective) = measures(objective_function(mo))
 
-function MomObj(sense::MOI.OptimizationSense, pol::PT, meas::Measure) where PT<:MT
-    return MomObj(sense,Mom(pol,meas))
-end
-
-function MomObj(sense::MOI.OptimizationSense, meas::Measure, pol::PT) where PT<:MT
-	return MomObj(sense,Mom(pol,meas))
-end
-
-function Base.show(io::IO, f::MomObj)
+function Base.show(io::IO, f::MomentObjective)
     if f.sense == MOI.MAX_SENSE
         print(io,"Maximize $(f.obj)")
-    else
-        @assert f.sense == MOI.MIN_SENSE
+    elseif f.sense == MOI.MIN_SENSE
         print(io,"Minimize $(f.obj)")
+    else
+        nothing
     end
 end
-
-function measures(f::MomObj)
-	return collect(keys(f.obj.momdict))
-end
-
