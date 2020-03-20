@@ -14,8 +14,6 @@ const MB = MultivariateBases
 using MultivariateMoments
 const MM = MultivariateMoments
 
-using SemialgebraicSets
-
 using MathOptInterface
 const MOI = MathOptInterface
 const MOIU = MOI.Utilities
@@ -23,14 +21,21 @@ const MOIU = MOI.Utilities
 using PolyJuMP
 Reexport.@reexport using JuMP
 const PJ = PolyJuMP
+
 Reexport.@reexport using SumOfSquares
+
 using OrderedCollections
 using LinearAlgebra
 
 const MT = Union{Number, AbstractPolynomialLike}
 
 
+
 include("measurevariable.jl")
+include("knownmeasures.jl")
+
+abstract type AbstractMeasureRef <: JuMP.AbstractVariableRef end
+include("measexpr.jl")
 include("momexpr.jl")
 
 abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end

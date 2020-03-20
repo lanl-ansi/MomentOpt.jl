@@ -5,7 +5,7 @@ export relax_type, set_relax_type
 export moment_basis, set_moment_basis
 
 
-struct MeasureRef <: JuMP.AbstractVariableRef
+struct MeasureRef <: AbstractMeasureRef
     model::GMPModel
     index::Int
 end

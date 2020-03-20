@@ -1,4 +1,4 @@
-export MeasureVariable, Measure
+export MeasureVariable, Measure 
 
 abstract type AbstractRelaxationType end
 struct Putinar <: AbstractRelaxationType end #TODO move and change

@@ -49,7 +49,7 @@
     @test moment_basis(foo) == ChebyshevBasisFirstKind
     @test relax_type(foo) == MomentOpt.Handelman #TODO: export Handelman
 
-    @measure m [1:2] [x] base_name = "bar"
-    @test bar isa Vector{MeasureRef}
+    foo = @measure m [1:2] [x] base_name = "bar"
+    @test foo isa Vector{MeasureRef}
 
 end

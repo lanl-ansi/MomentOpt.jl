@@ -5,10 +5,10 @@ abstract type AbstractMomentExpression <: AbstractMomentExpressionLike end
 
 Base.broadcastable(mom::AbstractMomentExpressionLike) = Ref(mom)
 
-function compatible(meas::Measure,mon::MT)
+function compatible(meas::MeasureVariable, mon::MT)
     if typeof(mon)<:Number
         return true
-    elseif isempty(setdiff(variables(mon),variables(meas)))
+    elseif isempty(setdiff(variables(mon), poly_variables(meas)))
         return true
     else
         return false
@@ -21,9 +21,9 @@ end
 Type to represent a moment, i.e. the pairing of a measure with a polynomial.
 """
 mutable struct Mom{PT<:MT} <: AbstractMomentExpression
-    meas::Measure
+    meas::MeasureVariable
     mon::PT
-    function Mom(meas::Measure,mon::MT)
+    function Mom(meas::MeasureVariable,mon::MT)
         if compatible(meas, mon)
             return new{typeof(mon)}(meas,mon)
         else
@@ -36,22 +36,22 @@ function Mom(mon)
     @error "The definition of a moment requires a measure and an integrand."
 end
 
-function Mom(mon::PT,meas::Measure) where PT<:MT
+function Mom(mon::PT,meas::MeasureVariable) where PT<:MT
     return Mom(meas,mon)
 end
 
-function LinearAlgebra.dot(mon::AbstractPolynomialLike, meas::Measure) 
+function LinearAlgebra.dot(mon::AbstractPolynomialLike, meas::MeasureVariable) 
     return Mom(meas, mon)
 end
 
-function LinearAlgebra.dot(meas::Measure, mon::AbstractPolynomialLike) 
+function LinearAlgebra.dot(meas::MeasureVariable, mon::AbstractPolynomialLike) 
     return Mom(meas, mon)
 end
-function LinearAlgebra.dot(mon::Number, meas::Measure) 
+function LinearAlgebra.dot(mon::Number, meas::MeasureVariable) 
     return Mom(meas, mon)
 end
 
-function LinearAlgebra.dot(meas::Measure, mon::Number) 
+function LinearAlgebra.dot(meas::MeasureVariable, mon::Number) 
     return Mom(meas, mon)
 end
 
@@ -72,12 +72,12 @@ function Base.convert(::Type{Mom{PT}}, m::Mom) where PT<:MT
     return Mom(m.meas,convert(PT,m.mon))
 end
 
-function Base.promote_rule(::Type{Mom{PT1}},::Type{Mom{PT2}}) where {PT1<:MT, PT2<:MT}
+function Base.promote_rule(::Type{Mom{PT1}}, ::Type{Mom{PT2}}) where {PT1<:MT, PT2<:MT}
     return Mom{promote_type(PT1,PT2)}
 end
 
 # pretty printing
-function Base.show(io::IO,mom::Mom)
+function Base.show(io::IO, mom::Mom)
     print(io, "⟨$(mom.meas), $(mom.mon)⟩")
 end
 
@@ -87,31 +87,28 @@ end
 Type to represent a linear combination of Mom.
 """
 mutable struct MomExpr{PT<:MT} <: AbstractMomentExpression
-    momdict::OrderedDict{Measure,PT}
-    function MomExpr(momdict::OrderedDict{Measure,PT}) where PT<:MT
-        if all(args->compatible(args...),momdict)
+    momdict::OrderedDict{MeasureVariable,PT}
+    function MomExpr(momdict::OrderedDict{MeasureVariable,PT}) where PT<:MT
+        if all(args->compatible(args...), momdict)
             new{PT}(momdict)
         else
-            @error "Measures and moments are not compatible."
+            @error "MeasureVariables and moments are not compatible."
         end
     end
 end
 
-#function MomExpr(momdict::OrderedDict{<:Measure,PT}) where PT<:MT
-#    return MomExpr(convert(OrderedDict{Measure,PT},momdict))
-#end
 
 # backwards compatibility of constructor
-function MomExpr(poly::PT, mu::Measure) where PT<:MT
-    return MomExpr(OrderedDict{Measure,PT}(mu => poly))
+function MomExpr(poly::PT, mu::MeasureVariable) where PT<:MT
+    return MomExpr(OrderedDict{MeasureVariable,PT}(mu => poly))
 end
 
-function MomExpr(mu::Measure,poly::PT) where PT<:MT
-    return MomExpr(OrderedDict{Measure,PT}(mu => poly))
+function MomExpr(mu::MeasureVariable, poly::PT) where PT<:MT
+    return MomExpr(OrderedDict{MeasureVariable,PT}(mu => poly))
 end
 
 function MomExpr(mom::Mom)
-    return MomExpr(OrderedDict{Measure,montype(mom)}(mom.meas => mom.mon))
+    return MomExpr(OrderedDict{MeasureVariable,montype(mom)}(mom.meas => mom.mon))
 end
 
 # conversion and promotion
@@ -119,12 +116,12 @@ function montype(m::ME) where ME <:AbstractMomentExpression
     return promote_type([typeof(m.momdict[meas]) for meas in keys(m.momdict)]...)
 end
 
-function Base.convert(::Type{MomExpr{PT}},m::Mom) where PT<:MT
-    return MomExpr(OrderedDict{Measure,PT}(m.meas => convert(PT,m.mon)))
+function Base.convert(::Type{MomExpr{PT}}, m::Mom) where PT<:MT
+    return MomExpr(OrderedDict{MeasureVariable,PT}(m.meas => convert(PT,m.mon)))
 end
 
 function Base.convert(::Type{MomExpr{PT}}, m::AbstractMomentExpression) where PT<:MT
-    momdict = OrderedDict{Measure,PT}()
+    momdict = OrderedDict{MeasureVariable,PT}()
     for meas in keys(m.momdict)
         momdict[meas] = convert(PT,m.momdict[meas])
     end
@@ -136,7 +133,7 @@ function Base.promote_rule(::Type{MomExpr{PT1}},::Type{Mom{PT2}}) where {PT1<:MT
 end
 
 # pretty printing
-function Base.show(io::IO,me::MomExpr)
+function Base.show(io::IO, me::MomExpr)
     n = length(me.momdict)
     for m in keys(me.momdict)
         print(io, Mom(m,me.momdict[m]))
@@ -169,12 +166,12 @@ function constant(ae::AffMomExpr)
     return ae.con
 end
 
-function AffMomExpr(mom::Union{Mom,Number},c::Number)
+function AffMomExpr(mom::Union{Mom,Number}, c::Number)
     return AffMomExpr(MomExpr(mom),c)
 end
 
 # conversion and promotion
-function Base.promote_rule(::Type{AffMomExpr{PT1,T1}},::Type{AffMomExpr{PT2,T2}}) where {PT1<:MT, PT2<:MT, T1<:Number, T2<:Number}
+function Base.promote_rule(::Type{AffMomExpr{PT1,T1}}, ::Type{AffMomExpr{PT2,T2}}) where {PT1<:MT, PT2<:MT, T1<:Number, T2<:Number}
     return AffMomExpr{promote_type(PT1,PT2), promote_type(T1,T2)}
 end
 
@@ -225,12 +222,12 @@ end
 # MomExpr
 function Base.:*(a::Number, me::MomExpr{PT}) where PT
     PU = typeof(one(typeof(a)) * one(PT))
-    return MomExpr(OrderedDict{Measure, PU}(meas => a*poly for (meas,poly) in me.momdict))
+    return MomExpr(OrderedDict{MeasureVariable, PU}(meas => a*poly for (meas,poly) in me.momdict))
 end
 
 function Base.:-(me::MomExpr{PT}) where PT
     PU = typeof(-one(PT))
-    return MomExpr(OrderedDict{Measure, PU}(meas => -poly for (meas, poly) in me.momdict))
+    return MomExpr(OrderedDict{MeasureVariable, PU}(meas => -poly for (meas, poly) in me.momdict))
 end
 
 # AffMomExpr
@@ -263,7 +260,7 @@ end
 
 function Base.sum(mev::Vector{<:Mom})
     T = add_mom_type(mev)
-    momdict = OrderedDict{Measure,T}()
+    momdict = OrderedDict{MeasureVariable,T}()
     for me in mev
         if haskey(momdict,me.meas)
             momdict[me.meas] = momdict[me.meas] + me.mon
@@ -276,7 +273,7 @@ end
 
 function Base.sum(mev::Vector{<:MomExpr})
     T = add_mom_type(mev)
-    momdict = OrderedDict{Measure,T}()
+    momdict = OrderedDict{MeasureVariable,T}()
     for me in mev
         merge!(+, momdict, me.momdict)
     end
