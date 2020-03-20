@@ -10,30 +10,9 @@ struct MeasureRef <: AbstractMeasureRef
     index::Int
 end
 
-Base.iszero(::MeasureRef) = false
-Base.copy(v::MeasureRef) = MeasureRef(v.model, v.index)
-Base.broadcastable(v::MeasureRef) = Ref(v)
-JuMP.isequal_canonical(v::MeasureRef, other::MeasureRef) = isequal(v, other)
-JuMP.index(v::MeasureRef) = v.index
-
-function Base.hash(v::MeasureRef, h::UInt)
-    return hash(objectid(owner_model(v)), hash(index(v), h))
-end
-
-function Base.isequal(v1::MeasureRef, v2::MeasureRef)
-    return owner_model(v1) === owner_model(v2) && index(v1) == index(v2)
-end
-
 function MeasureRef(m::GMPModel)
     index = MOI.add_variable(model_info(m))
     return MeasureRef(m, index)
-end
-
-JuMP.name(v::MeasureRef) = model_info(owner_model(v)).variable_names[index(v)]
-
-function JuMP.set_name(v::MeasureRef, s::String)
-    model_info(owner_model(v)).variable_names[index(v)] = s
-    return v
 end
 
 function JuMP.add_variable(model::GMPModel, v::MeasureVariable, name::String="")
@@ -46,7 +25,7 @@ function JuMP.add_variable(model::GMPModel, v::MeasureVariable, name::String="")
 end
 
 function JuMP.variable_by_name(model::GMPModel, name::String)
-    index = findfirst(x -> x==name, model_info(model).variable_names)
+    index = findfirst(x -> x == name, model_info(model).variable_names)
     if index isa Nothing
         return nothing
     else
@@ -59,14 +38,7 @@ end
 
 Get a measure's info attribute.
 """
-_info(v::MeasureRef) = model_data(owner_model(v)).variables[v].info
-
-"""
-    poly_variables(v::MeasureRef)
-
-Get variables measure is acting on.
-"""
-poly_variables(v::MeasureRef) = _info(v).poly_variables
+_info(v::MeasureRef) = info(measure(v))
 
 """
     set_poly_variables(v::MeasureRef, pv::Vector{MP.AbstractVariable})
@@ -127,4 +99,41 @@ Set relaxation type for measure.
 function set_relax_type(v::MeasureRef, relax_type)
     _info(v).relax_type = relax_type
     return v
+end
+
+struct KnownMeasureRef <: AbstractMeasureRef
+    model::GMPModel
+    index::Int
+end
+
+function KnownMeasureRef(m::GMPModel)
+    index = MOI.add_variable(model_info(m))
+    return KnownMeasureRef(m, index)
+end
+
+function JuMP.add_variable(model::GMPModel, v::KnowMeasureVariable, name::String="")
+    var_ref = MeasureRef(model)
+    model_data(model).known_measures[var_ref] = v
+    if !isempty(name)
+        set_name(var_ref, name)
+    end
+    return var_ref   
+end
+
+function known_measure_by_name(model::GMPModel, name::String)
+    index = findfirst(x -> x == name, model_info(model).variable_names)
+    if index isa Nothing
+        return nothing
+    else
+        return KnownMeasureRef(model, index)
+    end
+end
+
+"""
+    integrate(mon::PT <: MT, meas::KnownMeasureRef)
+
+Returns the value of the integral of mon with respect to meas.
+"""
+function integrate(poly::PT, meas::KnownMeasureRef) where PT <: MT 
+    return integrate(poly, measure_variable(meas))
 end

@@ -27,16 +27,17 @@ Reexport.@reexport using SumOfSquares
 using OrderedCollections
 using LinearAlgebra
 
-const MT = Union{Number, AbstractPolynomialLike}
+const MT = Union{Number, MP.AbstractPolynomialLike}
 
 
 
 include("measurevariable.jl")
 include("knownmeasures.jl")
 
-abstract type AbstractMeasureRef <: JuMP.AbstractVariableRef end
-include("measexpr.jl")
-include("momexpr.jl")
+include("measureexpr.jl")
+include("momentexpr.jl")
+
+include("momentobjective.jl")
 
 abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
 include("momentconstraints.jl")

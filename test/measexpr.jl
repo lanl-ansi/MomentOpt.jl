@@ -29,6 +29,8 @@
     @test length(coefficients(me1 + me2)) == 1
     @test length(coefficients(me1 - me2)) == 1
     
+    @test sum(μ) isa MeasureExpr{Int}
+    @test sum(μ) - μ[1] == μ[2]
 
 end
 

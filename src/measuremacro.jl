@@ -1,4 +1,4 @@
-export @measure
+export @measure, @register
 
 function _macro_assign_and_return(code, variable, name, model_for_registering)
     #TODO look at JuMP version and extend.
@@ -126,4 +126,7 @@ macro measure(args...)
     return macro_code
 end
 
+function register(m::GMPModel, meas::AbstractKnownMeasure)
+    
+end
 

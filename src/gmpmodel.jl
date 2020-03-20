@@ -5,7 +5,7 @@ struct NotRelaxed <: AbstractRelaxationStatus end
 struct PrimalRelaxed <: AbstractRelaxationStatus end
 struct DualRelaxed <: AbstractRelaxationStatus end
 mutable struct ModelInfo
-    measure_refs::Vector{JuMP.AbstractVariableRef}
+    measure_refs::Vector{AbstractMeasureRef}
     constraint_refs::Vector{AbstractGMPConstraintRef}
     variable_names::Vector{String}
     constraint_names::Vector{String}
@@ -32,9 +32,10 @@ function MOI.add_constraint(mi::ModelInfo)
 end
 
 mutable struct ModelData
-    variables::Dict{JuMP.AbstractVariableRef, MeasureVariable}
+    variables::Dict{AbstractMeasureRef, MeasureVariable}
     objective::Union{Nothing, MomObj}
     constraints::Dict{AbstractGMPConstraintRef, Any}
+    known_measures::Dict{AbstractMeasureRef, AbstractKnownMeasure}
 end
 
 ModelData() = ModelData(Dict{JuMP.AbstractVariableRef, MeasureVariable}(),

@@ -42,6 +42,9 @@ mutable struct MeasureVariable <: JuMP.AbstractVariable
     info::MeasureInfo
 end
 
+info(mv::MeasureVariable) = mv.info
+poly_variables(mv::MeasureVariable) = info(mv).poly_variables
+
 function JuMP.build_variable(_error::Function, info::MeasureInfo; extra_kw_args...)
     for (kwarg, _) in extra_kw_args
         _error("Unrecognized keyword argument $kwarg")

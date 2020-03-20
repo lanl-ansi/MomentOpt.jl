@@ -69,7 +69,7 @@ function Base.copy(m::Mom)
 end
 
 function Base.convert(::Type{Mom{PT}}, m::Mom) where PT<:MT
-    return Mom(m.meas,convert(PT,m.mon))
+    return Mom(m.meas, convert(PT,m.mon))
 end
 
 function Base.promote_rule(::Type{Mom{PT1}}, ::Type{Mom{PT2}}) where {PT1<:MT, PT2<:MT}
