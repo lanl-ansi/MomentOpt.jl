@@ -1,4 +1,4 @@
-export variable_box, LebesgueMeasure, integrate
+export variable_box, LebesgueMeasure, integrate, measure
 
 # Extend JuMP.VariableRef. Undocumented functions are direct copys of the functions defined for JuMP.VariableRef
 abstract type AbstractMeasureRef <: JuMP.AbstractVariableRef end
@@ -27,7 +27,7 @@ end
 """
     measure(v::AbstractMeasureRef)
 
-Get the measure an ABstractMeasureRef is pointing to. 
+Get the measure an AbstractMeasureRef is pointing to. 
 """
 measure(v::AbstractMeasureRef) = model_data(owner_model(v)).variables[v]
 

@@ -2,6 +2,9 @@ using Test
 
 using MomentOpt
 
+include("info.jl")
+
+#=
 using DynamicPolynomials
 using SemialgebraicSets
 using SumOfSquares
@@ -20,3 +23,4 @@ include("model.jl")
 include("macros.jl")
 include("show.jl")
 include("relax.jl")
+=#

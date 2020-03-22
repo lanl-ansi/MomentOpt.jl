@@ -1,7 +1,7 @@
 export Mom
 export sort_by_measure
 
-abstract type AbstractMomentExpressionLike end
+abstract type AbstractMomentExpressionLike <: JuMP.AbstractJuMPScalar end
 Base.broadcastable(mom::AbstractMomentExpressionLike) = Ref(mom)
 
 function compatible(meas::AbstractMeasureLike, mon::MT)
@@ -63,7 +63,7 @@ function MomentExpr(integr::PT, mexpr::MeasureExpr{T}) where {T, PT}
     return MomentExpr([integr], [mexpr])
 end
 
-function MomentExpr(integr::PT, m::AbstractMeasureLike) where {PT}
+function MomentExpr(integr::PT, m::T) where {PT, T <: AbstractMeasureLike}
     return MomentExpr(integr, MomentExpr([1], [m]))
 end
 
@@ -100,7 +100,7 @@ function constant(ae::AffineMomentExpr)
 end
 
 # conversion and promotion
-    function Base.promote_rule(::Type{AffineMomentExpr{T1, PT1, S1}}, ::Type{AffMomExpr{T2, PT2, S2}}) where {T1<:Number, T2<:Number, PT1<:MT, PT2<:MT, S1<:Number, S2<:Number}
+    function Base.promote_rule(::Type{AffineMomentExpr{T1, PT1, S1}}, ::Type{AffineMomentExpr{T2, PT2, S2}}) where {T1<:Number, T2<:Number, PT1<:MT, PT2<:MT, S1<:Number, S2<:Number}
     return AffineMomentExpr{promote_type(T1,T2), promote_type(PT1,PT2), promote_type(S1,S2)}
 end
 
@@ -108,11 +108,11 @@ function Base.convert(::Type{AffineMomentExpr{T, PT, S}}, ae::AffineMomentExpr) 
     return AffineMomentExpr(convert(MomentExpr{T, PT}, momexpr(ae)), convert(s,constant(ae)))
 end
 
-function Base.promote_rule(::Type{AffineMomentExpr{T1, PT1, S}},::Type{MomExpr{T2, PT2}}) where {T1 <: Number, T2 <: Number, PT1 <: MT, PT2 <: MT, S <: Number}
+function Base.promote_rule(::Type{AffineMomentExpr{T1, PT1, S}},::Type{MomentExpr{T2, PT2}}) where {T1 <: Number, T2 <: Number, PT1 <: MT, PT2 <: MT, S <: Number}
     return AffineMomentExpr{promote_type(T1,T2),promote_type(PT1, PT2), promote_type(S,Int)}
 end
 
-function Base.convert(::Type{AffineMomentExpr{T, PT, S}}, me::MomExpr) where {T <: Number, PT <: MT, S <: Number}
+function Base.convert(::Type{AffineMomentExpr{T, PT, S}}, me::MomentExpr) where {T <: Number, PT <: MT, S <: Number}
     return AffineMomentExpr(convert(MomentExpr{T, PT}, me), zero(S))
 end
 

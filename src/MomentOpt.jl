@@ -29,7 +29,9 @@ using LinearAlgebra
 
 const MT = Union{Number, MP.AbstractPolynomialLike}
 
-
+include("info.jl")
+#=
+include("gmpmodel.jl")
 
 include("measurevariable.jl")
 include("knownmeasures.jl")
@@ -44,13 +46,11 @@ include("momentconstraints.jl")
 include("measureconstraints.jl")
 include("substitutionconstraints.jl")
 
-abstract type AbstractGMPConstraintRef end
-include("gmpmodel.jl")
-
 include("measureref.jl")
 include("constraintref.jl")
 
 include("measuremacro.jl")
+=#
 #=
 include("momcon.jl")
 

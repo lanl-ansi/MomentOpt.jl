@@ -111,7 +111,7 @@ function KnownMeasureRef(m::GMPModel)
     return KnownMeasureRef(m, index)
 end
 
-function JuMP.add_variable(model::GMPModel, v::KnowMeasureVariable, name::String="")
+function JuMP.add_variable(model::GMPModel, v::AbstractKnownMeasure, name::String="")
     var_ref = MeasureRef(model)
     model_data(model).known_measures[var_ref] = v
     if !isempty(name)
@@ -129,11 +129,13 @@ function known_measure_by_name(model::GMPModel, name::String)
     end
 end
 
+measure(meas::KnownMeasureRef) = model_data(owner_model(v)).known_measures[v]
+
 """
     integrate(mon::PT <: MT, meas::KnownMeasureRef)
 
 Returns the value of the integral of mon with respect to meas.
 """
 function integrate(poly::PT, meas::KnownMeasureRef) where PT <: MT 
-    return integrate(poly, measure_variable(meas))
+    return integrate(poly, measure(meas))
 end

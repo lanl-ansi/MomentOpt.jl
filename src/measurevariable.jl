@@ -52,4 +52,3 @@ function JuMP.build_variable(_error::Function, info::MeasureInfo; extra_kw_args.
     return MeasureVariable(info)
 end
 
-const Measure = MeasureVariable
