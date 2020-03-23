@@ -1,7 +1,13 @@
 module MomentOpt
 
-import Reexport
+using Reexport
 
+Reexport.@reexport using JuMP
+include("info.jl")
+include("gmpmodel.jl")
+
+
+#=
 using MutableArithmetics
 const MA = MutableArithmetics
 
@@ -19,7 +25,6 @@ const MOI = MathOptInterface
 const MOIU = MOI.Utilities
 
 using PolyJuMP
-Reexport.@reexport using JuMP
 const PJ = PolyJuMP
 
 Reexport.@reexport using SumOfSquares
@@ -29,8 +34,8 @@ using LinearAlgebra
 
 const MT = Union{Number, MP.AbstractPolynomialLike}
 
+
 include("info.jl")
-#=
 include("gmpmodel.jl")
 
 include("measurevariable.jl")

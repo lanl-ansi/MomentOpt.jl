@@ -3,6 +3,7 @@ using Test
 using MomentOpt
 
 include("info.jl")
+include("gmpmodel.jl")
 
 #=
 using DynamicPolynomials

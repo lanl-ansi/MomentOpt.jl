@@ -1,16 +1,6 @@
+# Define GMPmodel <: JuMP.AbstractModel
+
 export GMPModel
-
-abstract type AbstractRelaxationMode end
-struct PrimalFormulation <: AbstractRelaxationMode end
-struct DualFormulation <: AbstractRelaxationMode end
-
-mutable struct RelaxInfo
-    mode::AbstractRelaxationMode
-    relax_degree::Int
-    solver::Union{Nothing, Function}
-end
-
-RelaxInfo() = RelaxInfo(DualFormulation(), 0, nothing) 
 
 mutable struct GMPModel <: JuMP.AbstractModel
     model_info::ModelInfo
@@ -19,12 +9,11 @@ mutable struct GMPModel <: JuMP.AbstractModel
     relax_model::Union{Nothing, JuMP.Model}
 end
 
-
 GMPModel() = GMPModel(ModelInfo(), Dict{Symbol, Any}(), RelaxInfo(), nothing)
 
 model_info(gmp::GMPModel) = gmp.model_info
 JuMP.num_variables(gmp::GMPModel) = length(model_info(gmp).variable_names)
-JuMP.obj_dictionary(gmp::GMPModel) = gmp.model_data
+JuMP.object_dictionary(gmp::GMPModel) = gmp.model_data
 relax_info(gmp::GMPModel) = gmp.relax_info
 relax_model(gmp::GMPModel) = gmp.relax_model
 
