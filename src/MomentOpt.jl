@@ -1,11 +1,42 @@
 module MomentOpt
 
+using MultivariatePolynomials
+const MP = MultivariatePolynomials
+import MultivariateBases
+const MB = MultivariateBases
+
+# MOI extension
+
+using MathOptInterface
+const MOI = MathOptInterface
+include("MeasureJuMP/attributes.jl")
+
+import LinearAlgebra.dot
+using SemialgebraicSets
+include("variables.jl")
+
+abstract type AbstractGMPScalar end
+struct NoScalar <: AbstractGMPScalar end
+function JuMP.function_string(io::IO, s::AbstractGMPScalar) end
+function degree(s::AbstractGMPScalar) end 
+
+abstract type AbstractGMPScalarSet <: JuMP.AbstractScalarSet 
+include("MeasureJuMP/sets.jl")
+
+
+abstract type AbstractGMPConstraint end <: AbstractConstraint
+function constraint_function(c::AbstractGMPConstraint) end
+function JuMP.shape(x::AbstractGMPConstraint) end
+function JuMP.constraint_string(print_mode, constraint::AbstractGMPConstraint) end
+
 using Reexport
 
 Reexport.@reexport using JuMP
-include("info.jl")
 include("gmpmodel.jl")
 
+
+
+Reexport.@reexport using SumOfSquares
 
 #=
 using MutableArithmetics

@@ -3,19 +3,41 @@
 
 Under some regularity assumptions one can say that the dual space of measures is the space of continuous functions. This is for example the case if the support of the measure is compact. This abstract type allows to define custom testfunctions.
 """
-abstract type AbstractGMPContinuous end
+abstract type AbstractGMPContinuous <: AbstractGMPVariable end
 
-#TODO introduce correct names for attributes
-#
-MOI.get(m::AbstractGMPContinuous, ::PolynomialVariables) = m.variables
+MOI.get(m::AbstractGMPContinuous, ::Variables) = m.variables
 MOI.get(m::AbstractGMPContinuous, ::Domain) = m.domain
-MOI.get(m::AbstractGMPContinuous, ::RelaxationType) = m.relax_type
-MOI.get(m::AbstractGMPContinuous, ::MomentBasis) = m.moment_basis
-MOI.get(m::AbstractGMPContinuous, ::MomentFunction) = nothing
+MOI.get(m::AbstractGMPContinuous, ::ApproximationType) = m.stregthen_type
+MOI.get(m::AbstractGMPContinuous, ::GMPBasis) = m.monom_basis
+function MOI.get(m::AbstractGMPMeasure, ::CoefFunction) 
+    get(m, ApproximationType()) == EXACT_APPROXIMATION ? m.coef_function : nothing
+end
 
 function Base.:(==)(m1::AbstractGMPContinuous, m2::AbstractGMPContinuous)
-    return all( get(m1, attr) == get(m2, attr) for attr in [PolynomialVariales(), Domain(), RelaxationType(), MomentBasis(), MomentFuntion()])
+    return all( get(m1, attr) == get(m2, attr) for attr in [GenericContinuousAttributes..., CoefFunction()])
 end
+
+"""
+    coefficient_vector(basis::MB.AbstractPolynomialBasis, f::AbstractContinuous)
+
+Returns the coefficients with respect to the polynomials in basis, approximating f.
+"""
+function coefficient_vector(basis::MB.AbstractPolynomialBasis, f::AbstractContinuous)
+    @assert get(f, ::ApproximationType()) isa EXACT_APPROXIMATION "Some requested coefficients are not available"
+    return get(f, CoefFunction())(basis)
+end
+
+export approximate
+"""
+    approximate(f::AbstractContinuous, max_degree::Int)
+
+Returns a polynomial approximation of f of degree max_degree.
+"""
+function approximate(f::AbstractContinuous, max_degree::Int)
+    basis = MB.maxdegree_basis(f, max_degree)
+    return dot(coefficient_vector(basis), basis)
+end
+
 
 export SymbolicContinuous
 
@@ -27,12 +49,12 @@ Type representing a symbolic continuous function. This type does not allow to co
 struct SymbolicContinuous{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPContinuous
     domain::S
     variables::Vector{V}
-    relax_type::NO_RELAXATION
-    moment_basis::T
+    stregthen_type::NO_APPROXIMATION
+    monom_basis::T
 end
 
-function SymbolicContinuous(support, variables, moment_basis) 
-    return SymbolicContinuous(support, variables, NO_RELAXATION(), moment_basis) 
+function SymbolicContinuous(support, variables, monom_basis) 
+    return SymbolicContinuous(support, variables, NO_RELAXATION(), monom_basis) 
 end
 
 export AnalyticContinuous
@@ -40,18 +62,18 @@ export AnalyticContinuous
 """
     AnalyticContinuous{V, T} <: AbstractGMPContinuous
 
-Type representing an analytic continuous function. Its field moment_function allows to evluate polynomials. 
+Type representing an analytic continuous function. Its field coef_function allows to compute the coefficients for arbitrary close polynomial approximations.
 """
 struct AnalyticContinuous{V <: MP.AbstractVariable, T <: Type{<:MB.AbstractPolynomialBasis}} <: AbstractGMPContinuous
     domain::Nothing
     variables::Vector{V}
-    relax_type::EXACT_RELAXATION
-    moment_basis::T
-    moment_function::Function
+    stregthen_type::EXACT_RELAXATION
+    monom_basis::T
+    coef_function::Function
 end
 
-function AnalyticContinuous(variables, moment_basis, moment_function) 
-    return AnalyticContinuous(nothing, variables, EXACT_RELAXATION(), moment_basis, moment_function) 
+function AnalyticContinuous(variables, monom_basis, monom_function) 
+    return AnalyticContinuous(nothing, variables, EXACT_RELAXATION(), monom_basis, monom_function) 
 end
 
 export ConstantContinuous
@@ -64,27 +86,29 @@ Type representing constant functions
 struct ConstantContinuous <: AbstractGMPContinuous
     domain::Nothing
     variables::Nothing
-    relax_type::EXACT_RELAXATION
-    moment_basis::Nothing
-    moment_function::Function
+    stregthen_type::EXACT_RELAXATION
+    monom_basis::Nothing
+    coef_function::Function
 end
 
-ConstantContinuous(a::Number) = ConstantContinuous(nothing, nothing, EXACT_RELAXATION(), nothing, x -> a)
+ConstantContinuous(a::Number) = ConstantContinuous(nothing, nothing, EXACT_RELAXATION(), nothing, x -> x == 1 ? a : 0)
 ZeroContinuous() = ConstantContinuous(0)
 OneContinuous() = ConstantContinuous(1)
+
+function approximate(f::ConstantContinuous, ::Int)
+    return get(f, CoefFunction())(1)*mono_one(get(f, Variables()))
+end
 
 export VariableContinuous
 
 """
-    VariableContinuous{S, V, T}
+    VariableContinuous{S, V, R, T}
 
-Type representing a measure that can be relaxed via a conic relaxation. 
+Type representing a continuous funciton that can be stregthend via a conic approximation. 
 """
-struct VariableContinuous{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPContinuous
+struct VariableContinuous{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable, R <: AbstractApproximation, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPContinuous
     domain::S
     variables::Vector{V}
-    relax_type::CONIC_FORMULATION
-    moment_basis::T
+    stregthen_type::R
+    monom_basis::T
 end
-
-

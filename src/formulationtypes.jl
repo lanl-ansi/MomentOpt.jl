@@ -1,5 +1,3 @@
-
-
 abstract type AbstractConicFormulation end
 abstract type AbstractPrimalFormulation <: AbstractConicFormulation end
 abstract type AbstractDualFormulation <: AbstractConicFormulation end

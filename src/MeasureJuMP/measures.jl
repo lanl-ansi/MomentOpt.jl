@@ -1,36 +1,57 @@
 """
     AbstractGMPMeasure
 
-Abstract type to represent measures in MeasureJuMP. Implementation of subtypes should implement MOI.get functions for `::PolynomialVariables`, `::Support`, `::RelaxationType`, and `::MomentBasis`.
-"""
-abstract type AbstractGMPMeasure end
+Abstract type to represent measures in MeasureJuMP. Implementation of subtypes should implement MOI.get functions for `::Variables`, `::Support`, `::ApproximationType`, and `::GMPBasis`.
+if get(m, ApproximationType()) == EXACT_APPROXIMATION, the measure m should have a field m.moment_function::Function. 
+By default there are four implementations of AbstractGMPMeasure:
+  * [SymbolicMeasure](@ref) :
+  * [AnalyticMeasure](@ref) :
+  * [ZeroMeasure](@ref) :
+  * [VariableMeasure](@ref) :
 
-MOI.get(m::AbstractGMPMeasure, ::PolynomialVariables) = m.variables
+"""
+abstract type AbstractGMPMeasure <: AbstractGMPVariable end
+
+MOI.get(m::AbstractGMPMeasure, ::Variables) = m.variables
 MOI.get(m::AbstractGMPMeasure, ::Support) = m.support
-MOI.get(m::AbstractGMPMeasure, ::RelaxationType) = m.relax_type
-MOI.get(m::AbstractGMPMeasure, ::MomentBasis) = m.moment_basis
-MOI.get(m::AbstractGMPMeasure, ::MomentFunction) = nothing
+MOI.get(m::AbstractGMPMeasure, ::ApproximationType) = m.relax_type
+MOI.get(m::AbstractGMPMeasure, ::GMPBasis) = m.moment_basis
+
+function MOI.get(m::AbstractGMPMeasure, ::MomentFunction) 
+    get(m, ApproximationType()) == EXACT_APPROXIMATION ? m.moment_function : nothing
+end
 
 function Base.:(==)(m1::AbstractGMPMeasure, m2::AbstractGMPMeasure)
-    return all( get(m1, attr) == get(m2, attr) for attr in [PolynomialVariales(), Support(), RelaxationType(), MomentBasis()])
+    return all( get(m1, attr) == get(m2, attr) for attr in [GenericMeasureAttributes..., MomentFunction()])
 end
 
 """
-    maxdegree_monomials(m::AbstractMeasure, max_degree::Int) 
+    covering_basis(t::AbstractGMPVariable, p::MP.AbstractPolynomialLike)
+    covering_basis(t::AbstractGMPVariable, p::Number)
 
-Returns all monomials in the moment basis of m up to degree max_degree.    
+Returns all monomials in the basis of t covering the monomials of p.    
 """
-function maxdegree_monomials(m::AbstractMeasure, max_degree::Int) 
-    return MB.maxdegree_basis(get.(m, [MomentBasis(), PolynomialVariables()])..., max_degree)  
+function covering_basis(t::AbstractGMPVariable, p::MP.AbstractPolynomialLike)
+    return MB.basis_covering_monomials(get.(t, [GMPBasis(), Variables()])..., monomials(p)) 
 end
 
 """
-    covering_monomials(m::AbstractMeasure, p::MP.AbstractPolynomialLike) 
+    mono_one(vars)
 
-Returns all monomials in the moment basis of m covering the monomials of p.    
+returns the monomial 1 defined on vars. 
 """
-function covering_monomials(m::AbstractMeasure,  p::MP.AbstractPolynomialLike) 
-    return MB.basis_covering_monomials(get.(m, [MomentBasis(), PolynomialVariables()])..., monomials(p))  
+mono_one(vars:::Vector{MP.AbstractVariable}) = prod(var^0 for var in vars)
+mono_one(::Nothing) = 1
+
+covering_basis(t::AbstractGMPVariable, p::Number) = covering_basis(t, p*mono_one(get(t, Variables())))
+
+"""
+    maxdegree_basis(t::AbstractGMPVariable, d::Int)
+
+Returns all monomials up to degree d in the basis of t.    
+"""
+function MB.maxdegree_basis(t::AbstractGMPVariable, d::Int)
+    return maxdegree_basis(get.(t, [GMPBasis(), Variables()])..., d) 
 end
 
 """
@@ -39,8 +60,8 @@ end
 Returns the integral with respect to m over the polynomials in basis.
 """
 function moment_vector(basis::MB.AbstractPolynomialBasis, m::AbstractMeasure)
-    @assert get(m, ::RelaxationType()) isa EXACT_RELAXATION "Some requested moments are not available"
-    return m.moment_function(basis)
+    @assert get(m, ::ApproximationType()) isa EXACT_APPROXIMATION "Some requested moments are not available"
+    return get(m, MomentFunction())(basis)
 end
 
 export integrate
@@ -69,7 +90,7 @@ Type representing a symbolic measure. This type does not allow to compute integr
 struct SymbolicMeasure{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPMeasure
     support::S
     variables::Vector{V}
-    relax_type::NO_RELAXATION
+    relax_type::NO_APPROXIMATION
     moment_basis::T
 end
 
@@ -87,7 +108,7 @@ Type representing an analytiv measure. Its field moment_function allows to integ
 struct AnalyticMeasure{V <: MP.AbstractVariable, T <: Type{<:MB.AbstractPolynomialBasis}} <: AbstractGMPMeasure
     support::Nothing
     variables::Vector{V}
-    relax_type::EXACT_RELAXATION
+    relax_type::EXACT_APPROXIMATION
     moment_basis::T
     moment_function::Function
 end
@@ -106,23 +127,27 @@ Type representing the measure giving zero weight to anything.
 struct ZeroMeasure <: AbstractGMPMeasure
     support::Nothing
     variables::Nothing
-    relax_type::EXACT_RELAXATION
+    relax_type::EXACT_APPROXIMATION
     moment_basis::Nothing
     moment_function::Function
 end
 
 ZeroMeasure() = ZeroMeasure(nothing, nothing, EXACT_RELAXATION(), nothing, x -> 0)
 
+function covering_basis(t::ZeroMeasure, p::MP.AbstractPolynomialLike)
+    return MB.basis_covering_monomials(get.(t, MonomialBasis, variables(p)), monomials(p)) 
+end
+
 export VariableMeasure
 
 """
-    VariableMeasure{S, V, T}
+    VariableMeasure{S, V, R, T}
 
 Type representing a measure that can be relaxed via a conic relaxation. 
 """
-struct VariableMeasure{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPMeasure
+struct VariableMeasure{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable, R <: AbstractApproximation, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPMeasure
     support::S
     variables::Vector{V}
-    relax_type::CONIC_FORMULATION
+    relax_type::R
     moment_basis::T
 end

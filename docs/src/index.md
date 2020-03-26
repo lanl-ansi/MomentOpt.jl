@@ -1,4 +1,4 @@
-# MomentOpt.jl - Conic Relaxations for Generalized Moment Problems
+# MomentOpt.jl - Modelization and Conic Relaxations for Generalized Moment Problems
 
 MomentOpt.jl is a Julia package to model Generalized Moment Problems and to approximate solutions via conic relaxations. 
 

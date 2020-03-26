@@ -1,31 +1,29 @@
 # ModelAttributes
 
 """
-    RelaxationMode(N)
-    RelaxationMode()
+    ApproximationMode()
 
-This attribute defines how the model should be relaxed. By default RelaxationMode() corresponds to no relaxation. The model cannot be approximated in this state.
+Attribute for the mode used to approximate a model.
 """
-struct RelaxationMode <: AbstractModelAttribute 
+struct ApproximationMode <: AbstractModelAttribute 
 end
 
 """
-    RelaxationStatus()
+    ApproximationStatus()
 
-Attribute for the TerminationStatus of the relaxation of the model.
+Attribute for the TerminationStatus of the approximation of the model.
 """
-struct RelaxationStatus <: AbstractModelAttribute end
-MOI.is_set_by_optimize(::RelaxationStatus) = true
+struct ApproximationStatus <: AbstractModelAttribute end
+MOI.is_set_by_optimize(::ApproximationStatus) = true
 
 # VariableAttributes
 
-# Attributes for Measures
 """
-    PolynomialVariables()
+    Variables()
 
-Attribute for the polynomial variables a measure is acting on. 
+Attribute for the variables a measure is acting on. 
 """
-struct PolynomialVariables <: AbstractVariableAttribute end
+struct Variables <: AbstractVariableAttribute end
 
 """
     Support()
@@ -35,18 +33,18 @@ Attribute for the support of a measure.
 struct Support <: AbstractVariableAttribute end
 
 """
-    RelaxationType()
+    ApproximationType()
 
-Attribute for the type of relaxation used for a measure.
+Attribute for the type of approximation used for a measure/continuous function.
 """
-struct RelaxationType <: AbstractVariableAttribute end
+struct ApproximationType <: AbstractVariableAttribute end
 
 """
-    MomentBasis()
+    GMPBasis()
 
-Attribute for the type of MultivariateBases, used to express the moment of a measure.
+Attribute for the type of MultivariateBases, used to express the moment of a measure or the monomials of a polynomial.
 """
-struct MomentBasis <: AbstractVariableAttribute end
+struct GMPBasis <: AbstractVariableAttribute end
 
 """
     MomentFunction()
@@ -55,13 +53,18 @@ Attribute for the moment function of a measure.
 """
 struct MomentFunction <: AbstractVariableAttribute end
 
-# Attributes for Continuous
-
 """
     Domain()
 
 Attribute for the domain of a continuous function.
 """
 struct Domain <: AbstractVariableAttribute end
+"""
+    CoefFunction()
 
+Attribute for the coefficient function of a continuous function.
+"""
+struct CoefFunction <: AbstractVariableAttribute end
 
+const GenericMeasureAttributes = [Variables(), Support(), ApproximationType(), GMPBasis()]
+const GenericContinuousAttributes = [Variables(), Domain(), ApproximationType(), GMPBasis()] 

@@ -5,7 +5,7 @@ const MP = MultivariatePolynomials
 import MultivariateBases
 const MB = MultivariateBases
 
-include("relaxtypes.jl")
+include("formulationtypes.jl")
 
 # MOI extension
 
@@ -15,6 +15,16 @@ include("attributes.jl")
 
 import LinearAlgebra.dot
 using SemialgebraicSets
+
+"""
+    mono_one(vars)
+
+returns the monomial 1 defined on vars. 
+"""
+mono_one(vars:::Vector{MP.AbstractVariable}) = prod(var^0 for var in vars)
+mono_one(::Nothing) = 1
+
+abstract type AbstractGMPType end
 include("measures.jl")
 include("continuous.jl")
 

@@ -3,41 +3,29 @@
 
 The set consiting of only a single measure.
 """
-struct EqualToMeasure{T <: AbstractGMPMeasure} <: AbstractScalarSet
+struct EqualToMeasure{T <: AbstractGMPMeasure} <: MOI.AbstractScalarSet
     measure::T
 end
 
 MOI.constant(set::EqualToMeasure) = set.measure
+MOI.dual_set(s::EqualToMeasure) = GreaterThanContinuous(VariableContinuous(get.(constant(s), GenericMeasureAttributes))...)
+MOI.dual_set_type(::Type{EqualToMeasure}) = GreaterThanContinuous
 
 """
-    EqualToContinuous{T} <: AbstractScalarSet
+    GreaterThanContinuous{T} <: AbstractScalarSet
 
-The set consisting of only a single continuous function.
+The set consisting of all continuous functions bigger than a single continuous.
 """
-struct EqualToFunction{T <: AbstractGMPConsinuous} <: AbstractScalarSet
+struct GreaterThanContinuous{T <: AbstractGMPContinuous} <: MOI.AbstractScalarSet
     continuous::T
 end
 
-MOI.constant(set::EqualToContinuous) = set.continuous
+MOI.constant(set::GreaterThanContinuous) = set.continuous
+MOI.dual_set(s::GreaterThanContinuous) = EqualToMeasure(VariableMeasure(get.(constant(s), GenericContinuousAttributes))...)
+MOI.dual_set_type(::Type{GreaterThanContinuous}) = EqualToMeasure
 
-const GMPEqualTo = Union{EqualToMeasure, EqualToContinous}
+const GMPset = Union{EqualToMeasure, GreaterThanContinuous}
 
-function Base.:(==)(set1::GMPEqualTo, set2::GMPEqualTo)
+function Base.:(==)(set1::GMPset, set2::GMPset)
     return constant(set1) == constant(set2)
 end
-
-
-for (meas, cont) in zip([],[])
-    function MOI.dual_set(set::EqualToMeasure{<:meas})
-        return cont(get.(set.measure, [Support(), PolynomialVariables(), RelaxationType(), MomentBasis()])...)
-    end
-    function MOI.dual_set(set::EqualToContinuous{<:cont})
-        return meas(get.(set.measure, [Domain(), PolynomialVariables(), RelaxationType(), MomentBasis()])...)
-    end
-
-    MOI.dual_set_type(::EqualToMeasure{<:meas}) = cont
-    MOI.dual_set_type(::EqualToContinuous{<:cont}) = meas
-
-end
-
-
