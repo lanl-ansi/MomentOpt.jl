@@ -11,11 +11,18 @@ using MathOptInterface
 const MOI = MathOptInterface
 include("MeasureJuMP/attributes.jl")
 
-import LinearAlgebra.dot
-using SemialgebraicSets
-include("variables.jl")
+using Reexport
 
-abstract type AbstractGMPScalar end
+Reexport.@reexport using JuMP
+
+abstract type AbstractGMPVariable  <: JuMP.AbstractVariable end
+const GMPAffExpr{T <: Number, V <: AbstractGMPVariable} = JuMP.GenericAffExpr{T, V}
+abstract type AbstractGMPConstraint <: AbstractConstraint end
+
+include("gmpmodel.jl")
+
+#=
+
 struct NoScalar <: AbstractGMPScalar end
 function JuMP.function_string(io::IO, s::AbstractGMPScalar) end
 function degree(s::AbstractGMPScalar) end 
@@ -29,15 +36,15 @@ function constraint_function(c::AbstractGMPConstraint) end
 function JuMP.shape(x::AbstractGMPConstraint) end
 function JuMP.constraint_string(print_mode, constraint::AbstractGMPConstraint) end
 
-using Reexport
 
-Reexport.@reexport using JuMP
-include("gmpmodel.jl")
+import LinearAlgebra.dot
+using SemialgebraicSets
+include("variables.jl")
 
 
 
 Reexport.@reexport using SumOfSquares
-
+=#
 #=
 using MutableArithmetics
 const MA = MutableArithmetics

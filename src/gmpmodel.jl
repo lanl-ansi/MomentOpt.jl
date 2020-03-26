@@ -7,7 +7,7 @@ mutable struct ModelInfo
     vct::Int
     cct::Int
     variable_names::Vector{AbstractString}
-    constraint_names:Vector{AbstractString}
+    constraint_names::Vector{AbstractString}
     obj_dict::Dict{Symbol, Any}
     function ModelInfo()
         new(0, 0, AbstractString[], AbstractString[], Dict{Symbol, Any}())
@@ -22,15 +22,15 @@ This type contains the data of the model.
 
 mutable struct ModelData
     variables::Dict{MOI.VariableIndex, AbstractGMPVariable}
-    constraints::Dict{MOI.ConstraintIndes, AbstractGMPConstraint}
+    constraints::Dict{MOI.ConstraintIndex, AbstractGMPConstraint}
     objective_sense::MOI.OptimizationSense
-    objective_function::AbstractGMPScalar
+    objective_function::GMPAffExpr
     max_degree::Int
     function ModelData()
         new(Dict{MOI.VariableIndex, AbstractGMPVariable}(),
             Dict{MOI.ConstraintIndex, AbstractGMPConstraint}(),
             MOI.FEASIBILITY_SENSE,
-            NoScalar())
+            GMPAffExpr{Int, AbstractGMPVariable}(), 0)
     end
 end
 
@@ -40,11 +40,14 @@ end
 
 Defines whether the primal or the dual of a problem should be used for a conic approximation.
 """
+
+export NO_APPROXIMATION_MODE, PRIMAL_APPROXIMATION_MODE, DUAL_APPROXIMATION_MODE
 abstract type AbstractApproximationMode end
 struct NO_APPROXIMATION_MODE <: AbstractApproximationMode end 
 struct PRIMAL_APPROXIMATION_MODE <: AbstractApproximationMode end 
-struct DUAL_APPROXIMATION_MODE <: AbstractApproximationationMode end
+struct DUAL_APPROXIMATION_MODE <: AbstractApproximationMode end
 
+export NOT_APPROXIMATED, PRIMAL_RELAXED, DUAL_STRENGTHENED, PRIMAL_STRENGTHENED, DUAL_RELAXED
 abstract type AbstractGMPStatus end
 struct NOT_APPROXIMATED <: AbstractGMPStatus end
 struct PRIMAL_RELAXED <: AbstractGMPStatus end
@@ -58,7 +61,7 @@ mutable struct ApproximationInfo
     degree::Int
     solver::Union{Nothing, Function}
     function ApproximationInfo()
-        new(NO_APPROXIMATION_MODE, NOT_APPROXIMATED, 0, nothing)
+        new(NO_APPROXIMATION_MODE(), NOT_APPROXIMATED(), 0, nothing)
     end
 end
 
@@ -97,10 +100,7 @@ function update_degree(m::GMPModel, degree::Int)
 end
 
 # define GMPVariableRef
-struct GMPVariableRef <: JuMP.AbstractVariableRef
-    model::GMPModel
-    index::MOI.VariableIndex
-end
+abstract type GMPVariableRef <: JuMP.AbstractVariableRef end
 
 # define internal functions for GMPVariableRef
 Base.iszero(::GMPVariableRef) = false
@@ -121,9 +121,12 @@ function JuMP.is_valid(m::GMPModel, vref::GMPVariableRef)
             vref.idx in keys(gmp_variables(m)))
 end
 
+function gmp_variable_refererence_type(v::AbstractGMPVariable) end
+    
 function JuMP.add_variable(m::GMPModel, v::AbstractGMPVariable, name::String = "")
     model_info(m).vct += 1
-    vref = GMPVariableRef(m, VariableIndex(model_info(m).vct))
+    vr_type = gmp_variable_refererence_type(v)
+    vref = vr_type(m, VariableIndex(model_info(m).vct))
     gmp_variables(m)[vref.index] = v
     push!(model_info(m).variable_names, name)
     return vref
@@ -155,7 +158,7 @@ end
 # utilities to modify variables
 
 # define GMPConstraintRef
-const GMPConstraintRef = JuMP.ConstraintRef{GMPModel, ConstraintIndex}
+const GMPConstraintRef = JuMP.ConstraintRef{GMPModel, MOI.ConstraintIndex}
 
 # define internal functions for GMPConstraintRef
 JuMP.constraint_type(::GMPModel) = GMPConstraintRef
@@ -168,7 +171,7 @@ end
 function JuMP.add_constraint(m::GMPModel, c::AbstractGMPConstraint,
                              name::String = "")
     model_info(m).cct += 1
-    cref = ConstraintRef(m, ConstraintIndex(model_info(m).cct), shape(c))
+    cref = ConstraintRef(m, MOI.ConstraintIndex(model_info(m).cct), shape(c))
     gmp_constraints(m)[cref.index] = c
     push!(constraint_names(m), name)
     update_degree(m, degree(constraint_function(c)))
@@ -197,7 +200,7 @@ end
 
 JuMP.name(cref::GMPConstraintRef) = constraint_names(cref.model)[cref.index]
 
-function JuMP.set_name(cref::MyConstraintRef, name::String)
+function JuMP.set_name(cref::GMPConstraintRef, name::String)
     constraint_names(cref.model)[cref.index] = name
 end
 
@@ -208,13 +211,13 @@ function JuMP.constraint_by_name(m::GMPModel, name::String)
     elseif length(index) > 1
         @error "Multiple constraints have the name $name."
     else
-        return GMPConstraintRef(m, ConstraintIndex(index))
+        return GMPConstraintRef(m, MOI.ConstraintIndex(index))
     end
 end
 
 # Objective
 function JuMP.set_objective(m::GMPModel, sense::MOI.OptimizationSense,
-                            f::AbstractGMPScalar)
+                            f::GMPAffExpr)
     model_data(m).objective_sense = sense
     model_data(m).objective_function = f
     update_degree(m, degree(f))    
@@ -238,10 +241,11 @@ function JuMP.objective_function(m::GMPModel, FT::Type)
 end
 
 # Show
-function show_backend_summary(io::IO, model::GMPModel)
+function JuMP.show_backend_summary(io::IO, model::GMPModel)
+    println(io)
     println(io, "Approxmation mode: ", approximation_info(model).mode)
     println(io, "Approximation status: ", approximation_info(model).status)
-    println(io, "Maximum degree of data: ", model_info(model).max_degree)
+    println(io, "Maximum degree of data: ", model_data(model).max_degree)
     println(io, "Degree for approximation ", approximation_info(model).degree)
     # The last print shouldn't have a new line
     if approximation_info(model).solver isa Nothing
@@ -269,7 +273,7 @@ end
 
 function JuMP.constraints_string(print_mode, m::GMPModel)
     strings = String[]
-    # Sort by creation order, i.e. ConstraintIndex value
+    # Sort by creation order, i.e. MOI.ConstraintIndex value
     constraints = sort(collect(gmp_constraints(m)), by = c -> c.first.value)
     for (index, constraint) in constraints
         push!(strings, JuMP.constraint_string(print_mode, constraint))

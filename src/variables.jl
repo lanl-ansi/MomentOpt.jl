@@ -1,4 +1,3 @@
-abstract type AbstractGMPVariable  <: JuMP.AbstractVariable end
 include("formulationtypes.jl")
 incldue("MeasureJuMP/approximationtypes.jl")
 include("MeasureJuMP/measures.jl")

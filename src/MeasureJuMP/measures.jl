@@ -12,6 +12,13 @@ By default there are four implementations of AbstractGMPMeasure:
 """
 abstract type AbstractGMPMeasure <: AbstractGMPVariable end
 
+struct MeasureRef <: GMPVariableRef
+    model::GMPModel
+    index::MOI.VariableIndex
+end
+
+gmp_variable_refererence_type(m::AbstractGMPMeasure) = MeasureRef
+
 MOI.get(m::AbstractGMPMeasure, ::Variables) = m.variables
 MOI.get(m::AbstractGMPMeasure, ::Support) = m.support
 MOI.get(m::AbstractGMPMeasure, ::ApproximationType) = m.relax_type
@@ -151,3 +158,6 @@ struct VariableMeasure{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVaria
     relax_type::R
     moment_basis::T
 end
+
+
+

@@ -5,6 +5,14 @@ Under some regularity assumptions one can say that the dual space of measures is
 """
 abstract type AbstractGMPContinuous <: AbstractGMPVariable end
 
+struct ContinuousRef <: GMPVariableRef
+    model::GMPModel
+    index::MOI.VariableIndex
+end
+
+gmp_variable_refererence_type(m::AbstractGMPContinuous) = ContinuousRef
+
+
 MOI.get(m::AbstractGMPContinuous, ::Variables) = m.variables
 MOI.get(m::AbstractGMPContinuous, ::Domain) = m.domain
 MOI.get(m::AbstractGMPContinuous, ::ApproximationType) = m.stregthen_type
@@ -112,3 +120,5 @@ struct VariableContinuous{S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVa
     stregthen_type::R
     monom_basis::T
 end
+
+
