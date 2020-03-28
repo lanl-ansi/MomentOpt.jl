@@ -1,1 +1,2 @@
-const MeasureAffExpr{T <: Number} = GMPAffExpr{T, 
+const ObjectExpr{C} = GMPExpr{C, AbstractGMPVariableRef} where C <: Number
+

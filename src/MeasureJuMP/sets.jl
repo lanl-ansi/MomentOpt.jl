@@ -3,7 +3,7 @@
 
 The set consiting of only a single measure.
 """
-struct EqualToMeasure{T <: AbstractGMPMeasure} <: MOI.AbstractScalarSet
+struct EqualToMeasure{T <: AbstractGMPMeasure} <: AbstractGMPSet
     measure::T
 end
 
@@ -16,7 +16,7 @@ MOI.dual_set_type(::Type{EqualToMeasure}) = GreaterThanContinuous
 
 The set consisting of all continuous functions bigger than a single continuous.
 """
-struct GreaterThanContinuous{T <: AbstractGMPContinuous} <: MOI.AbstractScalarSet
+struct GreaterThanContinuous{T <: AbstractGMPContinuous} <: AbstractGMPSet
     continuous::T
 end
 
@@ -24,6 +24,7 @@ MOI.constant(set::GreaterThanContinuous) = set.continuous
 MOI.dual_set(s::GreaterThanContinuous) = EqualToMeasure(VariableMeasure(get.(constant(s), GenericContinuousAttributes))...)
 MOI.dual_set_type(::Type{GreaterThanContinuous}) = EqualToMeasure
 
+# TODO define sets for MomentSubstitution
 const GMPset = Union{EqualToMeasure, GreaterThanContinuous}
 
 function Base.:(==)(set1::GMPset, set2::GMPset)

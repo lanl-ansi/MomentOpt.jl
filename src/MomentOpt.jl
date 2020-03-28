@@ -6,21 +6,56 @@ import MultivariateBases
 const MB = MultivariateBases
 
 # MOI extension
-
 using MathOptInterface
 const MOI = MathOptInterface
 include("MeasureJuMP/attributes.jl")
 
 using Reexport
-
 Reexport.@reexport using JuMP
 
-abstract type AbstractGMPVariable  <: JuMP.AbstractVariable end
-const GMPAffExpr{T <: Number, V <: AbstractGMPVariable} = JuMP.GenericAffExpr{T, V}
-abstract type AbstractGMPConstraint <: AbstractConstraint end
+import LinearAlgebra.dot
+using SemialgebraicSets
 
+abstract type AbstractGMPObject end
+# define measure 
+# define continuous
+include("objects.jl")
+
+abstract type AbstractGMPVariable  <: JuMP.AbstractVariable end
+abstract type AbstractGMPVariableRef <: JuMP.AbstractVariableRef end
+include("variables.jl")
+
+abstract type AbstractGMPScalar <: JuMP.AbstractJuMPScalar end
+include("gmpaffexpr.jl")
+
+
+#TODO stopped here
+include("objectaffexpr.jl")
+include("momentaffexpr.jl")
+
+abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
+# define MomentSubstitution
+# define IntegralSubstitution
+
+abstract type AbstractGMPSet <: MOI.AbstractScalarSet end
+include("MeasureJuMP/sets.jl")
+
+abstract type AbstractGMPShape <: JuMP.AbstractShape end
+include("shapes.jl")
+
+abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
+# define LinearMeasureConstraint
+# define LinearContinuousConstraint
+# define LinearMomentConstraint
+# define LinearIntegralConstriant
+# define MomentSubstitutionConstraint
+# define IntegralSubstitutionConstraint
+#
 include("gmpmodel.jl")
 
+include("shapes.jl")
+
+include("constraints.jl")
 #=
 
 struct NoScalar <: AbstractGMPScalar end

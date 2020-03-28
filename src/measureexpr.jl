@@ -2,15 +2,6 @@ export MeasureExpr, AffineMeasureExpr
 
 abstract type AbstractMeasureExpressionLike end
 Base.broadcastable(me::AbstractMeasureExpressionLike) = Ref(me)
-
-function compatible(meas1::AbstractMeasureRef, meas2::AbstractMeasureRef)
-    if sort!(poly_variables(meas1)) == sort!(poly_variables(meas2))
-        return true
-    else
-        return false
-    end
-end
-
 mutable struct MeasureExpr{T <: Number} <: AbstractMeasureExpressionLike
     coefs::Vector{T}
     meass::Vector{AbstractMeasureRef}

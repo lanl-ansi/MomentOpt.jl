@@ -48,16 +48,16 @@ struct PRIMAL_APPROXIMATION_MODE <: AbstractApproximationMode end
 struct DUAL_APPROXIMATION_MODE <: AbstractApproximationMode end
 
 export NOT_APPROXIMATED, PRIMAL_RELAXED, DUAL_STRENGTHENED, PRIMAL_STRENGTHENED, DUAL_RELAXED
-abstract type AbstractGMPStatus end
-struct NOT_APPROXIMATED <: AbstractGMPStatus end
-struct PRIMAL_RELAXED <: AbstractGMPStatus end
-struct DUAL_STRENGTHENED <: AbstractGMPStatus end
-struct PRIMAL_STRENGTHENED <: AbstractGMPStatus end
-struct DUAL_RELAXED <: AbstractGMPStatus end
+abstract type AbstractApproximationStatus end
+struct NOT_APPROXIMATED <: AbstractApproximationStatus end
+struct PRIMAL_RELAXED <: AbstractApproximationStatus end
+struct DUAL_STRENGTHENED <: AbstractApproximationStatus end
+struct PRIMAL_STRENGTHENED <: AbstractApproximationStatus end
+struct DUAL_RELAXED <: AbstractApproximationStatus end
 
 mutable struct ApproximationInfo
     mode::AbstractApproximationMode
-    status::AbstractGMPStatus
+    status::AbstractApproximationStatus
     degree::Int
     solver::Union{Nothing, Function}
     function ApproximationInfo()
@@ -92,6 +92,14 @@ constraint_names(model::GMPModel) = model_info(model).constraint_names
 JuMP.object_dictionary(model::GMPModel) = model.model_info.obj_dict
 JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
 
+function JuMP.termination_status(model::GMPModel)
+    if approximation_info(model).status isa NOT_APPROXIMATED
+        return (NOT_APPROXIMATED(), OptimizeNodCalled)
+    else
+        return (approximation_info(model).status, termination_status(approximation_model(model)))
+    end
+end
+
 function update_degree(m::GMPModel, degree::Int)
     if model_info(m).max_degree < degree
         model_info(m).max_degree = degree
@@ -99,30 +107,18 @@ function update_degree(m::GMPModel, degree::Int)
     end
 end
 
-# define GMPVariableRef
-abstract type GMPVariableRef <: JuMP.AbstractVariableRef end
-
-# define internal functions for GMPVariableRef
-Base.iszero(::GMPVariableRef) = false
-Base.copy(v::GMPVariableRef) = v
-Base.copy(v::GMPVariableRef, m::GMPModel) = GMPVariableRef(m, v.index)
-Base.:(==)(v::GMPVariableRef, w::GMPVariableRef) = v.model === w.model && v.index == w.index
-Base.broadcastable(v::GMPVariableRef) = Ref(v)
-JuMP.isequal_canonical(v::GMPVariableRef, w::GMPVariableRef) = v == w
+# 
 JuMP.variable_type(::GMPModel) = GMPVariableRef
-
+JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.idx]
 function set_name(v::GMPVariableRef, s::String)
     owner_model(v).model_info.variable_names[v.index] = s
     return nothing
 end
-
 function JuMP.is_valid(m::GMPModel, vref::GMPVariableRef)
     return (m === vref.model &&
             vref.idx in keys(gmp_variables(m)))
 end
-
-function gmp_variable_refererence_type(v::AbstractGMPVariable) end
-    
+ 
 function JuMP.add_variable(m::GMPModel, v::AbstractGMPVariable, name::String = "")
     model_info(m).vct += 1
     vr_type = gmp_variable_refererence_type(v)
@@ -138,12 +134,6 @@ function JuMP.delete(m::GMPModel, vref::GMPVariableRef)
     delete!(object_dictionary(m), vref.index)
 end
 
-JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.idx]
-
-function JuMP.set_name(vref::GMPVariableRef, name::String)
-    variable_names(vref.model)[vref.index] = name
-end
-
 function JuMP.variable_by_name(m::GMPModel, name::String)
     index = findall(x -> x == name, variable_names(m))
     if index isa Nothing
@@ -151,6 +141,7 @@ function JuMP.variable_by_name(m::GMPModel, name::String)
     elseif length(index) > 1
         @error "Multiple variables have the name $name."
     else
+        v = object_dictionary(m)[name]
         return GMPVariableRef(m, VariableIndex(index))
     end
 end
@@ -158,7 +149,7 @@ end
 # utilities to modify variables
 
 # define GMPConstraintRef
-const GMPConstraintRef = JuMP.ConstraintRef{GMPModel, MOI.ConstraintIndex}
+const GMPConstraintRef = JuMP.ConstraintRef{GMPModel, MOI.ConstraintIndex, JuMP.ScalarShape}
 
 # define internal functions for GMPConstraintRef
 JuMP.constraint_type(::GMPModel) = GMPConstraintRef
