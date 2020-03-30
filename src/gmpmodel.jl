@@ -21,16 +21,16 @@ This type contains the data of the model.
 """
 
 mutable struct ModelData
-    variables::Dict{MOI.VariableIndex, AbstractGMPVariable}
-    constraints::Dict{MOI.ConstraintIndex, AbstractGMPConstraint}
+    variables::Dict{Int, AbstractGMPVariable}
+    constraints::Dict{Int, AbstractGMPConstraint}
     objective_sense::MOI.OptimizationSense
-    objective_function::GMPAffExpr
+    objective_function::AbstractGMPExpressionLike
     max_degree::Int
     function ModelData()
-        new(Dict{MOI.VariableIndex, AbstractGMPVariable}(),
-            Dict{MOI.ConstraintIndex, AbstractGMPConstraint}(),
+        new(Dict{Int, AbstractGMPVariable}(),
+            Dict{Int, AbstractGMPConstraint}(),
             MOI.FEASIBILITY_SENSE,
-            GMPAffExpr{Int, AbstractGMPVariable}(), 0)
+            GMPEmptyExpr(), 0)
     end
 end
 
@@ -109,20 +109,25 @@ end
 
 # 
 JuMP.variable_type(::GMPModel) = GMPVariableRef
-JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.idx]
-function set_name(v::GMPVariableRef, s::String)
+JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.index]
+
+function JuMP.set_name(v::GMPVariableRef, s::String)
     owner_model(v).model_info.variable_names[v.index] = s
     return nothing
 end
+
 function JuMP.is_valid(m::GMPModel, vref::GMPVariableRef)
     return (m === vref.model &&
             vref.idx in keys(gmp_variables(m)))
 end
- 
-function JuMP.add_variable(m::GMPModel, v::AbstractGMPVariable, name::String = "")
+
+function GMPVariableRef(m::GMPModel, v::AbstractGMPVariable)
     model_info(m).vct += 1
-    vr_type = gmp_variable_refererence_type(v)
-    vref = vr_type(m, VariableIndex(model_info(m).vct))
+    return GMPVariableRef(m, model_info(m).vct, variable_type(v))
+end
+
+function JuMP.add_variable(m::GMPModel, v::AbstractGMPVariable, name::String = "")
+    vref = GMPVariableRef(m, v)
     gmp_variables(m)[vref.index] = v
     push!(model_info(m).variable_names, name)
     return vref
@@ -144,6 +149,14 @@ function JuMP.variable_by_name(m::GMPModel, name::String)
         v = object_dictionary(m)[name]
         return GMPVariableRef(m, VariableIndex(index))
     end
+end
+
+function gmp_object(vref::GMPVariableRef)
+    return gmp_variables(owner_model(vref))[vref.index]
+end
+
+function MP.variables(vref::GMPVariableRef)
+    return MOI.get(gmp_object(vref).v, Variables())
 end
 
 # utilities to modify variables

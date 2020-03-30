@@ -1,8 +1,10 @@
 module MomentOpt
 
+using Reexport
+
 using MultivariatePolynomials
 const MP = MultivariatePolynomials
-import MultivariateBases
+Reexport.@reexport using MultivariateBases
 const MB = MultivariateBases
 
 # MOI extension
@@ -10,15 +12,12 @@ using MathOptInterface
 const MOI = MathOptInterface
 include("MeasureJuMP/attributes.jl")
 
-using Reexport
 Reexport.@reexport using JuMP
 
 import LinearAlgebra.dot
-using SemialgebraicSets
+Reexport.@reexport using SemialgebraicSets
 
 abstract type AbstractGMPObject end
-# define measure 
-# define continuous
 include("objects.jl")
 
 abstract type AbstractGMPVariable  <: JuMP.AbstractVariable end
@@ -27,21 +26,17 @@ include("variables.jl")
 
 abstract type AbstractGMPScalar <: JuMP.AbstractJuMPScalar end
 include("gmpaffexpr.jl")
-
-
-#TODO stopped here
-include("objectaffexpr.jl")
-include("momentaffexpr.jl")
+include("affexpr.jl")
 
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution
 # define IntegralSubstitution
 
 abstract type AbstractGMPSet <: MOI.AbstractScalarSet end
-include("MeasureJuMP/sets.jl")
+#include("MeasureJuMP/sets.jl")
 
 abstract type AbstractGMPShape <: JuMP.AbstractShape end
-include("shapes.jl")
+#include("shapes.jl")
 
 abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
 # define LinearMeasureConstraint
@@ -50,12 +45,11 @@ abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
 # define LinearIntegralConstriant
 # define MomentSubstitutionConstraint
 # define IntegralSubstitutionConstraint
+#include("constraints.jl")
 #
 include("gmpmodel.jl")
 
-include("shapes.jl")
 
-include("constraints.jl")
 #=
 
 struct NoScalar <: AbstractGMPScalar end

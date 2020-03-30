@@ -1,16 +1,16 @@
 export integrate
 
 """
-     integrate(p::Number, m::AbstractMeasure)
-     integrate(p::MP.AbstractPolynomialLike, m::AbstractMeasure)
+     integrate(p::Number, m::AbstractGMPMeasure)
+     integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
 
 Returns the integral of p with respect to m. 
 """
-function integrate(p::Number, m::AbstractMeasure)
+function integrate(p::Number, m::AbstractGMPMeasure)
     return p*eval_vector(maxdegree_monomials(m, 0))
 end
 
-function integrate(p::MP.AbstractPolynomialLike, m::AbstractMeasure)
+function integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
     basis = covering_monomials(m, monomials(p))
     return dot(coefficients(p, basis), eval_vector(basis, m))
 end
@@ -22,11 +22,11 @@ export SymbolicMeasure
 
 Type representing a symbolic measure. This type does not allow to compute integrals or relaxations.
 """
-struct SymbolicMeasure{ V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPMeasure
+struct SymbolicMeasure{ V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet} <: AbstractGMPMeasure
     variables::Vector{V}
     bsa_set::S
     approx_type::NO_APPROXIMATION
-    approx_basis::T
+    approx_basis
 end
 
 function SymbolicMeasure(variables::Vector{V}, support::S, moment_basis::T) where { V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, T <: Type{<: MB.AbstractPolynomialBasis}}
@@ -39,11 +39,11 @@ export AnalyticMeasure
     AnalyticMeasure{V, T} <: AbstractGMPMeasure
 
 Type representing an analytic measure. Its field approx_function allows to integrate polynomials."""
-struct AnalyticMeasure{V <: MP.AbstractVariable, T <: Type{<:MB.AbstractPolynomialBasis}} <: AbstractGMPMeasure
+struct AnalyticMeasure{V <: MP.AbstractVariable} <: AbstractGMPMeasure
     variables::Vector{V}
     bsa_set::Nothing
     approx_type::EXACT_APPROXIMATION
-    approx_basis::T
+    approx_basis
     approx_function::Function
 end
 
@@ -79,10 +79,10 @@ export VariableMeasure
 
 Type representing a measure that can be relaxed via a conic relaxation. 
 """
-struct VariableMeasure{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, R <: AbstractApproximation, T <: Type{<: MB.AbstractPolynomialBasis}} <: AbstractGMPMeasure
+struct VariableMeasure{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, R <: AbstractApproximation} <: AbstractGMPMeasure
     variables::Vector{V}
     bsa_set::S
     approx_type::R
-    approx_basis::T
+    approx_basis
 end
 

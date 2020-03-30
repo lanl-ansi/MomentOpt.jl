@@ -1,3 +1,5 @@
+Base.broadcastable(o::AbstractGMPObject) = Ref(o)
+
 """
     AbstractApproximationType
 
@@ -46,7 +48,7 @@ Attribute for a function allowing to approximate the action of a GMPObject.
 """
 struct ApproximationFunction <: MOI.AbstractVariableAttribute end
 
-const GenericObjectAttributes = [Variables(), BSASet(), ApproximationType(), GMPBasis()]
+const GenericObjectAttributes = [Variables(), BSASet(), ApproximationType(), ApproximationBasis()]
 
 MOI.get(m::AbstractGMPObject, ::Variables) = m.variables
 MOI.get(m::AbstractGMPObject, ::BSASet) = m.bsa_set
@@ -57,7 +59,7 @@ function MOI.get(m::AbstractGMPObject, ::ApproximationFunction)
 end
 
 function Base.:(==)(m1::AbstractGMPObject, m2::AbstractGMPObject)
-    return typeof(m1) == typeof(m2) && all(get(m1, attr) == get(m2, attr) for attr in GenericObjectAttributes)
+    return typeof(m1) == typeof(m2) && all(MOI.get(m1, attr) == MOI.get(m2, attr) for attr in GenericObjectAttributes)
 end
 
 # GMPObjectAttributes functionalities
@@ -77,7 +79,7 @@ end
 
 returns the monomial 1 defined on vars. 
 """
-_mono_one(vars:::Vector{MP.AbstractVariable}) = prod(var^0 for var in vars)
+_mono_one(vars::Vector{MP.AbstractVariable}) = prod(var^0 for var in vars)
 _mono_one(::Nothing) = 1
 
 covering_basis(t::AbstractGMPObject, p::Number) = covering_basis(t, p*mono_one(get(t, Variables())))
@@ -97,8 +99,8 @@ end
 
 Returns the values of m corresponding to the monomials in basis. 
 """
-function eval_vector(basis::MB.AbstractPolynomialBasis, m::AbstractObject)
-    @assert get(m, ::ApproximationType()) isa EXACT_APPROXIMATION
+function eval_vector(basis::MB.AbstractPolynomialBasis, m::AbstractGMPObject)
+    @assert get(m, ApproximationType()) isa EXACT_APPROXIMATION
     return get(m, ApproximationFunction()).(basis)
 end
 
