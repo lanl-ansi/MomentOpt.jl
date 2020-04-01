@@ -97,9 +97,10 @@ function JuMP.function_string(io, e::ObjectExpr)
 end
 
 
+
 # compatibility
 
-function Base.promote_rule(::Type{ObjectExpr{C}}, ::GMPVariableRef) where {C}
+function Base.promote_rule(::Type{ObjectExpr{C}}, ::Type{GMPVariableRef}) where {C}
     return ObjectExpr{C}
 end
 
@@ -119,9 +120,18 @@ end
 # The ObjectExr constructor checks that all objects in one expression have the same polynomial variables and the vref_type. 
 MP.variables(e::ObjectExpr) = variables(first(gmp_variables(e)))
 vref_type(e::ObjectExpr) = vref_type(first(gmp_variables(e)))
+degree(e::ObjectExpr) = 0
+
+"""
+    AffObjectExpr{S, T}
+
+Type representing an affine linear combination of GMPObjects.
+"""
+const AffObjectExpr{S, T <: Number} = GMPAffExpr{S, ObjectExpr{T}}
+
+Base.:-(e::ObjectExpr, a::AbstractGMPObject) = AffObjectExpr(e, a)
 
 # MomentExpr
-
 function all_vars_measures(mv::Vector{<:ObjectExpr})
     if !isempty(mv)
         @assert vref_type(first(mv)) == AbstractGMPMeasure "Polynomials can only be paired with measures"
@@ -132,7 +142,6 @@ function cover_variables(c::Number, e::ObjectExpr) end
 function cover_variables(c::MP.AbstractPolynomialLike, e::ObjectExpr) 
     @assert variables(c) ⊆ variables(e) "$e does not act on $c."
 end
-
 export MomentExpr
 """
     MomentExpr{T, C}
@@ -250,13 +259,6 @@ const Mom = MomentExpr
 
 Type representing an affine linear combination of Moments.
 """
-#=
-mutable struct AffMomentExpr{T <: Union{Number, MP.AbstractPolynomialLike}, S <: Number, U <: Number} <: AbstractGMPExpressionLike
-    expr::MomentExpr{T, S}
-    cons::U
-end
-=#
-
 const AffMomentExpr{T <: Union{Number, MP.AbstractPolynomialLike}, S <: Number, U <: Number} = 
 GMPAffExpr{U, MomentExpr{T, S}}
 

@@ -85,7 +85,6 @@ function Base.sum(mev::Vector{GMPAffExpr{S, V}}) where {S, V}
     return GMPAffExpr{S, V}(sum(expr.(mev)), sum(constant.(mev)))
 end
 
-
 function Base.:+(a::Number, ae::GMPAffExpr{S, V}) where {S, V}
     return GMPAffExpr{promote_type(S, typeof(a)), V}(expr(ae), constant(ae)+a)
 end
@@ -95,11 +94,11 @@ function Base.:+(ae::ExprVariables, a::Number)
 end
 
 function Base.:-(a::Number, ae::ExprVariables)
-    return ae + (-a)
+    return a + (-ae)
 end
 
 function Base.:-(ae::ExprVariables, a::Number)
-    return a + (-ae)
+    return ae + (-a)
 end
 
 

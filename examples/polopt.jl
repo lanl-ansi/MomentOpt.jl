@@ -37,8 +37,6 @@ gmp = GMPModel()
 
 # Define the objective 
 @objective gmp Min Mom(f, μ)
-# This notation is a shorthand for 
-# @mobjective gmp :Min Mom(f,μ)
  
 # Constrain μ to be a probablity measure
 @constraint gmp Mom(1, μ) == 1

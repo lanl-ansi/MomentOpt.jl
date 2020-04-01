@@ -67,6 +67,7 @@ struct ZeroMeasure <: AbstractGMPMeasure
 end
 
 ZeroMeasure() = ZeroMeasure(nothing, nothing, EXACT_APPROXIMATION(), nothing, x -> 0)
+Base.show(io::IO, ::ZeroMeasure) = show(io, 0) 
 
 function covering_basis(t::ZeroMeasure, p::MP.AbstractPolynomialLike)
     return MB.basis_covering_monomials(get.(t, MonomialBasis, variables(p)), monomials(p)) 

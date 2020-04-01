@@ -10,7 +10,7 @@ JuMP.reshape_set(set::MOI.AbstractScalarSet, ::MomentConstraintShape) = set
 #TODO dual shape for MomentConstraintShape
 
 """
-    MomentConstraint{}
+    MomentConstraint
 
 """
 struct MomentConstraint <: AbstractGMPConstraint
@@ -37,6 +37,70 @@ end
 function JuMP.build_constraint(_error::Function, ae::AffMomentExpr, set::MOI.AbstractScalarSet)
     return MomentConstraint(ae, set)
 end
+
+# MeasureConstraints
+"""
+    EqualToMeasure{T} <: AbstractScalarSet
+
+The set consiting of only a single measure.
+"""
+struct EqualToMeasure{T <: AbstractGMPMeasure} <: AbstractGMPSet
+    measure::T
+end
+
+MOI.constant(set::EqualToMeasure) = set.measure
+
+function JuMP.in_set_string(print_mode, set::EqualToMeasure)
+    return "= "*sprint(show, MOI.constant(set))
+end
+
+# TODO MOI.dual_set for EqualToMeasure (GreaterThenContinuous)
+
+"""
+    MeasureConstraintShape 
+
+"""
+struct MeasureConstraintShape <: AbstractGMPShape end
+
+JuMP.reshape_vector(expr::ObjectExpr, ::MeasureConstraintShape) = expr
+JuMP.reshape_set(set::EqualToMeasure, ::MeasureConstraintShape) = set
+#TODO dual shape for MeasureConstraintShape
+
+
+"""
+    MeasureConstraint
+
+"""
+struct MeasureConstraint <: AbstractGMPConstraint
+    func::ObjectExpr
+    set::EqualToMeasure
+end
+
+JuMP.jump_function(con::MeasureConstraint) = con.func
+JuMP.moi_set(con::MeasureConstraint) = con.set
+JuMP.shape(con::MeasureConstraint) = MeasureConstraintShape()
+
+function MeasureConstraint(ae::AffObjectExpr, set::MOI.EqualTo)
+    @assert(constant(ae) == 0, "Affine measure constraints are not supported.")
+    @assert(MOI.constant(set) == 0, "Affine measure constraints are not supported.")
+    return MeasureConstraint(expr(ae), EqualToMeasure(ZeroMeasure()))
+end
+
+function JuMP.function_string(mode, mc::MeasureConstraint)
+    return string(mc.func)
+end
+
+function Base.show(io::IO, con::MeasureConstraint)
+    print(io, JuMP.constraint_string(JuMP.REPLMode, con))
+end
+
+function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::MOI.EqualTo)
+    @info s
+    return MeasureConstraint(ae, s) 
+end
+
+
+
 
 """
     GMPConstraintRef.
