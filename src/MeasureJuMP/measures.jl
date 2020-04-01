@@ -30,7 +30,7 @@ struct SymbolicMeasure{ V <: MP.AbstractVariable, S <: AbstractBasicSemialgebrai
 end
 
 function SymbolicMeasure(variables::Vector{V}, support::S, moment_basis::T) where { V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, T <: Type{<: MB.AbstractPolynomialBasis}}
-    return SymbolicMeasure(variables, support, NO_RELAXATION(), moment_basis) 
+    return SymbolicMeasure(variables, support, NO_APPROXIMATION(), moment_basis) 
 end
 
 export AnalyticMeasure
@@ -48,7 +48,7 @@ struct AnalyticMeasure{V <: MP.AbstractVariable} <: AbstractGMPMeasure
 end
 
 function AnalyticMeasure(variables::Vector{V}, moment_basis::T, moment_function::Function) where  {V <: MP.AbstractVariable, T <: Type{<:MB.AbstractPolynomialBasis}} 
-    return AnalyticMeasure(variables, nothing, EXACT_RELAXATION(), moment_basis, moment_function)
+    return AnalyticMeasure(variables, nothing, EXACT_APPROXIMATION(), moment_basis, moment_function)
 end
 
 export ZeroMeasure
@@ -66,7 +66,7 @@ struct ZeroMeasure <: AbstractGMPMeasure
     approx_function::Function
 end
 
-ZeroMeasure() = ZeroMeasure(nothing, nothing, EXACT_RELAXATION(), nothing, x -> 0)
+ZeroMeasure() = ZeroMeasure(nothing, nothing, EXACT_APPROXIMATION(), nothing, x -> 0)
 
 function covering_basis(t::ZeroMeasure, p::MP.AbstractPolynomialLike)
     return MB.basis_covering_monomials(get.(t, MonomialBasis, variables(p)), monomials(p)) 
@@ -85,4 +85,7 @@ struct VariableMeasure{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraic
     approx_type::R
     approx_basis
 end
+
+export Meas
+Meas(vars; support = FullSpace(), basis = MonomialBasis, approx = DefaultApproximation()) = VariableMeasure(vars, support, approx, basis)
 

@@ -1,6 +1,7 @@
 MomentOpt.jl Change Log
 =======================
 ### stagged
+- @measure is replaced by @variable
 - change measures after definition
 
 ### v 0.1.0

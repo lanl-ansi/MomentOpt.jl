@@ -33,15 +33,15 @@ K = @set(1-x>=0 && x+1>=0 && 1-y>=0 && y+1>=0)
 
 gmp = GMPModel()
 # Add measure to the model
-@measure gmp μ [x,y] support=K
+@variable gmp μ Meas([x,y], support = K)
 
 # Define the objective 
-@objective gmp Min Mom(f,μ)
+@objective gmp Min Mom(f, μ)
 # This notation is a shorthand for 
 # @mobjective gmp :Min Mom(f,μ)
  
 # Constrain μ to be a probablity measure
-@constraint gmp Mom(1,μ) == 1
+@constraint gmp Mom(1, μ) == 1
 
 # We solve the relaxation of order 2 with CSDP
 relax!(gmp, 2, with_optimizer(Mosek.Optimizer))

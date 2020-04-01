@@ -10,7 +10,7 @@ const MB = MultivariateBases
 # MOI extension
 using MathOptInterface
 const MOI = MathOptInterface
-include("MeasureJuMP/attributes.jl")
+include("MeasureJuMP/attributes.jl") # maybe move to gmpmodel
 
 Reexport.@reexport using JuMP
 
@@ -45,7 +45,7 @@ abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
 # define LinearIntegralConstriant
 # define MomentSubstitutionConstraint
 # define IntegralSubstitutionConstraint
-#include("constraints.jl")
+include("constraints.jl")
 #
 include("gmpmodel.jl")
 

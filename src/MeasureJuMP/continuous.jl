@@ -83,3 +83,8 @@ struct VariableContinuous{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebr
     approx_type::R
     approx_basis
 end
+
+
+export Cont
+Cont(vars; domain = FullSpace(), basis = MonomialBasis, approx = DefaultApproximation()) = VariableContinuous(vars, domain, approx, basis)
+

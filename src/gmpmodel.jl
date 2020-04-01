@@ -100,14 +100,15 @@ function JuMP.termination_status(model::GMPModel)
     end
 end
 
+MP.maxdegree(::Number) = 0
 function update_degree(m::GMPModel, degree::Int)
-    if model_info(m).max_degree < degree
-        model_info(m).max_degree = degree
+    if model_data(m).max_degree < degree
+        model_data(m).max_degree = degree
         approximation_info(m).degree = maximum([approximation_info(m).degree, degree])
     end
 end
 
-# 
+# referencing variables
 JuMP.variable_type(::GMPModel) = GMPVariableRef
 JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.index]
 
@@ -151,20 +152,44 @@ function JuMP.variable_by_name(m::GMPModel, name::String)
     end
 end
 
-function gmp_object(vref::GMPVariableRef)
+function vref_object(vref::GMPVariableRef)
     return gmp_variables(owner_model(vref))[vref.index]
 end
 
 function MP.variables(vref::GMPVariableRef)
-    return MOI.get(gmp_object(vref).v, Variables())
+    return MOI.get(vref_object(vref).v, Variables())
 end
+
+export support
+"""
+    support(vref::GMPVariableRef)
+
+Retruns the support a measure is defined on. 
+"""
+function support(vref::GMPVariableRef)
+    if vref_type(vref) == AbstractGMPContinuous
+        @info "$vref refers to a Continuous. Consider using domain($vref)."
+    end
+    return MOI.get(vref_object(vref).v, BSASet())
+end
+
+export domain
+"""
+    domain(vref::GMPVariableRef)
+
+Retruns the domain a continuous is defined on. 
+"""
+function domain(vref::GMPVariableRef)
+    if vref_type(vref) == AbstractGMPMeasure
+        @info "$vref refers to a Measure. Consider using support($vref)."
+    end
+    return MOI.get(vref_object(vref).v, BSASet())
+end
+
 
 # utilities to modify variables
 
-# define GMPConstraintRef
-const GMPConstraintRef = JuMP.ConstraintRef{GMPModel, MOI.ConstraintIndex, JuMP.ScalarShape}
-
-# define internal functions for GMPConstraintRef
+# referencing constraints 
 JuMP.constraint_type(::GMPModel) = GMPConstraintRef
 
 function JuMP.is_valid(m::GMPModel, cref::GMPConstraintRef)
@@ -172,13 +197,33 @@ function JuMP.is_valid(m::GMPModel, cref::GMPConstraintRef)
             cref.index in keys(gmp_constraints(m)))
 end
 
+function constraint_string(print_mode, ref::GMPConstraintRef; in_math_mode = false)
+    return JuMP.constraint_string(print_mode, JuMP.name(ref), constraint_object(ref), in_math_mode = in_math_mode)
+end
+
+function Base.show(io::IO, ref::GMPConstraintRef)
+    print(io, constraint_string(REPLMode, ref))
+end
+
+function JuMP.constraint_object(cref::GMPConstraintRef)
+    return gmp_constraints(cref.model)[cref.index]
+end
+
+function JuMP.jump_function(cref::GMPConstraintRef)
+    return jump_function(constraint_object(cref))
+end
+
+function JuMP.moi_set(cref::GMPConstraintRef)
+    return moi_set(constraint_object(cref))
+end
+
 function JuMP.add_constraint(m::GMPModel, c::AbstractGMPConstraint,
                              name::String = "")
     model_info(m).cct += 1
-    cref = ConstraintRef(m, MOI.ConstraintIndex(model_info(m).cct), shape(c))
+    cref = GMPConstraintRef(m, model_info(m).cct, shape(c))
     gmp_constraints(m)[cref.index] = c
     push!(constraint_names(m), name)
-    update_degree(m, degree(constraint_function(c)))
+    update_degree(m, degree(jump_function(c)))
     return cref
 end
 
@@ -188,9 +233,6 @@ function JuMP.delete(m::GMPModel, cref::GMPConstraintRef)
     delete!(object_dictionary(m), cref.index)
 end
 
-function JuMP.constraint_object(cref::GMPConstraintRef)
-    return gmp_constraints(cref.model)[cref.index]
-end
 
 function JuMP.num_constraints(m::GMPModel, F::Type{<:JuMP.AbstractJuMPScalar}, S::Type{<:MOI.AbstractSet})
     # TODO: is JuMP.ScalarConstraint the right thing to ask for?
@@ -221,7 +263,7 @@ end
 
 # Objective
 function JuMP.set_objective(m::GMPModel, sense::MOI.OptimizationSense,
-                            f::GMPAffExpr)
+                            f::AbstractGMPExpressionLike)
     model_data(m).objective_sense = sense
     model_data(m).objective_function = f
     update_degree(m, degree(f))    

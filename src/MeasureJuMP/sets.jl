@@ -1,3 +1,4 @@
+
 """
     EqualToMeasure{T} <: AbstractScalarSet
 
@@ -8,6 +9,11 @@ struct EqualToMeasure{T <: AbstractGMPMeasure} <: AbstractGMPSet
 end
 
 MOI.constant(set::EqualToMeasure) = set.measure
+
+function JuMP.in_set_string(print_mode, set::EqualToMeasure)
+    return " = "*sprint(show, constant(set))
+end
+
 MOI.dual_set(s::EqualToMeasure) = GreaterThanContinuous(VariableContinuous(get.(constant(s), GenericMeasureAttributes))...)
 MOI.dual_set_type(::Type{EqualToMeasure}) = GreaterThanContinuous
 
@@ -21,6 +27,11 @@ struct GreaterThanContinuous{T <: AbstractGMPContinuous} <: AbstractGMPSet
 end
 
 MOI.constant(set::GreaterThanContinuous) = set.continuous
+
+function JuMP.in_set_string(print_mode, set::EqualToMeasure)
+    return " = "*sprint(show, constant(set))
+end
+
 MOI.dual_set(s::GreaterThanContinuous) = EqualToMeasure(VariableMeasure(get.(constant(s), GenericContinuousAttributes))...)
 MOI.dual_set_type(::Type{GreaterThanContinuous}) = EqualToMeasure
 

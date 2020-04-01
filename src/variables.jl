@@ -1,7 +1,7 @@
 export GMPVariable
 
 """
-    GMPVariable{T <: AbstractGMPObject} <: AbstractGMPVariable
+    GMPVariable{S, T <: AbstractGMPObject} <: AbstractGMPVariable
 
 Type representing a variable for the GMPModel.
 """
@@ -40,12 +40,5 @@ Base.iszero(::GMPVariableRef) = false
 JuMP.isequal_canonical(v::GMPVariableRef, w::GMPVariableRef) = v == w
 Base.:(==)(v::GMPVariableRef, w::GMPVariableRef) = v.model === w.model && v.index == w.index
 Base.copy(v::GMPVariableRef) = v
-Base.copy(v::GMPVariableRef, m::JuMP.AbstractModel) = GMPVariableRef(m, v.index)
-variable_ref_type(vref::GMPVariableRef) = vref.var_type
-
-"""
-    compatible(vref1::GMPVariableRef, vref2::GMPVariableRef) 
-
-Checks whether two vrefs can be combined in the same GMPAffexpr.
-"""
-compatible(vref1::GMPVariableRef, vref2::GMPVariableRef) = variable_ref_type(vref1) == variable_ref_type(vref2)
+Base.copy(v::GMPVariableRef, m::JuMP.AbstractModel) = GMPVariableRef(m, v.index, v.var_type)
+vref_type(vref::GMPVariableRef) = vref.var_type

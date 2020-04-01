@@ -9,7 +9,7 @@ abstract type AbstractApproximationType end
 struct NO_APPROXIMATION <: AbstractApproximationType end
 struct EXACT_APPROXIMATION <: AbstractApproximationType end
 abstract type AbstractApproximation <: AbstractApproximationType end
-
+struct DefaultApproximation <: AbstractApproximation end #TODO to be removed as soon as default approximation is available.
 
 # GMPObjectAttributes and get functions
 
