@@ -12,7 +12,6 @@ function same_vref_type(vrefs::Vector{GMPVariableRef})
     if !isempty(vrefs)
         @assert all(x -> vref_type(vrefs[1]) == vref_type(x), vrefs[2:end]) "GMPObjects are of different type."
     end
-
 end
 
 """
@@ -95,8 +94,6 @@ function JuMP.function_string(io, e::ObjectExpr)
     end
     return str
 end
-
-
 
 # compatibility
 

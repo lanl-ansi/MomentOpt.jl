@@ -66,7 +66,19 @@ JuMP.reshape_vector(expr::ObjectExpr, ::MeasureConstraintShape) = expr
 JuMP.reshape_set(set::EqualToMeasure, ::MeasureConstraintShape) = set
 #TODO dual shape for MeasureConstraintShape
 
-
+function same_basis(mv::Vector{GMPVariableRef})
+    if isempty(mv)
+        return
+    else
+        basis = approx_basis(first(mv))
+        if all( x -> x == basis, approx_basis.(mv[2:end]))
+            return
+        else
+            @warn("Measures have different ApproximationBasis. $basis will be used for MeasureConstraint.")
+            return 
+        end
+    end
+end
 """
     MeasureConstraint
 
@@ -74,17 +86,16 @@ JuMP.reshape_set(set::EqualToMeasure, ::MeasureConstraintShape) = set
 struct MeasureConstraint <: AbstractGMPConstraint
     func::ObjectExpr
     set::EqualToMeasure
+        function MeasureConstraint(func::ObjectExpr, set::EqualToMeasure)
+            same_basis(gmp_variables(func))
+            new(func, set)
+        end
 end
 
 JuMP.jump_function(con::MeasureConstraint) = con.func
 JuMP.moi_set(con::MeasureConstraint) = con.set
 JuMP.shape(con::MeasureConstraint) = MeasureConstraintShape()
 
-function MeasureConstraint(ae::AffObjectExpr, set::MOI.EqualTo)
-    @assert(constant(ae) == 0, "Affine measure constraints are not supported.")
-    @assert(MOI.constant(set) == 0, "Affine measure constraints are not supported.")
-    return MeasureConstraint(expr(ae), EqualToMeasure(ZeroMeasure()))
-end
 
 function JuMP.function_string(mode, mc::MeasureConstraint)
     return string(mc.func)
@@ -95,12 +106,10 @@ function Base.show(io::IO, con::MeasureConstraint)
 end
 
 function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::MOI.EqualTo)
-    @info s
-    return MeasureConstraint(ae, s) 
+    @assert(constant(ae) == 0, "Affine measure constraints are not supported.")
+    @assert(MOI.constant(s) == 0, "Affine measure constraints are not supported.")
+    return MeasureConstraint(expr(ae), EqualToMeasure(ZeroMeasure())) 
 end
-
-
-
 
 """
     GMPConstraintRef.

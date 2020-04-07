@@ -11,8 +11,9 @@ function integrate(p::Number, m::AbstractGMPMeasure)
 end
 
 function integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
-    basis = covering_monomials(m, monomials(p))
-    return dot(coefficients(p, basis), eval_vector(basis, m))
+    basis = covering_basis(m, p)
+    coefs, _ = MB.change_basis(p, basis)
+    return dot(coefs, eval_vector(basis, m))
 end
 
 export SymbolicMeasure

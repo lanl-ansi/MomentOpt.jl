@@ -55,7 +55,7 @@ MOI.get(m::AbstractGMPObject, ::BSASet) = m.bsa_set
 MOI.get(m::AbstractGMPObject, ::ApproximationType) = m.approx_type
 MOI.get(m::AbstractGMPObject, ::ApproximationBasis) = m.approx_basis
 function MOI.get(m::AbstractGMPObject, ::ApproximationFunction) 
-    get(m, ApproximationType()) == EXACT_APPROXIMATION ? m.approx_func : nothing
+    MOI.get(m, ApproximationType()) isa EXACT_APPROXIMATION ? m.approx_function : nothing
 end
 
 function Base.:(==)(m1::AbstractGMPObject, m2::AbstractGMPObject)
@@ -71,7 +71,7 @@ end
 Returns all monomials in the basis of t covering the monomials of p.    
 """
 function covering_basis(t::AbstractGMPObject, p::MP.AbstractPolynomialLike)
-    return MB.basis_covering_monomials(get.(t, [GMPBasis(), Variables()])..., monomials(p)) 
+    return MB.basis_covering_monomials(MOI.get(t, ApproximationBasis()), monomials(p)) 
 end
 
 """
@@ -79,10 +79,10 @@ end
 
 returns the monomial 1 defined on vars. 
 """
-_mono_one(vars::Vector{MP.AbstractVariable}) = prod(var^0 for var in vars)
+_mono_one(vars::Vector{<:MP.AbstractVariable}) = prod(var^0 for var in vars)
 _mono_one(::Nothing) = 1
 
-covering_basis(t::AbstractGMPObject, p::Number) = covering_basis(t, p*mono_one(get(t, Variables())))
+covering_basis(t::AbstractGMPObject, p::Number) = covering_basis(t, p*mono_one(MOI.get(t, Variables())))
 
 
 """
@@ -91,7 +91,7 @@ covering_basis(t::AbstractGMPObject, p::Number) = covering_basis(t, p*mono_one(g
 Returns all monomials up to degree d in the basis of t.    
 """
 function MB.maxdegree_basis(t::AbstractGMPObject, d::Int)
-    return maxdegree_basis(get.(t, [GMPBasis(), Variables()])..., d) 
+    return maxdegree_basis(MOI.get.(t, [ApproximationBasis(), Variables()])..., d) 
 end
 
 """
@@ -100,8 +100,8 @@ end
 Returns the values of m corresponding to the monomials in basis. 
 """
 function eval_vector(basis::MB.AbstractPolynomialBasis, m::AbstractGMPObject)
-    @assert get(m, ApproximationType()) isa EXACT_APPROXIMATION
-    return get(m, ApproximationFunction()).(basis)
+    @assert MOI.get(m, ApproximationType()) isa EXACT_APPROXIMATION
+    return MOI.get(m, ApproximationFunction()).(MB.monomials(basis))
 end
 
 """

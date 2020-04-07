@@ -42,3 +42,4 @@ Base.:(==)(v::GMPVariableRef, w::GMPVariableRef) = v.model === w.model && v.inde
 Base.copy(v::GMPVariableRef) = v
 Base.copy(v::GMPVariableRef, m::JuMP.AbstractModel) = GMPVariableRef(m, v.index, v.var_type)
 vref_type(vref::GMPVariableRef) = vref.var_type
+JuMP.index(vref::GMPVariableRef) = vref.index

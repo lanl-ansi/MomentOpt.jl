@@ -1,6 +1,6 @@
 using Test
 using DynamicPolynomials
-
+using MosekTools
 @polyvar x
 
 using Revise
@@ -45,6 +45,28 @@ m3 = Mom(p2, ϕ)
 @test Mom.([p1,p2], [me, ϕ]) isa Vector{<:MomentOpt.MomentExpr}
 
 @constraint m mc2 m2 == 0
+@constraint m μ == ν
 
 
+# example 
+m = GMPModel()
+@variable m μ Meas([x, y]; support = @set(1-x^2-y^2≥0))
+@variable m ν Meas([x, y]; support = @set(1-x^2≥0 && 1-y^2≥0))
+@variable m λ lebesgue_measure_box(variable_box( x => [-1,1], y => [-1,1]); normalize = true)
+@constraint m μ + ν == λ
 
+amodel = Model()
+mu = MomentOpt.vref_object(μ)
+ms = ApproximationSequence(mu; model = amodel)
+
+# Polynomial to optimize 
+f = x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1 
+K = @set(1-x>=0 && x+1>=0 && 1-y>=0 && y+1>=0)
+gmp = GMPModel()
+@variable gmp μ Meas([x,y], support = K)
+@objective gmp Min Mom(f, μ)
+@constraint gmp Mom(1, μ) == 1
+
+set_approximation_degree(gmp, 4)
+set_optimizer(gmp, Mosek.Optimizer)
+approximate!(gmp)
