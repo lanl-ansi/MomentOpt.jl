@@ -1,11 +1,3 @@
-function MP.monomials(basis::MB.AbstractPolynomialBasis)
-    if basis isa MB.AbstractMonomialBasis
-        return basis.monomials
-    else
-        return basis.polynomials
-    end
-end
-
 function MB.change_basis(p::MP.AbstractPolynomialLike, Basis::Type{<:MB.AbstractPolynomialBasis})
     basis = MB.maxdegree_basis(Basis, variables(p), maxdegree(p))
     coeffs = Float64[]
@@ -30,5 +22,3 @@ function MB.change_basis(p::MP.AbstractPolynomialLike, basis::MB.AbstractPolynom
     idx = findall(!iszero, coeffs)
     return coeffs[idx], mons[idx]
 end
-
-MP.maxdegree(::Number) = 0

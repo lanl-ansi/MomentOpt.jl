@@ -89,15 +89,16 @@ variable_names(model::GMPModel) = model_info(model).variable_names
 constraint_names(model::GMPModel) = model_info(model).constraint_names
 JuMP.object_dictionary(model::GMPModel) = model.model_info.obj_dict
 JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
+
+function JuMP.termination_status(model::GMPModel)
+    return termination_status(approximation_model(model))
+end
+
 function JuMP.set_optimizer(model::GMPModel, optimizer::Function)
     approximation_info(model).solver = optimizer
     return nothing
 end
 
-
-function JuMP.termination_status(model::GMPModel)
-    return termination_status(approximation_model(model))
-end
 
 function update_degree(m::GMPModel, degree::Int)
     if model_data(m).max_degree < degree
@@ -107,9 +108,15 @@ function update_degree(m::GMPModel, degree::Int)
 end
 
 export set_approximation_degree
+"""
+    set_approximation_degree(model::GMPModel, degree::Int)
+
+Manually set the degree of the approximation to a custom value. The value cannot be less than the degree of the data. 
+"""
 function set_approximation_degree(model::GMPModel, degree::Int)
     if approximation_info(model).degree > degree && model_data(model).max_degree > degree
-        @warn "Approximation degree is already higher than $degree and has to be at least $(model_data(model).max_degree) because of the degree of the data."
+        approximation_info(model).degree = model_data(model).max_degree
+        @warn "Requested approximation degree $degree is too low to cover all data. The approximation degree has been set to the minimal value possible and now is $(model_data(model).max_degree)  "
     else
         approximation_info(model).degree = degree
     end
@@ -209,12 +216,15 @@ function domain(vref::GMPVariableRef)
     return MOI.get(vref_object(vref), BSASet())
 end
 
+export approx_basis
+"""
+    approx_basis(vref::GMPVariableRef)
+
+Returns the basis used to approximate vref.
+"""
 function approx_basis(vref::GMPVariableRef)
     return MOI.get(vref_object(vref), ApproximationBasis())
 end
-
-
-# utilities to modify variables
 
 # referencing constraints 
 JuMP.constraint_type(::GMPModel) = GMPConstraintRef
@@ -224,7 +234,7 @@ function JuMP.is_valid(m::GMPModel, cref::GMPConstraintRef)
             cref.index in keys(gmp_constraints(m)))
 end
 
-function constraint_string(print_mode, ref::GMPConstraintRef; in_math_mode = false)
+function JuMP.constraint_string(print_mode, ref::GMPConstraintRef; in_math_mode = false)
     return JuMP.constraint_string(print_mode, JuMP.name(ref), constraint_object(ref), in_math_mode = in_math_mode)
 end
 
@@ -243,8 +253,6 @@ end
 function JuMP.moi_set(cref::GMPConstraintRef)
     return moi_set(constraint_object(cref))
 end
-
-
 
 function JuMP.add_constraint(m::GMPModel, c::AbstractGMPConstraint,
                              name::String = "")
@@ -297,6 +305,21 @@ function JuMP.constraint_by_name(m::GMPModel, name::String)
     end
 end
 
+function JuMP.show_constraints_summary(io::IO, m::GMPModel)
+    n = length(gmp_constraints(m))
+    print(io, "Constraint", JuMP._plural(n), ": ", n)
+end
+
+function JuMP.constraints_string(print_mode, m::GMPModel)
+    strings = String[]
+    # Sort by creation order, i.e. MOI.ConstraintIndex value
+    constraints = sort(collect(gmp_constraints(m)), by = c -> c.first.value)
+    for (index, constraint) in constraints
+        push!(strings, JuMP.constraint_string(print_mode, constraint))
+    end
+    return strings
+end
+
 # Objective
 function JuMP.set_objective(m::GMPModel, sense::MOI.OptimizationSense,
                             f::AbstractGMPExpressionLike)
@@ -322,6 +345,16 @@ function JuMP.objective_function(m::GMPModel, FT::Type)
     return model_data(m).objective_function::FT
 end
 
+function JuMP.show_objective_function_summary(io::IO, m::GMPModel)
+    println(io, "Objective function type: ",
+            JuMP.objective_function_type(m))
+end
+
+function JuMP.objective_function_string(print_mode, m::GMPModel)
+    return JuMP.function_string(print_mode, objective_function(m))
+end
+
+
 # Show
 function JuMP.show_backend_summary(io::IO, model::GMPModel)
     println(io)
@@ -336,28 +369,36 @@ function JuMP.show_backend_summary(io::IO, model::GMPModel)
     end
 end
 
-function JuMP.show_objective_function_summary(io::IO, m::GMPModel)
-    println(io, "Objective function type: ",
-            JuMP.objective_function_type(m))
+# get value
+export approximation
+"""
+    approximation(vref::GMPVariableRef)
+
+Returns the approximation sequence of the referenced GMPObject.
+"""
+function approximation(vref::GMPVariableRef)
+    return Dict(k => value(v) for (k, v) in approximation_sequence(owner_model(vref), index(vref)).dict)
 end
 
-function JuMP.objective_function_string(print_mode, m::GMPModel)
-    return JuMP.function_string(print_mode, objective_function(m))
-end
+"""
+    approximation(vref::GMPVariableRef, m::AbstractPolynomialLike)
 
-_plural(n) = (isone(n) ? "" : "s")
-
-function JuMP.show_constraints_summary(io::IO, m::GMPModel)
-    n = length(gmp_constraints(m))
-    print(io, "Constraint", _plural(n), ": ", n)
-end
-
-function JuMP.constraints_string(print_mode, m::GMPModel)
-    strings = String[]
-    # Sort by creation order, i.e. MOI.ConstraintIndex value
-    constraints = sort(collect(gmp_constraints(m)), by = c -> c.first.value)
-    for (index, constraint) in constraints
-        push!(strings, JuMP.constraint_string(print_mode, constraint))
+Return the approximation of the ⟨vref, m⟩. 
+"""
+function approximation(vref::GMPVariableRef, m::MP.AbstractPolynomialLike)
+    #TODO check whether approximation is available
+    as = approximation_sequence(owner_model(vref), index(vref)).dict
+    if haskey(as, m)
+        return value(as[m])
+    else
+        coefs, basis = MB.change_basis(m, MOI.get(vref_object(vref), ApproximationBasis()))
+        return sum( c*value(as[b]) for (c,b) in zip(coefs, basis)) 
     end
-    return strings
 end
+
+function approximation(vref::GMPVariableRef, m::Number)
+    return approximation(vref,  m*_mono_one(MOI.get(vref_object(vref), Variables())))
+end
+
+
+JuMP.value(me::MomentExpr) = sum(c*approximation(m, cv) for (cv, mv) in me for (c, m) in mv)

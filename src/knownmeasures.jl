@@ -32,11 +32,11 @@ Get the measure an AbstractMeasureRef is pointing to.
 measure(v::AbstractMeasureRef) = model_data(owner_model(v)).variables[v]
 
 """
-    poly_variables(v::AbstractMeasureRef)
+    MP.variables(v::AbstractMeasureRef)
 
 Get variables measure is acting on.
 """
-poly_variables(v::AbstractMeasureRef) = poly_variables(measure(v))
+MP.variables(v::AbstractMeasureRef) = MP.variables(measure(v))
 
 
 """
@@ -45,7 +45,7 @@ poly_variables(v::AbstractMeasureRef) = poly_variables(measure(v))
 
 Supertype for all measures whose moments are known explicitly via a function.
 For every implementation of a subtype of AbstractKnownMeasures the functions
-poly_variables and moment_function have to be defined. 
+MP.variables and moment_function have to be defined. 
 By default a subtype of AbstractKnownMeasure is assumed to look like
 ```julia
 struct CustomKnownMeasure <: AbstractKnownMeasure
@@ -58,7 +58,7 @@ and func is a function that takes as input the exponent α of a monomial x^α an
 the value of the corresponding moment.
 """
 abstract type AbstractKnownMeasure end
-poly_variables(m::AbstractKnownMeasure) = m.variables
+MP.variables(m::AbstractKnownMeasure) = m.variables
 moment_function(m::AbstractKnownMeasure) = m.func
 Base.broadcastable(m::AbstractKnownMeasure) = Ref(m)
 
@@ -68,7 +68,7 @@ Base.broadcastable(m::AbstractKnownMeasure) = Ref(m)
 Returns the value of the integral of mon with respect to meas.
 """
 function integrate(poly::PT, meas::AbstractKnownMeasure) where PT <: MT 
-    vars = poly_variables(meas)
+    vars = MP.variables(meas)
     fun = moment_function(meas)
     if poly isa Number
         c = [poly]
@@ -107,7 +107,7 @@ struct LebesgueMeasure <: AbstractKnownMeasure
 end
 
 function Base.show(io::IO, m::LebesgueMeasure)
-    print(io, "Lebesgue measure acting on: $(poly_variables(m))")
+    print(io, "Lebesgue measure acting on: $(MP.variables(m))")
 end
 
 lebesgue_line(lb, ub, deg) = (ub^(deg+1) - lb^(deg+1))/(deg+1)

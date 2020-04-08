@@ -54,8 +54,9 @@ MOI.get(m::AbstractGMPObject, ::Variables) = m.variables
 MOI.get(m::AbstractGMPObject, ::BSASet) = m.bsa_set
 MOI.get(m::AbstractGMPObject, ::ApproximationType) = m.approx_type
 MOI.get(m::AbstractGMPObject, ::ApproximationBasis) = m.approx_basis
-function MOI.get(m::AbstractGMPObject, ::ApproximationFunction) 
-    MOI.get(m, ApproximationType()) isa EXACT_APPROXIMATION ? m.approx_function : nothing
+function MOI.get(m::AbstractGMPObject, ::ApproximationFunction)
+    @assert MOI.get(m, ApproximationType()) isa EXACT_APPROXIMATION "No exact approximation available."
+    return m.approx_function
 end
 
 function Base.:(==)(m1::AbstractGMPObject, m2::AbstractGMPObject)
@@ -71,6 +72,7 @@ end
 Returns all monomials in the basis of t covering the monomials of p.    
 """
 function covering_basis(t::AbstractGMPObject, p::MP.AbstractPolynomialLike)
+    @assert variables(p) ⊆  MOI.get(t, Variables()) "Object does not act on $(variables(p))."
     return MB.basis_covering_monomials(MOI.get(t, ApproximationBasis()), monomials(p)) 
 end
 
@@ -100,7 +102,6 @@ end
 Returns the values of m corresponding to the monomials in basis. 
 """
 function eval_vector(basis::MB.AbstractPolynomialBasis, m::AbstractGMPObject)
-    @assert MOI.get(m, ApproximationType()) isa EXACT_APPROXIMATION
     return MOI.get(m, ApproximationFunction()).(MB.monomials(basis))
 end
 

@@ -47,7 +47,7 @@ function AnalyticContinuous(variables::Vector{V}, monom_basis, monom_function::F
     return AnalyticContinuous(variables, nothing,  EXACT_APPROXIMATION(), monom_basis, monom_function) 
 end
 
-export ConstantContinuous
+export ConstantContinuous, ZeroContinuous, OneContinuous
 
 """
     ConstantContinuous <: AbstractGMPContinuous
@@ -67,7 +67,7 @@ ZeroContinuous() = ConstantContinuous(0)
 OneContinuous() = ConstantContinuous(1)
 
 function approximate(f::ConstantContinuous, ::Int)
-    return get(f, ApproxFunction())(1)*_mono_one(get(f, Variables()))
+    return MOI.get(f, ApproxFunction())(1)*_mono_one(get(f, Variables()))
 end
 
 export VariableContinuous

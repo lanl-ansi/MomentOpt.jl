@@ -16,7 +16,13 @@ Generates VariableBox that contains information for lower and upper bounds of va
 vb = variable_box( x=> [0,1], y=>[-1,1])
 
 """
-variable_box(args...) = VariableBox(Dict(args))
+function variable_box(args...)
+    T = Int
+    for i in 1:length(args)
+        T = promote_type(T, eltype(last(args[i])))
+    end
+    return VariableBox(Dict(first(a) => convert(Vector{T}, last(a)) for a in args))
+end
 
 lebesgue_line(lb, ub, deg) = (ub^(deg+1) - lb^(deg+1))/(deg+1)
 function lebesgue_box(
@@ -65,3 +71,5 @@ function lebesgue_measure_box(variables_with_domain::VariableBox; normalize = fa
                           )
 end
 
+
+# TODO add gaussian

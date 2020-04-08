@@ -61,12 +61,14 @@ ms = ApproximationSequence(mu; model = amodel)
 
 # Polynomial to optimize 
 f = x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1 
+
+f = x^2+y^2
 K = @set(1-x>=0 && x+1>=0 && 1-y>=0 && y+1>=0)
 gmp = GMPModel()
 @variable gmp μ Meas([x,y], support = K)
 @objective gmp Min Mom(f, μ)
 @constraint gmp Mom(1, μ) == 1
 
-set_approximation_degree(gmp, 4)
+set_approximation_degree(gmp, 2)
 set_optimizer(gmp, Mosek.Optimizer)
 approximate!(gmp)

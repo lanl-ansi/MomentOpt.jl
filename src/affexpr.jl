@@ -228,7 +228,7 @@ function Base.promote_rule(::Type{MomentExpr{T, S}}, ::Type{GMPVariableRef}) whe
     return MomentExpr{T, S}
 end
 
-function Base.convert(::Type{MomentExpr{T, S}}, m::GMPVariableRef) where {T, S, V}
+function Base.convert(::Type{MomentExpr{T, S}}, m::GMPVariableRef) where {T, S}
     return MomentExpr([one(T)], [convert(ObjectExpr{S}, m)])
 end
 
@@ -241,7 +241,7 @@ function Base.convert(::Type{MomentExpr{T, S}}, m::ObjectExpr) where {T, S}
 end
 
 function Base.promote_rule(::Type{MomentExpr{C1, V1}}, ::Type{MomentExpr{C2, V2}}) where {C1, C2, V1, V2}
-    return MomentExpr{promote_type(T1, T2), promote_type(V1, V2)}
+    return MomentExpr{promote_type(C1, C2), promote_type(V1, V2)}
 end
 
 function Base.convert(::Type{MomentExpr{C, V}}, m::MomentExpr) where {C, V}

@@ -1,6 +1,7 @@
 Base.broadcastable(t::AbstractGMPScalar) = Ref(t)
 
 abstract type AbstractGMPExpressionLike <: AbstractGMPScalar end
+struct GMPEmptyExpr <: AbstractGMPExpressionLike end
 
 """
     abstract type AbstractGMPExpr <: AbstractGMPExpressionLike
@@ -100,11 +101,6 @@ end
 function Base.:-(ae::ExprVariables, a::Number)
     return ae + (-a)
 end
-
-
-
-struct GMPEmptyExpr <: AbstractGMPExpressionLike end
-
 
 # functions used for printing of GMPAffExpr.
 function _no_one(c::Number)

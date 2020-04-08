@@ -7,7 +7,7 @@ export integrate
 Returns the integral of p with respect to m. 
 """
 function integrate(p::Number, m::AbstractGMPMeasure)
-    return p*eval_vector(maxdegree_monomials(m, 0))
+    return p*eval_vector(MB.maxdegree_basis(m, 0))
 end
 
 function integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
@@ -71,7 +71,15 @@ ZeroMeasure() = ZeroMeasure(nothing, nothing, EXACT_APPROXIMATION(), nothing, x 
 Base.show(io::IO, ::ZeroMeasure) = show(io, 0) 
 
 function covering_basis(t::ZeroMeasure, p::MP.AbstractPolynomialLike)
-    return MB.basis_covering_monomials(get.(t, MonomialBasis, variables(p)), monomials(p)) 
+    return MB.basis_covering_monomials(MonomialBasis, monomials(p)) 
+end
+
+function integrate(p::Number, ::ZeroMeasure)
+    return zero(typeof(p))
+end
+
+function integrate(p::MP.AbstractPolynomialLike, ::ZeroMeasure)
+    return zero(coefficienttype(p))
 end
 
 export VariableMeasure

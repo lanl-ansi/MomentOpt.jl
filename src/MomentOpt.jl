@@ -6,11 +6,12 @@ using MultivariatePolynomials
 const MP = MultivariatePolynomials
 Reexport.@reexport using MultivariateBases
 const MB = MultivariateBases
+include("MBext/MBextra.jl")
+include("MPext/MPextra.jl")
 
 # MOI extension
 using MathOptInterface
 const MOI = MathOptInterface
-include("MeasureJuMP/attributes.jl") # maybe move to gmpmodel
 
 Reexport.@reexport using JuMP
 
@@ -29,31 +30,28 @@ abstract type AbstractGMPScalar <: JuMP.AbstractJuMPScalar end
 include("gmpaffexpr.jl")
 include("affexpr.jl")
 
+abstract type AbstractGMPSet <: MOI.AbstractScalarSet end
+abstract type AbstractGMPShape <: JuMP.AbstractShape end
+abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
+
+
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution
 # define IntegralSubstitution
-
-abstract type AbstractGMPSet <: MOI.AbstractScalarSet end
-#include("MeasureJuMP/sets.jl")
-
-abstract type AbstractGMPShape <: JuMP.AbstractShape end
-#include("shapes.jl")
-
-abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
 
 include("constraints.jl")
 #
 include("gmpmodel.jl")
 
-
 Reexport.@reexport using SumOfSquares
 
-include("MPextra.jl")
 include("approximate.jl")
+
+include("MMext/MMextra.jl")
 #include("relax.jl")
 
-#=
-include("postproc.jl")
-=#
+import LinearAlgebra.eigen
+include("gmppostproc.jl")
+
 
 end# module

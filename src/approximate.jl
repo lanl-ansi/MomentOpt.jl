@@ -155,7 +155,13 @@ function MomentPutinar(model::GMPModel, degree::Int)
                 end
             end
             for (ineq, mult) in qm[:ineq]
-                cref = @constraint approximation_model(model) riesz.(model, i, ineq*mult*transpose(mult)) in PSDCone()
+                if length(mult) == 1
+                    moiset = MOI.GreaterThan(0.0)
+                    mult = first(mult)
+                else
+                    moiset = PSDCone()
+                end
+                cref = @constraint approximation_model(model) riesz.(model, i, ineq*mult*transpose(mult)) in moiset
                 push!(v_approx.crefs, cref)
             end
         end
@@ -190,9 +196,4 @@ function measure_relaxation_model(model::GMPModel)
     # add measure constraints
     return nothing
 end
-
-
-function measure_strengthen_model end
-function continuous_strengthen_model end
-function continuous_relaxation_model end
 
