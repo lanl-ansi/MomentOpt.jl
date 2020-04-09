@@ -18,22 +18,7 @@
 # set_approximation_degree(model::GMPModel, degree::Int)
 # set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode) 
 end
-@testset "Variables" begin
-# JuMP.name(vref::GMPVariableRef)
 
-# JuMP.set_name(v::GMPVariableRef, s::String)
-# JuMP.is_valid(m::GMPModel, vref::GMPVariableRef)
-# GMPVariableRef(m::GMPModel, v::AbstractGMPVariable)
-# JuMP.add_variable(m::GMPModel, v::AbstractGMPVariable, name::String = "")
-# JuMP.delete(m::GMPModel, vref::GMPVariableRef)
-# JuMP.variable_by_name(m::GMPModel, s::String)
-# MO.vref_object(vref::GMPVariableRef)
-# MP.variables(vref::GMPVariableRef)
-#
-# support(vref::GMPVariableRef)
-# domain(vref::GMPVariableRef)
-# approx_basis(vref::GMPVariableRef)
-end
 @testset "Constraints" begin
 # JuMP.constraint_type(::GMPModel)
 # JuMP.is_valid(m::GMPModel, cref::GMPConstraintRef)

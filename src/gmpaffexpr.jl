@@ -9,10 +9,12 @@ struct GMPEmptyExpr <: AbstractGMPExpressionLike end
 Every instance of this type needs to have fields coefs and vars, or need to define the functions gmp_coefficients and gmp_variables. In addition the function Base.:* must be implemented for multiplication where the first element is a Number. Also Base.sum must be implemented. 
 """
 abstract type AbstractGMPExpr <: AbstractGMPExpressionLike end
-
+gmp_coefficients(vref::AbstractGMPVariableRef) = [1]
 gmp_coefficients(e::AbstractGMPExpr) = e.coefs
+gmp_variables(vref::AbstractGMPVariableRef) = [vref]
 gmp_variables(e::AbstractGMPExpr) = e.vars
 Base.iszero(e::AbstractGMPExpr) = isempty(gmp_coefficients(e)) ? true : all(es -> iszero(es), gmp_coefficients(e))
+JuMP.isequal_canonical(e1::AbstractGMPExpr, e2::AbstractGMPExpr) = e1 == e2
 
 function Base.getindex(e::AbstractGMPExpr, s) 
     idx = findfirst(x -> x == s, gmp_variables(e))
@@ -23,7 +25,7 @@ Base.length(e::AbstractGMPExpr) = length(gmp_coefficients(e))
 Base.iterate(e::AbstractGMPExpr) = ((first(gmp_coefficients(e)), first(gmp_variables(e))), 1)
 Base.iterate(e::AbstractGMPExpr, s) = (s >= length(e)) ? nothing : ((gmp_coefficients(e)[s+1], gmp_variables(e)[s+1]), s + 1)
 
-function Base.isequal(me1::AbstractGMPExpr, me2::AbstractGMPExpr)
+function Base.:(==)(me1::AbstractGMPExpr, me2::AbstractGMPExpr)
     return all(gmp_coefficients(me1) .== gmp_coefficients(me2)) && all(gmp_variables(me1) .== gmp_variables(me2))
 end
 

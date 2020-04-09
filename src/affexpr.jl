@@ -38,7 +38,7 @@ function ObjectExpr(c::T, v::GMPVariableRef) where {T}
 end
 
 Base.:*(a::Number, vref::GMPVariableRef) = ObjectExpr([a], [vref])
-Base.:*(a::Number, e::ObjectExpr) = ObjectExpr(a.*coefficients(e), variables(e))
+Base.:*(a::Number, e::ObjectExpr) = ObjectExpr(a.*gmp_coefficients(e), gmp_variables(e))
 
 function Base.sum(mev::Vector{ObjectExpr{C}}) where {C}
     # TODO add early compatibiliy check: for now the sum is computed 
@@ -170,6 +170,23 @@ degree(e::MomentExpr) = maximum(MP.maxdegree.(gmp_coefficients(e)))
 
 Base.:*(a::Number, e::MomentExpr) = MomentExpr(a.*gmp_coefficients(e), gmp_variables(e))
 
+function momexp_by_measure(e::MomentExpr{T, S}) where {T, S}
+    dict = Dict{GMPVariableRef, promote_type(T, S)}()
+    for (t, v) in e
+        for (s, m) in v
+            if haskey(dict, m)
+                dict[m] += t*s
+            else
+                dict[m] = t*s
+            end
+        end
+    end
+    for (k, v) in dict
+        v == 0 ? delete!(dict, k) : nothing
+    end
+    return MomentExpr(collect(values(dict)), collect(keys(dict)))
+end
+
 function Base.sum(mev::Vector{MomentExpr{T, S}}) where {T, S}
     # TODO add early compatibiliy check: for now the sum is computed 
     # and an assertion error is generated when buildinf the GMPExpr in the return. 
@@ -206,20 +223,6 @@ function JuMP.function_string(io, e::MomentExpr)
         end 
     end
     return str
-end
-
-function momexp_by_measure(e::MomentExpr{T, S}) where {T, S}
-    dict = Dict{AbstractGMPMeasure, promote_type(T, S)}()
-    for (t, v) in e
-        for (s, m) in v
-            if haskey(dict, m)
-                dict[m] += t*s
-            else
-                dict[m] = t*s
-            end
-        end
-    end
-    return dict
 end
 
 # compatibility

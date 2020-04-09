@@ -141,46 +141,57 @@ end
 
 # referencing variables
 JuMP.variable_type(::GMPModel) = GMPVariableRef
-JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.index]
-
-function JuMP.set_name(v::GMPVariableRef, s::String)
-    owner_model(v).model_info.variable_names[v.index] = s
-    return nothing
-end
-
-function JuMP.is_valid(m::GMPModel, vref::GMPVariableRef)
-    return (m === vref.model &&  vref.idx in keys(gmp_variables(m)))
-end
 
 function GMPVariableRef(m::GMPModel, v::AbstractGMPVariable)
     model_info(m).vct += 1
     return GMPVariableRef(m, model_info(m).vct, variable_type(v))
 end
 
+JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.index]
+
+function JuMP.set_name(v::GMPVariableRef, s::String)
+    idx = findall(x -> x == JuMP.name(v), variable_names(owner_model(v)))
+    if length(idx) == 1
+        delete!(object_dictionary(owner_model(v)), Symbol(JuMP.name(v)))
+    end
+    variable_names(owner_model(v))[index(v)] = s
+    return nothing
+end
+
+function JuMP.variable_by_name(m::GMPModel, name::String)
+    idx = findall(x -> x == name, variable_names(m))
+    if isempty(idx)
+        return nothing
+    elseif length(idx) > 1
+        throw(ErrorException("Multiple variables have the name $name."))
+    else
+        v = object_dictionary(m)[Symbol(name)]
+        return GMPVariableRef(m, first(idx), typeof(v))
+    end
+end
+
+function JuMP.is_valid(m::GMPModel, vref::GMPVariableRef)
+    return (m === owner_model(vref) &&  index(vref) in keys(gmp_variables(m)))
+end
+
 function JuMP.add_variable(m::GMPModel, v::AbstractGMPVariable, name::String = "")
     vref = GMPVariableRef(m, v)
-    gmp_variables(m)[vref.index] = v
-    push!(model_info(m).variable_names, name)
+    gmp_variables(m)[index(vref)] = v
+    push!(variable_names(m), name)
     return vref
 end
 
 function JuMP.delete(m::GMPModel, vref::GMPVariableRef)
     @assert JuMP.is_valid(m, vref)
-    delete!(gmp_variables(m), vref.index)
-    delete!(object_dictionary(m), vref.index)
+    delete!(gmp_variables(m), index(vref))
+    idx = findall(x -> x == JuMP.name(vref), variable_names(m))
+    if length(idx) == 1
+        delete!(object_dictionary(m), Symbol(JuMP.name(vref)))
+    end
+    variable_names(m)[index(vref)] = ""
+    return nothing
 end
 
-function JuMP.variable_by_name(m::GMPModel, name::String)
-    index = findall(x -> x == name, variable_names(m))
-    if index isa Nothing
-        return nothing
-    elseif length(index) > 1
-        @error "Multiple variables have the name $name."
-    else
-        v = object_dictionary(m)[name]
-        return GMPVariableRef(m, index, typeof(v))
-    end
-end
 
 function vref_object(vref::GMPVariableRef)
     return gmp_variables(owner_model(vref))[vref.index].v
@@ -197,9 +208,6 @@ export support
 Retruns the support a measure is defined on. 
 """
 function support(vref::GMPVariableRef)
-    if vref_type(vref) == AbstractGMPContinuous
-        @info "$vref refers to a Continuous. Consider using domain($vref)."
-    end
     return MOI.get(vref_object(vref), BSASet())
 end
 
@@ -210,9 +218,6 @@ export domain
 Retruns the domain a continuous is defined on. 
 """
 function domain(vref::GMPVariableRef)
-    if vref_type(vref) == AbstractGMPMeasure
-        @info "$vref refers to a Measure. Consider using support($vref)."
-    end
     return MOI.get(vref_object(vref), BSASet())
 end
 
@@ -273,8 +278,8 @@ end
 
 function JuMP.delete(m::GMPModel, cref::GMPConstraintRef)
     @assert is_valid(m, cref)
-    delete!(gmp_constraints(m), cref.index)
-    delete!(object_dictionary(m), cref.index)
+    delete!(gmp_constraints(m), index(cref))
+    delete!(object_dictionary(m), index(cref))
 end
 
 

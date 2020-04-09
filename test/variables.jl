@@ -26,4 +26,35 @@
         @test index(vref2) == 2
 
     end
+
+    @testset "Add/DeleteVariable" begin
+        @polyvar x y
+        m = GMPModel()
+        @variable m μ Meas([x,y])
+        nu = @variable m ν Meas([x])
+
+        @test JuMP.name(μ) == "μ"
+        @test JuMP.name(nu) == "ν"
+        
+        @test JuMP.variable_by_name(m, "ν") == nu
+        JuMP.set_name(μ, "ν")
+        @test JuMP.variable_by_name(m, "μ") isa Nothing
+        @test_throws ErrorException JuMP.variable_by_name(m, "ν")
+
+        @test JuMP.is_valid(m, μ)
+        JuMP.delete(m, μ)
+        @test JuMP.variable_by_name(m, "ν") == nu
+    end
+
+    @testset "Variables" begin
+        @polyvar x y 
+        m = GMPModel()
+        mu = Meas([x,y])
+        @variable m μ mu 
+        @test MO.vref_object(μ) === mu
+        @test variables(μ) == [x, y]
+        @test support(μ) == FullSpace()
+        @test domain(μ) == FullSpace()
+        @test approx_basis(μ) == MonomialBasis
+    end
 end

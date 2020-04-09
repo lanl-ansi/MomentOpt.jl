@@ -34,7 +34,6 @@ abstract type AbstractGMPSet <: MOI.AbstractScalarSet end
 abstract type AbstractGMPShape <: JuMP.AbstractShape end
 abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
 
-
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution
 # define IntegralSubstitution
@@ -52,6 +51,5 @@ include("MMext/MMextra.jl")
 
 import LinearAlgebra.eigen
 include("gmppostproc.jl")
-
 
 end# module

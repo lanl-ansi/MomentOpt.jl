@@ -43,7 +43,6 @@
         μ = Meas([x, y]; support = S2, basis = ChebyshevBasis)
         @test_throws AssertionError integrate(p2, μ)
         @test monomials(maxdegree_basis(μ, 2)) == [2.0*x^2 - 1.0, x*y, 2.0*y^2 - 1.0, x, y, 1.0]  
-
     end
 
     @testset "AbstractGMPContinuous" begin
