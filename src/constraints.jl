@@ -1,3 +1,7 @@
+function Base.:(==)(c1::AbstractGMPConstraint, c2::AbstractGMPConstraint)
+    return JuMP.jump_function(c1) == JuMP.jump_function(c2) && JuMP.moi_set(c1) == JuMP.moi_set(c2)
+end
+
 # MomentConstraint
 """
     MomentConstraintShape 

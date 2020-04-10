@@ -1,66 +1,104 @@
-@testset "MomentConstraint" begin
-    @polyvar x y
-    m = GMPModel()
-    @variable m μ Meas([x,y])
-    @variable m ν Meas([x,y], basis = ChebyshevBasis)
-    @variable m σ Meas([x])
+@testset "Constraints" begin
+    @testset "MomentConstraint" begin
+        @polyvar x y
+        m = GMPModel()
+        @variable m μ Meas([x,y])
+        @variable m ν Meas([x,y], basis = ChebyshevBasis)
+        @variable m σ Meas([x])
 
-    oe = μ + ν
-    me = Mom(x*y + x, oe)
-    @test JuMP.reshape_vector(me, MO.MomentConstraintShape()) == me
-    @test JuMP.reshape_set(MOI.EqualTo(0), MO.MomentConstraintShape()) == MOI.EqualTo(0)
+        oe = μ + ν
+        me = Mom(x*y + x, oe)
+        @test JuMP.reshape_vector(me, MO.MomentConstraintShape()) == me
+        @test JuMP.reshape_set(MOI.EqualTo(0), MO.MomentConstraintShape()) == MOI.EqualTo(0)
 
-    con1 = MO.MomentConstraint(me, MOI.EqualTo(0))
-    con2 = MO.MomentConstraint(me+1, MOI.EqualTo(1))
+        con1 = MO.MomentConstraint(me, MOI.EqualTo(0))
+        con2 = MO.MomentConstraint(me+1, MOI.EqualTo(1))
 
-    @test JuMP.jump_function(con1) == JuMP.jump_function(con2) 
-    @test JuMP.moi_set(con1) == JuMP.moi_set(con2) 
-    @test JuMP.shape(con1) isa MO.MomentConstraintShape
-    @test sprint(show, con1) == sprint(show, con2)
+        @test JuMP.jump_function(con1) == JuMP.jump_function(con2) 
+        @test JuMP.moi_set(con1) == JuMP.moi_set(con2) 
+        @test JuMP.shape(con1) isa MO.MomentConstraintShape
+        @test sprint(show, con1) == sprint(show, con2)
 
-    _err = x -> ""
-    con3 = JuMP.build_constraint(_err, me+1, MOI.EqualTo(1))
-    @test JuMP.jump_function(con3) == JuMP.jump_function(con2) 
-    @test JuMP.moi_set(con3) == JuMP.moi_set(con2) 
+        _err = x -> ""
+        con3 = JuMP.build_constraint(_err, me+1, MOI.EqualTo(1))
+        @test JuMP.jump_function(con3) == JuMP.jump_function(con2) 
+        @test JuMP.moi_set(con3) == JuMP.moi_set(con2) 
 
-end
+    end
 
-@testset "MeasureConstraint" begin
-    @polyvar x y
-    m = GMPModel()
-    @variable m μ Meas([x,y])
-    @variable m ν Meas([x,y], basis = ChebyshevBasis)
-    @variable m σ Meas([x])
+    @testset "MeasureConstraint" begin
+        @polyvar x y
+        m = GMPModel()
+        @variable m μ Meas([x,y])
+        @variable m ν Meas([x,y], basis = ChebyshevBasis)
+        @variable m σ Meas([x])
 
-    @test MOI.constant(MO.EqualToMeasure(ZeroMeasure())) isa ZeroMeasure
-    @test JuMP.reshape_vector(μ + ν , MeasureConstraintShape()) == μ + ν
-    @test  JuMP.reshape_set(EqualToMeasure(ZeroMeasure), MeasureConstraintShape()) isa ZeroMeasure()
-    @test MO.same_basis(MO.GMPVariable[]) isa Nothing 
-    @test MO.same_basis([μ, σ]) isa Nothing
-    @test MO.same_basis([μ, ν ]) isa Nothing
+        @test MOI.constant(MO.EqualToMeasure(ZeroMeasure())) isa ZeroMeasure
+        @test JuMP.reshape_vector(μ + ν , MO.MeasureConstraintShape()) == μ + ν
+        @test  JuMP.reshape_set(MO.EqualToMeasure(ZeroMeasure()), MO.MeasureConstraintShape()) == MO.EqualToMeasure(ZeroMeasure())
+        @test MO.same_basis(MO.GMPVariableRef[]) isa Nothing 
+        @test MO.same_basis([μ, σ]) isa Nothing
+        @test MO.same_basis([μ, ν ]) isa Nothing
 
-    mc = MO.MeasureConstraint(μ + ν, MO.EqualToMeasure(ZeroMeasure())) 
-    @test sprint(show, mc) == "μ + ν = 0"
-    @test JuMP.jump_function(mc) == μ + ν
-    @test JuMP.moi_set(mc) == MO.EqualTo(ZeroMeasure())
-    @test JuMP.shape(mc) isa MeasureConstraintShape
+        mc = MO.MeasureConstraint(μ + ν, MO.EqualToMeasure(ZeroMeasure())) 
+        @test sprint(show, mc) == "μ + ν = 0"
+        @test JuMP.jump_function(mc) == μ + ν
+        @test JuMP.moi_set(mc) == MO.EqualToMeasure(ZeroMeasure())
+        @test JuMP.shape(mc) isa MO.MeasureConstraintShape
 
-    _err = x -> ""
-    @test JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(0)) isa MO.MeasureConstraint
-    @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(1))
-    @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 1, MOI.EqualTo(0))
+        _err = x -> ""
+        @test JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(0)) isa MO.MeasureConstraint
+        @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(1))
+        @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 1, MOI.EqualTo(0))
 
-end
+    end
 
-@testset "GMPConstraintRef" begin
-# Base.iszero(::GMPConstraintRef) 
-# JuMP.isequal_canonical(v::GMPConstraintRef, w::GMPConstraintRef)
-# Base.:(==)(v::GMPConstraintRef, w::GMPConstraintRef)
-# JuMP.owner_model(con_ref::GMPConstraintRef)
-# JuMP.shape(cref::GMPConstraintRef)
-# JuMP.index(cref::GMPConstraintRef)
-end
+    @testset "GMPConstraintRef" begin
+        @polyvar x y
+        m = GMPModel()
+        @variable m μ Meas([x,y])
+        @constraint m c1 Mom(1, μ) == 1
+        @constraint m c2 μ == 0 
+        @test !iszero(c1)
+        @test !JuMP.isequal_canonical(c1, c2)
+        @test JuMP.isequal_canonical(c1, c1) 
+        @test JuMP.owner_model(c1) == m
+        @test JuMP.shape(c1) isa MO.MomentConstraintShape
+        @test JuMP.shape(c2) isa MO.MeasureConstraintShape
 
-@testset "Add/DeleteConstraint" begin
+        @test JuMP.index.([c1, c2]) == [1, 2] 
+    end
+
+    @testset "Add/DeleteConstraint" begin
+        @polyvar x y
+        m = GMPModel()
+        @variable m μ Meas([x,y])
+        @variable m ν Meas([x,y], basis = ChebyshevBasis)
+        @constraint m c1 Mom(1, μ) == 1
+        @constraint m c2 μ == 0 
+        @test JuMP.constraint_type(m) == MO.GMPConstraintRef
+        @test JuMP.is_valid(m, c1)
+        @test sprint(show, c1) == "c1 : ⟨1, μ⟩ = 1.0"
+        @test sprint(show, c2) == "c2 : μ = 0"
+
+        @test JuMP.constraint_object(c2) == MO.MeasureConstraint(MO.ObjectExpr(1, μ), MO.EqualToMeasure(ZeroMeasure()))
+        @test JuMP.jump_function(c2) == MO.ObjectExpr(1, μ)
+        @test JuMP.moi_set(c2) == MO.EqualToMeasure(ZeroMeasure())
+        @test JuMP.name(c1) == "c1"
+        @test JuMP.name(c2) == "c2"
+
+        JuMP.set_name(c1, "c2")
+        @test JuMP.name(c1) == "c2"
+
+        @test JuMP.constraint_by_name(m, "c1") isa Nothing
+        @test_throws ErrorException JuMP.constraint_by_name(m, "c2")
+
+        JuMP.delete(m, c1)
+        @test JuMP.constraint_by_name(m, "c2") == c2
+
+        @test JuMP.num_constraints(m, MO.MeasureConstraint) == 1
+        @test JuMP.num_constraints(m, MO.MomentConstraint) == 0
+
+    end
 
 end

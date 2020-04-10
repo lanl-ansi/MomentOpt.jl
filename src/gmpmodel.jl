@@ -99,7 +99,6 @@ function JuMP.set_optimizer(model::GMPModel, optimizer::Function)
     return nothing
 end
 
-
 function update_degree(m::GMPModel, degree::Int)
     if model_data(m).max_degree < degree
         model_data(m).max_degree = degree
@@ -275,38 +274,41 @@ function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{MomentOpt.ObjectEx
     return add_constraint(m, con, name)
 end
 
-
 function JuMP.delete(m::GMPModel, cref::GMPConstraintRef)
     @assert is_valid(m, cref)
     delete!(gmp_constraints(m), index(cref))
-    delete!(object_dictionary(m), index(cref))
+    idx = findall(x -> x == JuMP.name(cref), constraint_names(m))
+    if length(idx) == 1
+        delete!(object_dictionary(m), Symbol(JuMP.name(cref)))
+    end
+    constraint_names(m)[index(cref)] = ""
+    return nothing
 end
 
-
-function JuMP.num_constraints(m::GMPModel, F::Type{<:JuMP.AbstractJuMPScalar}, S::Type{<:MOI.AbstractSet})
-    # TODO: is JuMP.ScalarConstraint the right thing to ask for?
-    return count(con -> con isa JuMP.ScalarConstraint{F, S}, values(gmp_constraints(m)))
-end
-
-function JuMP.num_constraints(m::GMPModel, ::Type{<:Vector{F}}, S::Type{<:MOI.AbstractSet}) where F<:JuMP.AbstractJuMPScalar
-    # TODO: is JuMP.VectorConstraint the right thing to ask for?
-    return count(con -> con isa JuMP.VectorConstraint{F, S}, values(gmp_constraints(m)))
+function JuMP.num_constraints(m::GMPModel, T::Type{<:AbstractGMPConstraint})
+    return count(con -> con isa T, values(gmp_constraints(m)))
 end
 
 JuMP.name(cref::GMPConstraintRef) = constraint_names(cref.model)[cref.index]
 
 function JuMP.set_name(cref::GMPConstraintRef, name::String)
-    constraint_names(cref.model)[cref.index] = name
+    idx = findall(x -> x == JuMP.name(cref), constraint_names(owner_model(cref)))
+    if length(idx) == 1
+        delete!(object_dictionary(owner_model(cref)), Symbol(JuMP.name(cref)))
+    end
+    constraint_names(owner_model(cref))[index(cref)] = name
+    return nothing
 end
 
 function JuMP.constraint_by_name(m::GMPModel, name::String)
-    index = findall(x -> x == name, constraint_names(m))
-    if index isa Nothing
+    idx = findall(x -> x == name, constraint_names(m))
+    if isempty(idx)
         return nothing
-    elseif length(index) > 1
-        @error "Multiple constraints have the name $name."
+    elseif length(idx) > 1
+        throw(ErrorException("Multiple constraints have the name $name."))
     else
-        return GMPConstraintRef(m, MOI.ConstraintIndex(index))
+        c = object_dictionary(m)[Symbol(name)]        
+        return GMPConstraintRef(m, first(idx), JuMP.shape(c))
     end
 end
 

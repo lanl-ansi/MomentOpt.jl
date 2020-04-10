@@ -1,4 +1,4 @@
-@testset "AbstractGMPExpr" begin
+@testset "Expressions" begin
     @testset "AbstractGMPExpr Types" begin
 
         @test MO.GMPEmptyExpr() isa MO.AbstractGMPExpressionLike
