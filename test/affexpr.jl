@@ -34,6 +34,11 @@
             @test MO.vref_type(oe1) == MO.AbstractGMPMeasure
             @test MO.degree(oe1) == 0
 
+            @test sprint(show, MO.ObjectExpr(Int[], MO.GMPVariableRef[])) == "0"
+            o2 = (μ + ν)/2
+            @test eltype([μ, o2]) == MomentOpt.ObjectExpr{typeof(1.0)}
+            @test eltype([oe1, o2]) == MomentOpt.ObjectExpr{typeof(1.0)}
+
         end
         @testset "MomentExpr" begin
             @polyvar x y
@@ -59,12 +64,22 @@
             @test !(m2 == m3)
             @test sprint(show, m2) == "⟨0.5, μ⟩ + ⟨0.5, ν⟩"
             @test sprint(show, m3) == "⟨1, 0.5μ + 0.5ν⟩" 
+            @test sprint(show, m1 - m1) == "⟨0, 0⟩"
             @test MO.momexp_by_measure(m2) == MO.momexp_by_measure(m3)
-            m4 =  Mom([1, x], [o1, o2])        
+            m4 = Mom([1, x], [o1, o2])        
+            m5 = Mom([-x, 1],[o1, o2])
             @test MO.degree(m1) == 0 
             @test MO.degree(m2) == 0
             @test MO.degree(m3) == 0
             @test MO.degree(m4) == 1
+
+            @test sprint(show, m5) == "⟨-x, μ⟩ + ⟨1, 0.5μ + 0.5ν⟩"
+            @test sprint(show, m4 - m5) == "⟨x + 1, μ⟩ + ⟨x - 1, 0.5μ + 0.5ν⟩" 
+            @test sprint(show, MomentExpr(Int[], MO.GMPVariableRef[])) == "⟨0, 0⟩"
+
+            @test eltype([Mom(1, μ + ν), μ]) == MomentExpr{Int, Int}
+            @test eltype([Mom(1, μ + ν), μ + ν]) == MomentExpr{Int, Int}
+            @test eltype([Mom(1, μ + ν), Mom(one(Int8), μ + ν)]) == MomentExpr{Int, Int}
 
         end
 
@@ -84,6 +99,7 @@
             @test o1-μ == Mom(Int[], MO.GMPVariableRef[])
             o3 =(μ-ν)/2
             @test o2 + o3 == MO.ObjectExpr(1, o1)
+            @test 2*o2 == o2*2
 
         end
 
@@ -106,6 +122,15 @@
             @test length(m3 + m1 - 2*m2) == 2
             @test MO.momexp_by_measure(Mom(1, o2) + Mom(1, o3)) == m1
 
+            mv = Mom.([1, 2], μ)
+            @test JuMP.isequal_canonical(mv[2] - mv[1], mv[1])
+            @test Mom.(1, [μ, μ]) isa Vector{MomentExpr{Int, Int}}
+            ae1 = m1 + 1
+            ae2 = 2*ae1 -1
+            @test MO.constant(ae1) == MO.constant(ae2)
+            @test ae2*2 - ae2 == ae2
+            @test sprint(show, ae2*2 - 2) == "⟨4.0, μ⟩"
+            @test ae1 - 1 == -(-ae1 + 1)
         end
 
     end

@@ -32,10 +32,6 @@ end
 # Linear operations
 const ExprVariables = Union{AbstractGMPVariableRef, AbstractGMPExpressionLike}
 
-function Base.:*(a::Number, e::ExprVariables) 
-    @error("Multiplication needs implementation for ($(typeof(a)), $(typeof(e))")
-end
-
 function Base.:*(m::ExprVariables, a::Number)
     return a*m
 end
@@ -46,13 +42,6 @@ end
 
 function Base.:-(m::ExprVariables)
     return (-1)*m
-end
-
-function Base.:*(::ExprVariables, ::ExprVariables)
-    @error("Cannot multiply GMPExpressions. Only linear expressions are permitted.")
-end
-function Base.sum(mev::Vector{<:ExprVariables})
-    @error("Base.sum must be implemented for $(typeof(mev))")
 end
 
 function Base.:+(m1::ExprVariables, m2::ExprVariables)
@@ -72,6 +61,10 @@ end
 expr(ae::GMPAffExpr) = ae.expr
 constant(ae::GMPAffExpr) = ae.cons
 
+function Base.:(==)(ae1::GMPAffExpr, ae2::GMPAffExpr)
+    return constant(ae1) == constant(ae2) && expr(ae1) == expr(ae2)
+end
+
 function Base.:+(a::Number, v::AbstractGMPVariableRef)
     return GMPAffExpr(1*v, a)
 end
@@ -81,15 +74,15 @@ function Base.:+(a::Number, e::AbstractGMPExpr)
 end
 
 function Base.:*(a::Number, ae::GMPAffExpr{S,V}) where {S, V}
-    return GMPAffExpr{promote_type(S, typeof(a)), V}(a*constant(ae), a*expr(ae))
+    return GMPAffExpr(a*expr(ae), a*constant(ae))
 end
 
 function Base.sum(mev::Vector{GMPAffExpr{S, V}}) where {S, V}
-    return GMPAffExpr{S, V}(sum(expr.(mev)), sum(constant.(mev)))
+    return GMPAffExpr(sum(expr.(mev)), sum(constant.(mev)))
 end
 
 function Base.:+(a::Number, ae::GMPAffExpr{S, V}) where {S, V}
-    return GMPAffExpr{promote_type(S, typeof(a)), V}(expr(ae), constant(ae)+a)
+    return GMPAffExpr(expr(ae), constant(ae)+a)
 end
 
 function Base.:+(ae::ExprVariables, a::Number) 
@@ -121,4 +114,12 @@ function _prep_coef(c::Number)
     else
         return "", ""
     end
+end
+
+function JuMP.function_string(mode, ae::GMPAffExpr)
+    s, c = _prep_coef(constant(ae))
+    if constant(ae) == 1
+        c = string(constant(ae))
+    end
+    return function_string(mode, expr(ae))*s*c
 end

@@ -84,7 +84,7 @@ returns the monomial 1 defined on vars.
 _mono_one(vars::Vector{<:MP.AbstractVariable}) = prod(var^0 for var in vars)
 _mono_one(::Nothing) = 1
 
-covering_basis(t::AbstractGMPObject, p::Number) = covering_basis(t, p*mono_one(MOI.get(t, Variables())))
+covering_basis(t::AbstractGMPObject, p::Number) = covering_basis(t, p*_mono_one(MOI.get(t, Variables())))
 
 
 """

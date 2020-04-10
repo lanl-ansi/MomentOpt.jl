@@ -119,13 +119,13 @@ MP.variables(e::ObjectExpr) = variables(first(gmp_variables(e)))
 vref_type(e::ObjectExpr) = vref_type(first(gmp_variables(e)))
 degree(e::ObjectExpr) = 0
 
+
 """
     AffObjectExpr{S, T}
 
 Type representing an affine linear combination of GMPObjects.
 """
 const AffObjectExpr{S, T <: Number} = GMPAffExpr{S, ObjectExpr{T}}
-
 Base.:-(e::ObjectExpr, a::AbstractGMPObject) = AffObjectExpr(e, a)
 
 # MomentExpr
@@ -190,7 +190,11 @@ end
 function Base.sum(mev::Vector{MomentExpr{T, S}}) where {T, S}
     # TODO add early compatibiliy check: for now the sum is computed 
     # and an assertion error is generated when buildinf the GMPExpr in the return. 
-    coefs = T[]
+    if T <: Number
+        coefs = T[]
+    else
+        coefs = polynomialtype(T)[]
+    end
     vars = ObjectExpr{S}[]
     for me in mev
         for (c, m) in me
@@ -261,4 +265,3 @@ Type representing an affine linear combination of Moments.
 """
 const AffMomentExpr{T <: Union{Number, MP.AbstractPolynomialLike}, S <: Number, U <: Number} = 
 GMPAffExpr{U, MomentExpr{T, S}}
-

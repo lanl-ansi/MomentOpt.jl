@@ -7,7 +7,7 @@ export integrate
 Returns the integral of p with respect to m. 
 """
 function integrate(p::Number, m::AbstractGMPMeasure)
-    return p*eval_vector(MB.maxdegree_basis(m, 0))
+    return p*first(eval_vector(MB.maxdegree_basis(m, 0), m))
 end
 
 function integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)

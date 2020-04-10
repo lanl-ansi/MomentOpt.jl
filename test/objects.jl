@@ -39,44 +39,46 @@
         @test λ == λ
         @test integrate(p1, λ) == 10/3
         @test_throws AssertionError integrate(p2, λ)
-
+        @test integrate(1, λ) == 1
         μ = Meas([x, y]; support = S2, basis = ChebyshevBasis)
         @test_throws AssertionError integrate(p2, μ)
-        @test monomials(maxdegree_basis(μ, 2)) == [2.0*x^2 - 1.0, x*y, 2.0*y^2 - 1.0, x, y, 1.0]  
+        @test monomials(maxdegree_basis(μ, 2)) == [2.0*x^2 - 1.0, x*y, 2.0*y^2 - 1.0, x, y, 1.0]
+        @test monomials(MO.covering_basis(μ, 2)) == Polynomial{true, typeof(1.0)}[1.0]
     end
 
     @testset "AbstractGMPContinuous" begin
         # Base.:(==)(m1::AbstractGMPObject, m2::AbstractGMPObject)
         # MO.covering_basis(t::AbstractGMPObject, p::MP.AbstractPolynomialLike)
 
-#  approximate(f::AbstractGMPContinuous, max_degree::Int)
-# SymbolicContinuous(variables::Vector{V}, domain::S, monom_basis) where {S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable} 
-# AnalyticContinuous(variables::Vector{V}, monom_basis, monom_function::Function) where {V <: MP.AbstractVariable} 
-# ConstantContinuous(a::Number)
-# ZeroContinuous()
-# OneContinuous()
-# approximate(f::ConstantContinuous, ::Int)
-# Cont(vars; domain = FullSpace(), basis = MonomialBasis, approx = DefaultApproximation())
-# MB.maxdegree_basis(t::AbstractGMPObject, d::Int)
-# MO.eval_vector(basis::MB.AbstractPolynomialBasis, m::AbstractGMPObject)
+        #  approximate(f::AbstractGMPContinuous, max_degree::Int)
+        # SymbolicContinuous(variables::Vector{V}, domain::S, monom_basis) where {S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable} 
+        # AnalyticContinuous(variables::Vector{V}, monom_basis, monom_function::Function) where {V <: MP.AbstractVariable} 
+        # ConstantContinuous(a::Number)
+        # ZeroContinuous()
+        # OneContinuous()
+        # approximate(f::ConstantContinuous, ::Int)
+        # Cont(vars; domain = FullSpace(), basis = MonomialBasis, approx = DefaultApproximation())
+        # MB.maxdegree_basis(t::AbstractGMPObject, d::Int)
+        # MO.eval_vector(basis::MB.AbstractPolynomialBasis, m::AbstractGMPObject)
 
-end
+    end
 
-@testset "DefaultMeasures" begin
+    @testset "DefaultMeasures" begin
 
-    @polyvar x y
+        @polyvar x y
 
-    @test MO.lebesgue_line(-1, 1, 0) == 2
-    @test MO.lebesgue_line(0, 1, 1) == 1/2
+        @test MO.lebesgue_line(-1, 1, 0) == 2
+        @test MO.lebesgue_line(0, 1, 1) == 1/2
 
-    box = variable_box( x => [0, 1], y => [-1/2, 1/2])
-    @test MO.lebesgue_box(box, x*y) == 0
-    @test MO.lebesgue_box(box, x^2) == 1/3
-    
-    box = variable_box( x => [-1, 1], y => [-1/2, 1/2])
-    @test MO.lebesgue_box(box, x^2*y^2; normalize = true) == 1/36
+        box = variable_box( x => [0, 1], y => [-1/2, 1/2])
+        @test MO.lebesgue_box(box, x*y) == 0
+        @test MO.lebesgue_box(box, x^2) == 1/3
 
-    λ = lebesgue_measure_box(box, basis = MonomialBasis)
-    @test λ isa AnalyticMeasure
-end
+        box = variable_box( x => [-1, 1], y => [-1/2, 1/2])
+        @test MO.lebesgue_box(box, x^2*y^2; normalize = true) == 1/36
+        @test MO.lebesgue_box(box, x^2*y^2) == 1/18
+
+        λ = lebesgue_measure_box(box, basis = MonomialBasis)
+        @test λ isa AnalyticMeasure
+    end
 end

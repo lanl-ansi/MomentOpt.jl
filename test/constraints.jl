@@ -26,18 +26,30 @@
 end
 
 @testset "MeasureConstraint" begin
-# MOI.constant(set::EqualToMeasure) 
-# JuMP.in_set_string(print_mode, set::EqualToMeasure)
-# JuMP.reshape_vector(expr::ObjectExpr, ::MeasureConstraintShape)
-# JuMP.reshape_set(set::EqualToMeasure, ::MeasureConstraintShape)
-# same_basis(mv::Vector{GMPVariableRef})
-#
-# JuMP.jump_function(con::MeasureConstraint)
-# JuMP.moi_set(con::MeasureConstraint)
-# JuMP.shape(con::MeasureConstraint)
-# JuMP.function_string(mode, mc::MeasureConstraint)
-# Base.show(io::IO, con::MeasureConstraint)
-# JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::MOI.EqualTo)
+    @polyvar x y
+    m = GMPModel()
+    @variable m μ Meas([x,y])
+    @variable m ν Meas([x,y], basis = ChebyshevBasis)
+    @variable m σ Meas([x])
+
+    @test MOI.constant(MO.EqualToMeasure(ZeroMeasure())) isa ZeroMeasure
+    @test JuMP.reshape_vector(μ + ν , MeasureConstraintShape()) == μ + ν
+    @test  JuMP.reshape_set(EqualToMeasure(ZeroMeasure), MeasureConstraintShape()) isa ZeroMeasure()
+    @test MO.same_basis(MO.GMPVariable[]) isa Nothing 
+    @test MO.same_basis([μ, σ]) isa Nothing
+    @test MO.same_basis([μ, ν ]) isa Nothing
+
+    mc = MO.MeasureConstraint(μ + ν, MO.EqualToMeasure(ZeroMeasure())) 
+    @test sprint(show, mc) == "μ + ν = 0"
+    @test JuMP.jump_function(mc) == μ + ν
+    @test JuMP.moi_set(mc) == MO.EqualTo(ZeroMeasure())
+    @test JuMP.shape(mc) isa MeasureConstraintShape
+
+    _err = x -> ""
+    @test JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(0)) isa MO.MeasureConstraint
+    @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(1))
+    @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 1, MOI.EqualTo(0))
+
 end
 
 @testset "GMPConstraintRef" begin

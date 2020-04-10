@@ -39,7 +39,7 @@ Base.broadcastable(v::GMPVariableRef) = Ref(v)
 Base.iszero(::GMPVariableRef) = false
 JuMP.isequal_canonical(v::GMPVariableRef, w::GMPVariableRef) = v == w
 Base.:(==)(v::GMPVariableRef, w::GMPVariableRef) = v.model === w.model && v.index == w.index
-Base.copy(v::GMPVariableRef) = v
-Base.copy(v::GMPVariableRef, m::JuMP.AbstractModel) = GMPVariableRef(m, v.index, v.var_type)
+# Base.copy(v::GMPVariableRef) = v
+# Base.copy(v::GMPVariableRef, m::JuMP.AbstractModel) = GMPVariableRef(m, v.index, v.var_type)
 vref_type(vref::GMPVariableRef) = vref.var_type
 JuMP.index(vref::GMPVariableRef) = vref.index
