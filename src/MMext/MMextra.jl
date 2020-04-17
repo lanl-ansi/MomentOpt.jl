@@ -34,13 +34,12 @@ function MM.moment_matrix(vref::GMPVariableRef, X)
                 return moment_value(m)
             end
         end
-        throw(ArgumentError("Measure does not have the moment $(x)"))
     end
     return MM.MomentMatrix{Float64}(getmom, X)
 end
 
 function MM.moment_matrix(vref::GMPVariableRef)
-    X = monomials(MOI.get(vref_object(vref), Variables()), 0:Int(floor(approximation_info(owner_model(vref)).degree/2))) # TODO should reflect sparsity 
+    X = monomials(variables(vref_object(vref)), 0:Int(floor(approximation_info(owner_model(vref)).degree/2))) # TODO should reflect sparsity 
     return moment_matrix(vref, X)
 end
 

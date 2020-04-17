@@ -1,5 +1,10 @@
 @testset "Approximate" begin
 
+    # @test JuMP.termination_status(model) == JuMP.termination_status(MO.approximation_model(model))
+    # JuMP.set_optimizer(model::GMPModel, optimizer::Function)
+    # set_approximation_degree(model::GMPModel, degree::Int)
+    # set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode) 
+
     @testset "ApproximationSequence" begin
         # MO.gmp_object(ms::ApproximationSequence)
         # Base.show(io::IO, ms::ApproximationSequence)
@@ -25,6 +30,18 @@
     end
 
     @testset "StandardRelaxation - Dual" begin
+
+    end
+
+    @testset "Get Value" begin
+
+        @polyvar x y
+        m = GMPModel()
+        @variable m mu Meas([x])     
+        @test_throws AssertionError approximation(mu)
+        @test_throws AssertionError approximation(mu, x)
+        @test_throws AssertionError approximation(mu, y)
+        @test_throws AssertionError JuMP.value(Mom(x, mu))
 
     end
 

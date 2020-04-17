@@ -1,43 +1,75 @@
 @testset "GMPModel" begin
     @testset "Model" begin
-        # MO.model_info(model::GMPModel) = model.model_info
-        # MO.model_data(model::GMPModel) = model.model_data
-        # MO.approximation_info(model::GMPModel) = model.approximation_info
-        # MO.approximation_model(model::GMPModel) = model.approximation_model
-        # MO.gmp_variables(model::GMPModel) = model_data(model).variables
-        # MO.gmp_constraints(model::GMPModel) = model_data(model).constraints
-        # MO.variable_names(model::GMPModel) = model_info(model).variable_names
-        # MO.constraint_names(model::GMPModel) = model_info(model).constraint_names
-        # JuMP.object_dictionary(model::GMPModel) = model.model_info.obj_dict
-        # JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
-        # JuMP.termination_status(model::GMPModel)
-        # JuMP.variable_type(::GMPModel)
-        # 
-        # JuMP.set_optimizer(model::GMPModel, optimizer::Function)
-        # MO.update_degree(m::GMPModel, degree::Int)
-        # set_approximation_degree(model::GMPModel, degree::Int)
-        # set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode) 
+        model = GMPModel()
+        @test MO.model_info(model) isa MO.ModelInfo
+        @test MO.model_data(model) isa MO.ModelData
+        @test MO.approximation_info(model) isa MO.ApproximationInfo
+        @test MO.approximation_model(model) isa JuMP.Model
+        @test MO.gmp_variables(model) isa Dict{Int, MO.AbstractGMPVariable}
+        @test MO.gmp_constraints(model) isa Dict{Int, MO.AbstractGMPConstraint}
+        @test MO.variable_names(model) isa Vector{AbstractString}
+        @test MO.constraint_names(model) isa Vector{AbstractString}
+        @test JuMP.object_dictionary(model) isa Dict{Symbol, Any}
+        @test JuMP.variable_type(model) == MO.GMPVariableRef
+        @test JuMP.constraint_type(model) == MO.GMPConstraintRef
+
+        @polyvar x y
+        @variable model [1:3] Meas([x,y]) 
+        @test JuMP.num_variables(model) == 3
+
     end
 
     @testset "Objective" begin
-        # JuMP.set_objective(m::GMPModel, sense::MOI.OptimizationSense, f::AbstractGMPExpressionLike)
-        # JuMP.objective_sense(m::GMPModel) 
-        # JuMP.set_objective_sense(m::GMPModel, sense::MOI.OptimizationSense)
-        # JuMP.objective_function(m::GMPModel) 
-        # JuMP.objective_function_type(m::GMPModel) 
-        # JuMP.objective_function(m::GMPModel, FT::Type)
-        # JuMP.objective_function_string(print_mode, m::GMPModel)
-    end
+
+        @polyvar x y
+        m = GMPModel()
+        mus = @variable m [1:2] Meas([x,y]) 
+        JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
+
+        @test JuMP.objective_sense(m) == MOI.MAX_SENSE
+        JuMP.set_objective_sense(m, MOI.MIN_SENSE)
+        @test JuMP.objective_sense(m) == MOI.MIN_SENSE
+        @test JuMP.objective_function(m) == Mom(1, mus[1]) + Mom(1, mus[2])
+        @test JuMP.objective_function_type(m) == MO.MomentExpr{Int, Int} 
+        @test JuMP.objective_function(m, MO.MomentExpr{Int, Int}) == Mom(1, mus[1]) + Mom(1, mus[2])
+       end
     @testset "Summary" begin
-        # JuMP.show_objective_function_summary(io::IO, m::GMPModel)
-        # JuMP.show_backend_summary(io::IO, model::GMPModel)
+        @polyvar x y
+        m = GMPModel()
+        mus = @variable m [1:2] Meas([x,y]) 
+        JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
+        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64,Int64}\nConstraints: 0\nApproxmation mode: PRIMAL_RELAXATION_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: "
+        
+        @constraint m Mom(1, mus[1]) <= 1
+        @constraint m c2 Mom(1, mus[2]) >= 1
+        @test sprint(print, m) == "Max ⟨1, noname⟩ + ⟨1, noname⟩\nSubject to\n ⟨1, noname⟩ ≤ 1.0\n ⟨1, noname⟩ ≥ 1.0\n"
     end
 
     @testset "Get Value" begin
-        # approximation(vref::GMPVariableRef)
-        # approximation(vref::GMPVariableRef, m::MP.AbstractPolynomialLike)
-        # approximation(vref::GMPVariableRef, m::Number)
-        # JuMP.value(me::MomentExpr)
+
+        @polyvar x y
+        m = GMPModel()
+        @variable m mu Meas([x])     
+        @test_throws AssertionError approximation(mu)
+        @test_throws AssertionError approximation(mu, x)
+        @test_throws AssertionError approximation(mu, y)
+        @test_throws AssertionError JuMP.value(Mom(x, mu))
+        
+        @test JuMP.termination_status(m) == MOI.OPTIMIZE_NOT_CALLED
+
+        opt = x -> ""
+        JuMP.set_optimizer(m, opt)
+        @test MO.approximation_info(m).solver == opt
+        @test MO.approximation_degree(m) == MO.model_degree(m)
+        set_approximation_degree(m, -1)
+        @test MO.approximation_degree(m) == 0
+        set_approximation_degree(m, 1)
+        @test MO.approximation_degree(m) == 1
+
+        @test MO.approximation_mode(m) isa MO.PRIMAL_RELAXATION_MODE
+        set_approximation_mode(m, MO.DUAL_STRENGTHEN_MODE())
+        @test MO.approximation_mode(m) isa MO.DUAL_STRENGTHEN_MODE
+
     end
 
 end

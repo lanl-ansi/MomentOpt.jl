@@ -2,13 +2,13 @@ function same_length(v1::AbstractVector, v2::AbstractVector)
     @assert length(v1) == length(v2) "Inputs do not have same length."
 end
 
-function same_variables(vrefs::Vector{GMPVariableRef})
+function same_variables(vrefs::Vector{<:GMPVariableRef})
     if !isempty(vrefs)
         @assert all(x -> variables(vrefs[1]) == variables(x), vrefs[2:end]) "GMPObjects do not act on same variables."
     end
 end
 
-function same_vref_type(vrefs::Vector{GMPVariableRef})
+function same_vref_type(vrefs::Vector{<:GMPVariableRef})
     if !isempty(vrefs)
         @assert all(x -> vref_type(vrefs[1]) == vref_type(x), vrefs[2:end]) "GMPObjects are of different type."
     end
@@ -22,14 +22,13 @@ In consequence all variables of an ObjectExpr have to refer to either AbstractGM
   * All AbstractGMPObjects need to act on the same polynomial variables.
 
 """
-mutable struct ObjectExpr{C <: Number} <: AbstractGMPExpr
+mutable struct ObjectExpr{C <: Number, S} <: AbstractGMPExpr
     coefs::Vector{C}
-    vars::Vector{GMPVariableRef}
-    function ObjectExpr(cv::Vector{C}, mv::Vector{GMPVariableRef}) where {C <: Number}
+    vars::Vector{<:GMPVariableRef{S}}
+    function ObjectExpr(cv::Vector{C}, mv::Vector{GMPVariableRef{S}}) where {C <: Number, S}
         same_length(cv, mv)
         same_variables(mv)
-        same_vref_type(mv)
-        return new{C}(cv, mv)
+        return new{C, S}(cv, mv)
     end
 end
 
@@ -40,11 +39,11 @@ end
 Base.:*(a::Number, vref::GMPVariableRef) = ObjectExpr([a], [vref])
 Base.:*(a::Number, e::ObjectExpr) = ObjectExpr(a.*gmp_coefficients(e), gmp_variables(e))
 
-function Base.sum(mev::Vector{ObjectExpr{C}}) where {C}
+function Base.sum(mev::Vector{ObjectExpr{C, S}}) where {C, S}
     # TODO add early compatibiliy check: for now the sum is computed 
     # and an assertion error is generated when buildinf the GMPExpr in the return. 
     coefs = C[]
-    vars = GMPVariableRef[]
+    vars = GMPVariableRef{S}[]
     for me in mev
         for (c, m) in me
             index = findfirst(x -> x == m, vars)
@@ -61,11 +60,11 @@ function Base.sum(mev::Vector{ObjectExpr{C}}) where {C}
     return ObjectExpr(coefs[index], vars[index])
 end
 
-function Base.sum(mev::Vector{GMPVariableRef})
+function Base.sum(mev::Vector{GMPVariableRef{S}}) where S
     # TODO add early compatibiliy check: for now the sum is computed 
     # and an assertion error is generated when buildinf the GMPExpr in the return. 
     coefs = Int[]
-    vars = GMPVariableRef[]
+    vars = GMPVariableRef{S}[]
     for m in mev
         index = findfirst(x -> x == m, vars)
         if index isa Nothing
@@ -97,26 +96,26 @@ end
 
 # compatibility
 
-function Base.promote_rule(::Type{ObjectExpr{C}}, ::Type{GMPVariableRef}) where {C}
-    return ObjectExpr{C}
+function Base.promote_rule(::Type{ObjectExpr{C, S}}, ::Type{GMPVariableRef{S}}) where {C, S}
+    return ObjectExpr{C, S}
 end
 
-function Base.convert(::Type{ObjectExpr{C}}, m::GMPVariableRef) where {C}
+function Base.convert(::Type{ObjectExpr{C, S}}, m::GMPVariableRef{S}) where {C, S}
     return ObjectExpr([one(C)], [m])
 end
 
-function Base.promote_rule(::Type{ObjectExpr{C1}}, ::Type{ObjectExpr{C2}}) where {C1, C2}
-    return ObjectExpr{promote_type(C1, C2)}
+function Base.promote_rule(::Type{ObjectExpr{C1, S}}, ::Type{ObjectExpr{C2, S}}) where {C1, C2, S}
+    return ObjectExpr{promote_type(C1, C2), S}
 end
 
-function Base.convert(::Type{ObjectExpr{C}}, m::ObjectExpr) where {C}
+function Base.convert(::Type{ObjectExpr{C, S}}, m::ObjectExpr) where {C, S}
     return ObjectExpr(convert.(C, gmp_coefficients(m)), gmp_variables(m))
 end
 
 
 # The ObjectExr constructor checks that all objects in one expression have the same polynomial variables and the vref_type. 
 MP.variables(e::ObjectExpr) = variables(first(gmp_variables(e)))
-vref_type(e::ObjectExpr) = vref_type(first(gmp_variables(e)))
+vref_type(e::ObjectExpr{C, S}) where {C, S} = S
 degree(e::ObjectExpr) = 0
 
 
@@ -125,8 +124,8 @@ degree(e::ObjectExpr) = 0
 
 Type representing an affine linear combination of GMPObjects.
 """
-const AffObjectExpr{S, T <: Number} = GMPAffExpr{S, ObjectExpr{T}}
-Base.:-(e::ObjectExpr, a::AbstractGMPObject) = AffObjectExpr(e, a)
+const AffObjectExpr{S, T <: Number, U} = GMPAffExpr{S, ObjectExpr{T, U}}
+#Base.:-(e::ObjectExpr, a::AnalyticGMPObject) = AffObjectExpr(e, -a)
 
 # MomentExpr
 function all_vars_measures(mv::Vector{<:ObjectExpr})
@@ -147,8 +146,8 @@ Type representing a linear combination of Moments. A Moment is the pairing of an
 """
 mutable struct MomentExpr{T <: Union{Number, MP.AbstractPolynomialLike}, S <: Number} <: AbstractGMPExpr
     coefs::Vector{T}
-    vars::Vector{ObjectExpr{S}}
-    function MomentExpr(cv::Vector{T}, mv::Vector{ObjectExpr{S}}) where {S, T}
+    vars::Vector{ObjectExpr{S, AbstractGMPMeasure}}
+    function MomentExpr(cv::Vector{T}, mv::Vector{ObjectExpr{S, AbstractGMPMeasure}}) where {S, T}
         same_length(cv, mv)
         all_vars_measures(mv)
         for (c, m) in zip(cv, mv)
@@ -158,13 +157,14 @@ mutable struct MomentExpr{T <: Union{Number, MP.AbstractPolynomialLike}, S <: Nu
     end
 end
 
-function MomentExpr(cv::Vector{<:Union{Number, MP.AbstractPolynomialLike}}, mv::Vector{GMPVariableRef})
+function MomentExpr(cv::Vector{<:Union{Number, MP.AbstractPolynomialLike}}, mv::Vector{<:GMPVariableRef})
     return MomentExpr(cv, ObjectExpr.(ones(Int, length(mv)), mv))
 end
 
 function MomentExpr(cv::Union{Number, MP.AbstractPolynomialLike}, mv::Union{GMPVariableRef, ObjectExpr}) 
     return MomentExpr([cv], [mv])
 end
+Base.zero(::Type{MomentExpr{T, S}}) where {T,S} = MomentExpr(T[], ObjectExpr{S,AbstractGMPMeasure}[])
 
 degree(e::MomentExpr) = maximum(MP.maxdegree.(gmp_coefficients(e)))
 
@@ -195,7 +195,7 @@ function Base.sum(mev::Vector{MomentExpr{T, S}}) where {T, S}
     else
         coefs = polynomialtype(T)[]
     end
-    vars = ObjectExpr{S}[]
+    vars = ObjectExpr{S, AbstractGMPMeasure}[]
     for me in mev
         for (c, m) in me
             index = findfirst(x -> x == m, vars)
@@ -230,29 +230,29 @@ function JuMP.function_string(io, e::MomentExpr)
 end
 
 # compatibility
-
+#=
 function Base.promote_rule(::Type{MomentExpr{T, S}}, ::Type{GMPVariableRef}) where {T, S}
     return MomentExpr{T, S}
 end
 
 function Base.convert(::Type{MomentExpr{T, S}}, m::GMPVariableRef) where {T, S}
-    return MomentExpr([one(T)], [convert(ObjectExpr{S}, m)])
+    return MomentExpr([one(T)], [convert(ObjectExpr{S, AbstractGMPMeasure}, m)])
 end
 
-function Base.promote_rule(::Type{MomentExpr{T, S1}}, ::Type{ObjectExpr{S2}}) where {T, S1, S2}
+function Base.promote_rule(::Type{MomentExpr{T, S1}}, ::Type{ObjectExpr{S2, AbstractGMPMeasure}}) where {T, S1, S2}
     return MomentExpr{T, promote_type(S1, S2)}
 end
 
 function Base.convert(::Type{MomentExpr{T, S}}, m::ObjectExpr) where {T, S}
-    return MomentExpr([one(T)], [convert(ObjectExpr{S}, m)])
+    return MomentExpr([one(T)], [convert(ObjectExpr{S, AbstractGMPMeasure}, m)])
 end
-
+=#
 function Base.promote_rule(::Type{MomentExpr{C1, V1}}, ::Type{MomentExpr{C2, V2}}) where {C1, C2, V1, V2}
     return MomentExpr{promote_type(C1, C2), promote_type(V1, V2)}
 end
 
 function Base.convert(::Type{MomentExpr{C, V}}, m::MomentExpr) where {C, V}
-    return MomentExpr(convert.(C, gmp_coefficients(m)), convert.(ObjectExpr{V}, gmp_variables(m)))
+    return MomentExpr(convert.(C, gmp_coefficients(m)), convert.(ObjectExpr{V, AbstractGMPMeasure}, gmp_variables(m)))
 end
 
 

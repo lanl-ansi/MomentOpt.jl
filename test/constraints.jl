@@ -33,39 +33,33 @@
         @variable m ν Meas([x,y], basis = ChebyshevBasis)
         @variable m σ Meas([x])
 
-        @test MOI.constant(MO.EqualToMeasure(ZeroMeasure())) isa ZeroMeasure
+        @test MOI.constant(MO.EqualToMeasure(ZeroMeasure([x, y]))) isa AnalyticMeasure
         @test JuMP.reshape_vector(μ + ν , MO.MeasureConstraintShape()) == μ + ν
-        @test  JuMP.reshape_set(MO.EqualToMeasure(ZeroMeasure()), MO.MeasureConstraintShape()) == MO.EqualToMeasure(ZeroMeasure())
-        @test MO.same_basis(MO.GMPVariableRef[]) isa Nothing 
-        @test MO.same_basis([μ, σ]) isa Nothing
-        @test MO.same_basis([μ, ν ]) isa Nothing
+        @test  JuMP.reshape_set(MO.EqualToMeasure(ZeroMeasure([x])), MO.MeasureConstraintShape()) isa MO.EqualToMeasure
 
-        mc = MO.MeasureConstraint(μ + ν, MO.EqualToMeasure(ZeroMeasure())) 
-        @test sprint(show, mc) == "μ + ν = 0"
+        mc = MO.MeasureConstraint(μ + ν, MO.EqualToMeasure(ZeroMeasure([x,y]))) 
+        @test sprint(show, mc) == "μ + ν = AnalyticMeasure"
         @test JuMP.jump_function(mc) == μ + ν
-        @test JuMP.moi_set(mc) == MO.EqualToMeasure(ZeroMeasure())
+        @test JuMP.moi_set(mc) isa MO.EqualToMeasure
         @test JuMP.shape(mc) isa MO.MeasureConstraintShape
 
         _err = x -> ""
-        @test JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(0)) isa MO.MeasureConstraint
-        @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 0, MOI.EqualTo(1))
-        @test_throws AssertionError JuMP.build_constraint(_err, μ + ν - 1, MOI.EqualTo(0))
-
-    end
+        @test JuMP.build_constraint(_err, μ + ν, MO.EqualToMeasure(ZeroMeasure([x, y]))) isa MO.MeasureConstraint
+     end
 
     @testset "GMPConstraintRef" begin
         @polyvar x y
         m = GMPModel()
         @variable m μ Meas([x,y])
         @constraint m c1 Mom(1, μ) == 1
-        @constraint m c2 μ == 0 
+        @constraint m c2 μ == ZeroMeasure([x,y]) 
         @test !iszero(c1)
         @test !JuMP.isequal_canonical(c1, c2)
         @test JuMP.isequal_canonical(c1, c1) 
+        @test JuMP.isequal_canonical(c2, c2) 
         @test JuMP.owner_model(c1) == m
         @test JuMP.shape(c1) isa MO.MomentConstraintShape
         @test JuMP.shape(c2) isa MO.MeasureConstraintShape
-
         @test JuMP.index.([c1, c2]) == [1, 2] 
     end
 
@@ -75,15 +69,17 @@
         @variable m μ Meas([x,y])
         @variable m ν Meas([x,y], basis = ChebyshevBasis)
         @constraint m c1 Mom(1, μ) == 1
-        @constraint m c2 μ == 0 
-        @test JuMP.constraint_type(m) == MO.GMPConstraintRef
+
+        ζ = ZeroMeasure([x,y]) 
+        @constraint m c2 μ == ζ
         @test JuMP.is_valid(m, c1)
         @test sprint(show, c1) == "c1 : ⟨1, μ⟩ = 1.0"
-        @test sprint(show, c2) == "c2 : μ = 0"
+        @test sprint(show, c2) == "c2 : μ = AnalyticMeasure"
 
-        @test JuMP.constraint_object(c2) == MO.MeasureConstraint(MO.ObjectExpr(1, μ), MO.EqualToMeasure(ZeroMeasure()))
+        @test sprint(show, JuMP.constraint_object(c2)) == "μ = AnalyticMeasure"
+
         @test JuMP.jump_function(c2) == MO.ObjectExpr(1, μ)
-        @test JuMP.moi_set(c2) == MO.EqualToMeasure(ZeroMeasure())
+        @test JuMP.moi_set(c2) isa MO.EqualToMeasure
         @test JuMP.name(c1) == "c1"
         @test JuMP.name(c2) == "c2"
 

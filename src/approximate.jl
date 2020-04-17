@@ -5,128 +5,125 @@ export approximate!
 Computes an approximation of m.
 """
 function approximate!(model::GMPModel)
-    if approximation_info(model).mode isa NO_APPROXIMATION_MODE
-        @warn("No approximation mode has been set.") #TODO remove default to Primal
-    else
-        generate_approximation_model(model)
-        set_optimizer(approximation_model(model), approximation_info(model).solver)
-        optimize!(approximation_model(model))
-        #TODO maybe do some postprocessing
-    end
-    return model
+    model.approximation_model = Model()
+    set_optimizer(approximation_model(model), approximation_info(model).solver) 
+    return approximate!(model, approximation_mode(model))
 end
 
+function approximate!(model::GMPModel, mode::AbstractPrimalMode)
+    # init approx objects
+    # substitutions/delete JuMP variables (better when creating) (substitutions should only work with objects, that are already defined)
+    # if measure 
+    #   add justification constraints justify(vref, Approximationtype, mode)
+    # else
+    #   for continuous functions the approximation is not justified
+    # end
+    #
+    # add constraints
+    # if nonneg constraint 
+    #   add justification
+    # end
+    # add objective
+    optimize!(approximation_model(model))
 
-# Moment sequences connect GMPObjects to JuMPvariables
-export ApproximationSequence
-"""
-    ApproximationSequence{T <: AbstractGMPObject}
-
-An approximation sequence stores necessary data to build the approximation of the object.
-"""
-mutable struct ApproximationSequence{T <: AbstractGMPObject}
-    model::JuMP.Model
-    object::T
-    dict::Dict{MP.AbstractPolynomialLike, Any}
-    function ApproximationSequence(o::T; model = JuMP.Model()) where T <: AbstractGMPObject
-        new{T}(model, o, Dict{MP.AbstractPolynomialLike, Any}())
-    end
-end
-Base.broadcastable(ms::ApproximationSequence) = Ref(ms)
-function gmp_object(ms::ApproximationSequence)
-    return ms.object
-end
-
-function Base.show(io::IO, ms::ApproximationSequence)
-    println(io, "ApproximationSequence:")
-    for (k, v) in ms.dict
-        println("$k => $v")
-    end
-end
-
-Base.length(ms::ApproximationSequence) = length(ms. dict)
-
-function Base.getindex(ms::ApproximationSequence, m::MP.AbstractPolynomialLike)
-    if !haskey(ms.dict, m) 
-        if MOI.get(gmp_object(ms), ApproximationType()) isa EXACT_APPROXIMATION
-            ms.dict[m] = integrate(m, gmp_object(ms))
-        else
-            cc, mm = MB.change_basis(m, MOI.get(gmp_object(ms), ApproximationBasis()))
-            if length(cc) == 1 && mm[1] == m
-                ms.dict[m] = @variable ms.model
-            else
-                ms.dict[m] = 0
-                for i in 1:length(cc)
-                    haskey(ms.dict, mm[i]) ? nothing : ms.dict[mm[i]] = @variable ms.model 
-                    ms.dict[m] += cc[i] * ms.dict[mm[i]]
-                end
-            end
-        end
-    end
-    return ms.dict[m]
-end
-
-function Base.getindex(ms::ApproximationSequence, m::Number)
-    return getindex(ms::ApproximationSequence, m*_mono_one(MOI.get(gmp_object(ms), Variables())))
-end
-
-Base.getindex(ms::ApproximationSequence, v::AbstractArray) = getindex.(ms, v)
-
-function approximation_sequence(model::JuMP.Model, o::AbstractGMPObject, degree::Int)
-    ms = ApproximationSequence(o; model = model)
-    basis = maxdegree_basis(o, degree) #TODO change for sparsity or symmetry
-    ms[MP.monomials(basis)] #ApproximationSequences are generated lazily.
-    return ms
-end
-
-export GMPObjectApproximation
-"""
-    GMPObjectApproximation
-
-Contains approximation and references to constraints, justifying the approximation.
-"""
-mutable struct GMPObjectApproximation
-    approx::ApproximationSequence
-    crefs::Vector{JuMP.ConstraintRef}
-end
-
-function Base.show(io::IO, ap::GMPObjectApproximation)
-    print(io, "Approximation with $(length(ap.crefs)) crefs")
-end
-
-function init_approximation(model::GMPModel, degree::Int)
-    m = approximation_model(model)
-    for (i, o) in gmp_variables(model)
-        approximation_info(model).approx_vrefs[i] = GMPObjectApproximation(approximation_sequence(m, o.v, degree), GMPConstraintRef[])
-    end
+    # set dual justifications 
     return nothing
 end
 
-function approximation_sequence(model::GMPModel, index::Int)
-    return approximation_info(model).approx_vrefs[index].approx
+function dual_variable(model::JuMP.Model, con::AbstractGMPConstraint, sense::MOI.OptimizationSense, deg::Int)
+    if con isa MeasureConstraint
+        # for measure constraints the basis of the first registered measure is used to test equality
+        v = vref_object(first(gmp_variables(jump_function(con))))
+        variable = @variable(model, variable_type = Poly(monomials(maxdegree_basis(v, deg))))
+    elseif moi_set(con) isa MOI.EqualTo
+        variable = @variable(model)
+    elseif xor(moi_set(con) isa MOI.LessThan, sense == MOI.MIN_SENSE)
+        variable = @variable(model, lower_bound=0)
+    else
+        variable = @variable(model, upper_bound=0)
+    end
+    return variable
 end
 
-"""
-    riesz(::GMPModel, ::GMPVariableRef, p)
-    riesz(::GMPModel, ::(Aff)MomentExpr)
+function approximate!(model::GMPModel, mode::AbstractDualMode)
+    # init constraint multipliers
+    dvar = Dict()
+    for (i, con) in gmp_constraints(model)
+        dvar[i] = dual_variable(approximation_model(model), con, objective_sense(model), approximation_degree(model))
+    end
+    
+    PT = polynomialtype(eltype(variables(gmp_variables(model)[1].v)), JuMP.AffExpr)
+    dlhs = Dict{Int, PT}()
 
-Evaluates a moment expression with respect to the corresponding moment sequences.
-"""
-function riesz(m::GMPModel, index::Int, p::MP.AbstractPolynomialLike)
-    cc, mm = MB.change_basis(p, MOI.get(gmp_variables(m)[index].v, ApproximationBasis()))
-    ms = approximation_sequence(m, index)
-    return sum( cc[i]*ms[mm[i]] for i in 1:length(cc))
+    for i in keys(gmp_variables(model))
+        dlhs[i] = zero(PT)        
+    end
+    d_obj =0
+
+    for (i, con) in gmp_constraints(model)
+        if con isa MeasureConstraint
+            for v in gmp_variables(jump_function(con))
+                dlhs[index(v)] = MA.add_mul!(dlhs[index(v)], dvar[i])
+            end
+        elseif con isa MomentConstraint
+            mcon = momexp_by_measure(jump_function(con))
+            for (c, v) in mcon
+                idx = index(first(gmp_variables(v)))
+                dlhs[idx] = MA.add_mul!(dlhs[idx], dvar[i], c)
+            end
+            d_obj = MA.add_mul!(d_obj, dvar[i], MOI.constant(moi_set(con)))
+        end
+    end
+
+    primal_sense = objective_sense(model)    
+    if primal_sense == MOI.FEASIBILITY_SENSE
+        obj = zero(MomentExpr{Int, Int})
+        dual_sense = primal_sense
+    elseif primal_sense == MOI.MAX_SENSE
+        obj = - objective_function(model)
+        dual_sense = MOI.MIN_SENSE
+    elseif primal_sense == MOI.MIN_SENSE
+        obj = objective_function(model)
+        dual_sense = MOI.MAX_SENSE
+    end
+    obj_const = constant(obj)
+    obj_expr = momexp_by_measure(expr(obj))
+    dcon = Dict()
+    just = Dict()
+    for (i, v) in gmp_variables(model)
+        p = dlhs[i]
+        if primal_sense == MOI.MIN_SENSE
+            p = -p
+        end
+        idx = findfirst(x -> index(first(gmp_variables(x))) == i, gmp_variables(obj_expr))
+        if !(idx isa Nothing)
+            p = MA.add!(p, gmp_coefficients(obj_expr)[idx])
+        end
+        multipliers = approximation_scheme(approx_scheme(v.v), bsa_set(v.v), variables(v.v), approximation_degree(model))
+        just[i] = Dict()
+        @info multipliers
+        for (mons, set) in multipliers
+            @info mons
+            if size(mons, 1) == 1
+                just[i][mons] = @variable(approximation_model(model), lower_bound = 0 )
+                @info p
+                @info first(mons)
+                @info just[i][mons]
+                p = MA.sub_mul!(p, first(mons), just[i][mons]) 
+            else
+            just[i][mons] = @variable(approximation_model(model), [1:size(mons,1),1:size(mons,2)], PSD)
+            p = MA.sub!(p, LinearAlgebra.tr(mons*just[i][mons])) 
+        end
+        end
+        dcon[i] = @constraint approximation_model(model) p == 0
+    end
+
+    @objective(approximation_model(model), dual_sense, d_obj)
+
+    optimize!(approximation_model(model))
+    
+    return dvar, dcon, just
 end
-
-function riesz(ms::GMPModel, index::Int, m::Number)
-    return riesz(ms, index, m*_mono_one(MOI.get(gmp_variables(ms)[index].v, Variables())))
-end
-
-function riesz(model::GMPModel, me::MomentExpr)
-    return sum(c*riesz(model, index(m), cv) for (cv, mv) in me for (c, m) in mv)
-end
-
-riesz(ms::GMPModel, me::AffMomentExpr) = constant(me) + riesz(expr(me))
 
 # inner approximations of positive polynomials
 
@@ -175,7 +172,6 @@ function generate_approximation_model(model::GMPModel)
 end
 
 function measure_relaxation_model(model::GMPModel)
-    model.approximation_model = Model()
     degree = approximation_info(model).degree
     # initiate moments
     init_approximation(model, degree)

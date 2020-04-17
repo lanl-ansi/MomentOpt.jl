@@ -1,3 +1,5 @@
+abstract type AbstractGMPScalar <: JuMP.AbstractJuMPScalar end
+
 Base.broadcastable(t::AbstractGMPScalar) = Ref(t)
 
 abstract type AbstractGMPExpressionLike <: AbstractGMPScalar end
@@ -13,7 +15,7 @@ gmp_coefficients(vref::AbstractGMPVariableRef) = [1]
 gmp_coefficients(e::AbstractGMPExpr) = e.coefs
 gmp_variables(vref::AbstractGMPVariableRef) = [vref]
 gmp_variables(e::AbstractGMPExpr) = e.vars
-Base.iszero(e::AbstractGMPExpr) = isempty(gmp_coefficients(e)) ? true : all(es -> iszero(es), gmp_coefficients(e))
+Base.iszero(e::AbstractGMPExpr) = false
 JuMP.isequal_canonical(e1::AbstractGMPExpr, e2::AbstractGMPExpr) = e1 == e2
 
 function Base.getindex(e::AbstractGMPExpr, s) 
@@ -28,6 +30,16 @@ Base.iterate(e::AbstractGMPExpr, s) = (s >= length(e)) ? nothing : ((gmp_coeffic
 function Base.:(==)(me1::AbstractGMPExpr, me2::AbstractGMPExpr)
     return all(gmp_coefficients(me1) .== gmp_coefficients(me2)) && all(gmp_variables(me1) .== gmp_variables(me2))
 end
+
+mutable struct GMPAffExpr{S, V <: AbstractGMPExpr} <: AbstractGMPExpressionLike
+    expr::V
+    cons::S
+end
+
+expr(ae::GMPAffExpr) = ae.expr
+constant(ae::GMPAffExpr) = ae.cons
+expr(e::AbstractGMPExpr) = e
+constant(e::AbstractGMPExpr) = 0
 
 # Linear operations
 const ExprVariables = Union{AbstractGMPVariableRef, AbstractGMPExpressionLike}
@@ -52,48 +64,41 @@ function Base.:-(m1::ExprVariables, m2::ExprVariables)
     return sum([m1, -m2])
 end
 
-
-mutable struct GMPAffExpr{S, V <: AbstractGMPExpr} <: AbstractGMPExpressionLike
-    expr::V
-    cons::S
-end
-
-expr(ae::GMPAffExpr) = ae.expr
-constant(ae::GMPAffExpr) = ae.cons
-
 function Base.:(==)(ae1::GMPAffExpr, ae2::GMPAffExpr)
     return constant(ae1) == constant(ae2) && expr(ae1) == expr(ae2)
 end
 
-function Base.:+(a::Number, v::AbstractGMPVariableRef)
+const AffExprConstant = Union{Number, JuMP.VariableRef, AnalyticGMPObject}
+
+function Base.:+(a::AffExprConstant, v::AbstractGMPVariableRef)
     return GMPAffExpr(1*v, a)
 end
 
-function Base.:+(a::Number, e::AbstractGMPExpr)
+function Base.:+(a::AffExprConstant, e::AbstractGMPExpr)
     return GMPAffExpr(e, a)
 end
 
-function Base.:*(a::Number, ae::GMPAffExpr{S,V}) where {S, V}
+function Base.:*(a::Number, ae::GMPAffExpr)
     return GMPAffExpr(a*expr(ae), a*constant(ae))
 end
 
-function Base.sum(mev::Vector{GMPAffExpr{S, V}}) where {S, V}
+function Base.sum(mev::Vector{<:GMPAffExpr})
     return GMPAffExpr(sum(expr.(mev)), sum(constant.(mev)))
 end
 
-function Base.:+(a::Number, ae::GMPAffExpr{S, V}) where {S, V}
-    return GMPAffExpr(expr(ae), constant(ae)+a)
+function Base.:+(a::AffExprConstant, ae::GMPAffExpr)
+    return GMPAffExpr(expr(ae), constant(ae) + a)
 end
 
-function Base.:+(ae::ExprVariables, a::Number) 
+function Base.:+(ae::ExprVariables, a::AffExprConstant) 
     return a + ae
 end
 
-function Base.:-(a::Number, ae::ExprVariables)
+function Base.:-(a::AffExprConstant, ae::ExprVariables)
     return a + (-ae)
 end
 
-function Base.:-(ae::ExprVariables, a::Number)
+function Base.:-(ae::ExprVariables, a::AffExprConstant)
     return ae + (-a)
 end
 
@@ -114,6 +119,10 @@ function _prep_coef(c::Number)
     else
         return "", ""
     end
+end
+
+function _prep_coef(c::AnalyticMeasure)
+    return " + ", sprint(show, c)
 end
 
 function JuMP.function_string(mode, ae::GMPAffExpr)

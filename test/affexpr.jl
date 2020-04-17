@@ -8,7 +8,7 @@
             m = GMPModel()
             @variable m μ Meas([x])
             @variable m ν Meas([x])
-            @variable m σ SymbolicMeasure([y], FullSpace(), ChebyshevBasis)
+            @variable m σ Meas([y], basis = ChebyshevBasis)
             @test_throws AssertionError MO.same_variables([μ, σ])
             @test MO.same_variables([μ, ν]) isa Nothing
             @test MO.same_vref_type([μ, σ]) isa Nothing
@@ -34,10 +34,10 @@
             @test MO.vref_type(oe1) == MO.AbstractGMPMeasure
             @test MO.degree(oe1) == 0
 
-            @test sprint(show, MO.ObjectExpr(Int[], MO.GMPVariableRef[])) == "0"
+            @test sprint(show, MO.ObjectExpr(Int[], MO.GMPVariableRef{MO.AbstractGMPMeasure}[])) == "0"
             o2 = (μ + ν)/2
-            @test eltype([μ, o2]) == MomentOpt.ObjectExpr{typeof(1.0)}
-            @test eltype([oe1, o2]) == MomentOpt.ObjectExpr{typeof(1.0)}
+            @test eltype([μ, o2]) == MomentOpt.ObjectExpr{typeof(1.0), MO.AbstractGMPMeasure}
+            @test eltype([oe1, o2]) == MomentOpt.ObjectExpr{typeof(1.0), MO.AbstractGMPMeasure}
 
         end
         @testset "MomentExpr" begin
@@ -75,10 +75,10 @@
 
             @test sprint(show, m5) == "⟨-x, μ⟩ + ⟨1, 0.5μ + 0.5ν⟩"
             @test sprint(show, m4 - m5) == "⟨x + 1, μ⟩ + ⟨x - 1, 0.5μ + 0.5ν⟩" 
-            @test sprint(show, MomentExpr(Int[], MO.GMPVariableRef[])) == "⟨0, 0⟩"
+            @test sprint(show, MomentExpr(Int[], MO.GMPVariableRef{MO.AbstractGMPMeasure}[])) == "⟨0, 0⟩"
 
-            @test eltype([Mom(1, μ + ν), μ]) == MomentExpr{Int, Int}
-            @test eltype([Mom(1, μ + ν), μ + ν]) == MomentExpr{Int, Int}
+            @test eltype([Mom(1, μ + ν), μ]) == AbstractJuMPScalar
+            @test eltype([Mom(1, μ + ν), μ + ν]) == MO.AbstractGMPExpr
             @test eltype([Mom(1, μ + ν), Mom(one(Int8), μ + ν)]) == MomentExpr{Int, Int}
 
         end
@@ -96,10 +96,17 @@
             o1 = μ
             o2 = (μ+ν)/2
             @test sum([o1, o2])+ν == 3*o2
-            @test o1-μ == Mom(Int[], MO.GMPVariableRef[])
+            @test o1-μ == Mom(Int[], MO.GMPVariableRef{MO.AbstractGMPMeasure}[])
             o3 =(μ-ν)/2
             @test o2 + o3 == MO.ObjectExpr(1, o1)
             @test 2*o2 == o2*2
+
+            λ = lebesgue_measure_box(variable_box(x => [0, 1], y => [0, 1]))
+            @test sprint(show, μ + λ) == "μ + AnalyticMeasure"
+            @test sprint(show, μ + λ - λ) == "μ + AnalyticMeasure"
+            @test sprint(show, 2*(μ + λ)) == "2μ + AnalyticMeasure"
+            @test sprint(show, (μ + λ)/4) == "0.25μ + AnalyticMeasure"
+
 
         end
 
@@ -117,7 +124,7 @@
             m2 = MomentExpr([0.5, 0.5], [μ, ν])
             m3 = Mom(1, o2)
 
-            @test m1 + μ == Mom(2, μ)
+            @test m1 + Mom(1, μ) == Mom(2, μ)
             @test length(sum([m1, m2, m3])) == 3
             @test length(m3 + m1 - 2*m2) == 2
             @test MO.momexp_by_measure(Mom(1, o2) + Mom(1, o3)) == m1
@@ -126,7 +133,8 @@
             @test JuMP.isequal_canonical(mv[2] - mv[1], mv[1])
             @test Mom.(1, [μ, μ]) isa Vector{MomentExpr{Int, Int}}
             ae1 = m1 + 1
-            ae2 = 2*ae1 -1
+            ae2 = 2*ae1 - 1
+            ae3 = m1 - 1
             @test MO.constant(ae1) == MO.constant(ae2)
             @test ae2*2 - ae2 == ae2
             @test sprint(show, ae2*2 - 2) == "⟨4.0, μ⟩"

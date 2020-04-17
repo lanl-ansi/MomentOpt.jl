@@ -41,13 +41,15 @@ gmp = GMPModel()
 # Constrain μ to be a probablity measure
 @constraint gmp Mom(1, μ) == 1
 
-# We solve the relaxation of order 2 with CSDP
-relax!(gmp, 2, with_optimizer(Mosek.Optimizer))
+# We solve the relaxation of order 
+set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
+set_optimizer(gmp, Mosek.Optimizer)
+approximate!(gmp)
 
 println("Relaxation order: $(2)")
 println("Lower bound: $(objective_value(gmp))")
 # We try to extract atoms from the relaxed moment sequence of μ
-opt = atomic(gmp, μ, tol = 1e-03)
+opt = atomic( μ, tol = 1e-03)
 println()
 
 # As we could not extract atoms from the solution, we increase the relaxation order

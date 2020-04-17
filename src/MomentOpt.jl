@@ -13,43 +13,40 @@ include("MPext/MPextra.jl")
 using MathOptInterface
 const MOI = MathOptInterface
 
+using MutableArithmetics
+const MA = MutableArithmetics
 Reexport.@reexport using JuMP
 
-import LinearAlgebra.dot
-Reexport.@reexport using SemialgebraicSets
+using LinearAlgebra
 
-abstract type AbstractGMPObject end
+Reexport.@reexport using SemialgebraicSets
+include("SASext/SASextra.jl")
+
+Reexport.@reexport using SumOfSquares
+
+
+# begin MomentOpt
+include("approximation.jl")
+include("approximationscheme.jl")
 include("objects.jl")
 include("defaultmeasures.jl")
-
-abstract type AbstractGMPVariable  <: JuMP.AbstractVariable end
-abstract type AbstractGMPVariableRef <: JuMP.AbstractVariableRef end
 include("variables.jl")
-
-abstract type AbstractGMPScalar <: JuMP.AbstractJuMPScalar end
 include("gmpaffexpr.jl")
 include("affexpr.jl")
-
-abstract type AbstractGMPSet <: MOI.AbstractScalarSet end
-abstract type AbstractGMPShape <: JuMP.AbstractShape end
-abstract type AbstractGMPConstraint <: JuMP.AbstractConstraint end
 
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution
 # define IntegralSubstitution
 
 include("constraints.jl")
+
 #
 include("gmpmodel.jl")
-
-Reexport.@reexport using SumOfSquares
 
 include("approximate.jl")
 
 include("MMext/MMextra.jl")
-#include("relax.jl")
 
-import LinearAlgebra.eigen
 include("gmppostproc.jl")
 
 end# module

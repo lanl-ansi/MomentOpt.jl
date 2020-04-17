@@ -1,3 +1,24 @@
+export ZeroMeasure
+
+"""
+    ZeroMeasure(vars::Vector{MP.AbstractVariable})
+
+Measure acting on vars and giving zero mass to the whole space. 
+"""
+ZeroMeasure(vars::Vector{<:MP.AbstractVariable}; basis = MonomialBasis) = AnalyticMeasure(vars, basis, x -> 0)
+
+export DiracMeasure
+
+"""
+    DiracMeasure(vars::Vector{MP.AbstractVariable}, point::AbstractVector)
+
+Dirac measure in the point vars == point.
+"""
+function DiracMeasure(vars::Vector{<:MP.AbstractVariable}, point::AbstractVector)
+    @assert length(vars) == length(point) "Variables and point need to have same length."
+    return AnalyticMeasure(vars, MonomialBasis, x -> prod(point[i]^exponents(x)[i] for i in 1:length(point)))
+end
+
 struct VariableBox{T<:Number, VT<:MP.AbstractVariable}
     dict::Dict{VT, Vector{T}}
 end

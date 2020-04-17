@@ -77,7 +77,7 @@ export VariableContinuous
 
 Type representing a continuous funciton that can be stregthend via a conic approximation. 
 """
-struct VariableContinuous{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, R <: AbstractApproximation} <: AbstractGMPContinuous
+struct VariableContinuous{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, R <: AbstractApproximationScheme} <: AbstractGMPContinuous
     variables::Vector{V}
     bsa_set::S
     approx_type::R
@@ -86,5 +86,5 @@ end
 
 
 export Cont
-Cont(vars; domain = FullSpace(), basis = MonomialBasis, approx = DefaultApproximation()) = VariableContinuous(vars, domain, approx, basis)
+Cont(vars; domain = FullSpace(), basis = MonomialBasis, approx = PutinarScheme()) = VariableContinuous(vars, domain, approx, basis)
 

@@ -4,8 +4,7 @@
         @polyvar x y
         mu = Meas([x, y])
         v = GMPVariable(mu)
-        @test MO.object_type(v) == VariableMeasure{PolyVar{true},FullSpace,MomentOpt.DefaultApproximation}
-        @test MO.variable_type(v) == MO.AbstractGMPMeasure
+        @test MO.object_type(v) == VariableMeasure{PolyVar{true}, FullSpace, MonomialBasis, PutinarScheme}
 
         _error = _ -> ""
         info = VariableInfo(true, 1, true, 1, true, 1, true, 1, false, false)
@@ -15,15 +14,15 @@
 
     @testset "GMPVariableRef" begin
         m = GMPModel()
-        vref1 = MO.GMPVariableRef(m, 1, AnalyticMeasure)
-        vref2 = MO.GMPVariableRef(m, 2, VariableMeasure)
+        vref1 = MO.GMPVariableRef(m, 1, MomentOpt.AbstractGMPMeasure)
+        vref2 = MO.GMPVariableRef(m, 2, MomentOpt.AbstractGMPMeasure)
 
         @test !iszero(vref1)
         @test vref1 == vref1
         @test !(vref1 == vref2)
-        @test MO.vref_type(vref1) == AnalyticMeasure
-        @test index(vref1) == 1
-        @test index(vref2) == 2
+        @test JuMP.isequal_canonical(vref1, vref2) == (vref1 == vref2)
+        @test MO.vref_type(vref1) == MomentOpt.AbstractGMPMeasure
+        @test index.([vref1, vref2]) == [1, 2]
 
     end
 
