@@ -107,11 +107,11 @@ function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::MOI.Equal
     return MeasureConstraint(expr(ae), EqualToMeasure(-constant(ae))) 
 end
 
-#=
+
 function JuMP.build_constraint(_error::Function, e::ObjectExpr, s::EqualToMeasure)
     return MeasureConstraint(e, s) 
 end
-
+#=
 function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::EqualToMeasure)
 
     return MeasureConstraint(expr(ae), MOIU.shift_constant(s, -constant(ae))) 
