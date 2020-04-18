@@ -57,7 +57,7 @@ struct EqualToMeasure <: AbstractGMPSet
 end
 
 MOI.constant(set::EqualToMeasure) = set.measure
-MOI.Utilities.shift_constant(set::EqualToMeasure, m::AnalyticMeasure) = EqualToMeasure(constant(set) + m)
+#MOI.Utilities.shift_constant(set::EqualToMeasure, m::AnalyticMeasure) = EqualToMeasure(constant(set) - m)
 function JuMP.in_set_string(print_mode, set::EqualToMeasure)
     return "= "*sprint(show, MOI.constant(set))
 end
@@ -104,18 +104,19 @@ function Base.show(io::IO, con::MeasureConstraint)
 end
 
 function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::MOI.EqualTo)
-    return MeasureConstraint(expr(ae), EqualToMeasure(constant(ae))) 
+    return MeasureConstraint(expr(ae), EqualToMeasure(-constant(ae))) 
 end
 
-
+#=
 function JuMP.build_constraint(_error::Function, e::ObjectExpr, s::EqualToMeasure)
     return MeasureConstraint(e, s) 
 end
 
 function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::EqualToMeasure)
+
     return MeasureConstraint(expr(ae), MOIU.shift_constant(s, -constant(ae))) 
 end
-
+=#
 """
     GMPConstraintRef.
 

@@ -32,9 +32,9 @@ end
 
 function dual_variable(model::JuMP.Model, con::AbstractGMPConstraint, sense::MOI.OptimizationSense, deg::Int)
     if con isa MeasureConstraint
-        # for measure constraints the basis of the first registered measure is used to test equality
+        # for measure constraints the basis of the first registered measure is used to test equality should probably be moved to the analytic measure...
         v = vref_object(first(gmp_variables(jump_function(con))))
-        variable = @variable(model, variable_type = Poly(monomials(maxdegree_basis(v, deg))))
+        variable = @variable(model, variable_type = Poly(maxdegree_basis(v, deg)))
     elseif moi_set(con) isa MOI.EqualTo
         variable = @variable(model)
     elseif xor(moi_set(con) isa MOI.LessThan, sense == MOI.MIN_SENSE)
@@ -63,8 +63,9 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
     for (i, con) in gmp_constraints(model)
         if con isa MeasureConstraint
             for v in gmp_variables(jump_function(con))
-                dlhs[index(v)] = MA.add_mul!(dlhs[index(v)], dvar[i])
+                dlhs[index(v)] = MA.add!(dlhs[index(v)], dvar[i])
             end
+            d_obj = MA.add!(d_obj, integrate(dvar[i], MOI.constant(moi_set(con))))
         elseif con isa MomentConstraint
             mcon = momexp_by_measure(jump_function(con))
             for (c, v) in mcon
@@ -101,14 +102,9 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
         end
         multipliers = approximation_scheme(approx_scheme(v.v), bsa_set(v.v), variables(v.v), approximation_degree(model))
         just[i] = Dict()
-        @info multipliers
         for (mons, set) in multipliers
-            @info mons
             if size(mons, 1) == 1
                 just[i][mons] = @variable(approximation_model(model), lower_bound = 0 )
-                @info p
-                @info first(mons)
-                @info just[i][mons]
                 p = MA.sub_mul!(p, first(mons), just[i][mons]) 
             else
             just[i][mons] = @variable(approximation_model(model), [1:size(mons,1),1:size(mons,2)], PSD)
@@ -118,11 +114,17 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
         dcon[i] = @constraint approximation_model(model) p == 0
     end
 
-    @objective(approximation_model(model), dual_sense, d_obj)
+    @objective(approximation_model(model), dual_sense,  d_obj)
 
     optimize!(approximation_model(model))
-    
-    return dvar, dcon, just
+
+    for i in keys(gmp_variables(model))
+        approx_vrefs(model)[i] = RefApprox(dual(dcon[i]), value(dcon[i]), just[i])
+    end
+    for i in keys(gmp_constraints(model))
+        approx_crefs(model)[i] = RefApprox(nothing, value(dvar[i]), nothing)
+    end
+    return nothing
 end
 
 # inner approximations of positive polynomials

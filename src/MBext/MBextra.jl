@@ -1,23 +1,20 @@
 function MB.change_basis(p::MP.AbstractPolynomialLike, Basis::Type{<:MB.AbstractPolynomialBasis})
     basis = MB.maxdegree_basis(Basis, variables(p), maxdegree(p))
-    coeffs = Float64[]
-    rem = p
-    mons = monomials(basis)
-    for i = 1:length(basis)
-        c, rem = divrem(rem, mons[i])
-        push!(coeffs, c)
-    end
-    idx = findall(!iszero, coeffs)
-    return coeffs[idx], mons[idx]
+    return change_basis(p, basis)
 end
 
 function MB.change_basis(p::MP.AbstractPolynomialLike, basis::MB.AbstractPolynomialBasis)
-    coeffs = Float64[]
+    coeffs = promote_type(Float64, coefficienttype(p))[]
     rem = p
     mons = monomials(basis)
     for i = 1:length(basis)
         c, rem = divrem(rem, mons[i])
-        push!(coeffs, c)
+        if c == 0
+            push!(coeffs, 0)
+        else
+            @assert length(monomials(c)) == 1 && MP.isconstant(first(monomials(c)))
+            push!(coeffs, first(coefficients(c)))
+        end
     end
     idx = findall(!iszero, coeffs)
     return coeffs[idx], mons[idx]

@@ -1,3 +1,36 @@
+function JuMP.objective_value(model::GMPModel) 
+    if approximation_mode(model) isa AbstractPrimalMode
+        return objective_value(approximation_model(model))
+    elseif  approximation_mode(model) isa AbstractDualMode
+        return dual_objective_value(approximation_model(model))
+    end
+end
+function JuMP.dual_objective_value(model::GMPModel) 
+    if approximation_mode(model) isa AbstractPrimalMode
+        return dual_objective_value(approximation_model(model))
+    elseif  approximation_mode(model) isa AbstractDualMode
+        return objective_value(approximation_model(model))
+    end
+end
+function JuMP.primal_status(model::GMPModel) 
+    if approximation_mode(model) isa AbstractPrimalMode
+        return primal_status(approximation_model(model))
+    elseif  approximation_mode(model) isa AbstractDualMode
+        return dual_status(approximation_model(model))
+    end
+end
+function JuMP.dual_status(model::GMPModel) 
+    if approximation_mode(model) isa AbstractPrimalMode
+        return dual_status(approximation_model(model))
+    elseif  approximation_mode(model) isa AbstractDualMode
+        return primal_status(approximation_model(model))
+    end
+end
+
+function JuMP.termination_status(model::GMPModel)
+    return termination_status(approximation_model(model))
+end
+
 export atomic
 """
     atomic(vref::GMPVariableRef; tol=1e-3)

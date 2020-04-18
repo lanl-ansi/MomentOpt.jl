@@ -36,13 +36,14 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
     else
         eqs = equalities(K)
     end
+    
     dict = Dict{Any, Any}()
     for ineq in ineqs
         deg = Int(floor((d-maxdegree(ineq))/2))
         mons = monomials(maxdegree_basis(scheme.basis_type, vars, deg))
         if length(mons) == 1
             moiset = MOI.GreaterThan(0.0)
-            mons = first(mons)
+            mons = mons
         else
             moiset = PSDCone()
         end

@@ -34,7 +34,7 @@ using MosekTools
 
 
 # relaxation order for the Generalized Moment Problem
-order = 8 
+order = 8
 
 # polnomial variables
 @polyvar x y
@@ -46,40 +46,31 @@ B = @set(1-x^2>=0 && 1-y^2>=0)
 
 # define measures on K and B
 gmp = GMPModel()
-@measure gmp μ [x,y] support=K
-@measure gmp ν [x,y] support=B
 
+@variable gmp μ Meas([x,y], support = K)
+@variable gmp ν Meas([x,y], support = B)
 
 # We want to maximize the mass of mu
-@objective gmp Max Mom(μ,1)
+@objective gmp Max Mom(1, μ)
 
 # The constraint is mu + nu = Lebesgue on B
-# The normalized moments of Lebesgue measure on B
-leb_mom(i,j) = ((1-(-1)^(i+1))/(i+1))*((1-(-1)^(j+1))/(j+1))/4
-
-# DynamicPolynomials.jl provides the possibility to define a monomial vector.
-mons = monomials([x,y],0:2*order)
-# The monomial vector is not of a polynomial type, we need to convert it first.
-pons = polynomial.(mons)
-
-# The fiels mons.Z provides the exponents of the monomials of mons (and pons)
-exponents = mons.Z
-# The constraints are added to the gmp model. Note that we give a name to the constraints 
-# in order to be able to refer to them later on
-
-@constraint gmp cons[i=1:length(exponents)] Mom(pons[i],μ)+Mom(pons[i],ν) == leb_mom(exponents[i]...) 
+λ = lebesgue_measure_box(variable_box(x => [-1, 1], y => [-1, 1]); normalize = true)
+con = @constraint gmp μ + ν == λ
 
 # In order to relax the problem, we need to specify the relaxation order and a solver factory:
-relax!(gmp,order,with_optimizer(Mosek.Optimizer))
-
+set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
+set_optimizer(gmp, Mosek.Optimizer)
+set_approximation_degree(gmp, 2*order)
+approximate!(gmp)
 
 # The optimal value is an approximation to the volume of K (which is π in this case)
 println("Volume of approximation: $(objective_value(gmp)*4)")
+println(termination_status(gmp))
 
 # The polynomial over approximation of the indicator function can be defined
 # from the dual solution as follows:
-poly = sum(dual_value(gmp,cons[i])*pons[i] for i=1:length(mons))
-
+poly = MomentOpt.approx_crefs(gmp)[index(con)].dual
+println()
 println(
 """
 The approximated function can be plotted, e.g., using the following commands:
@@ -92,8 +83,12 @@ plot(xx, yy, f, st= :surface)
 """)
 
 # The convergence can be improved by adding "Stokes" constraints.
-@constraint gmp stokes_x[i=1:length(exponents)] Mom(differentiate(pons[i]*(1-x^2-y^2), x), μ) == 0
-@constraint gmp stokes_y[i=1:length(exponents)] Mom(differentiate(pons[i]*(1-x^2-y^2), y), μ) == 0
+mons = monomials([x,y],0:2*order-1)
+#pons = polynomial.(mons)
 
-relax!(gmp,order,with_optimizer(Mosek.Optimizer))
+@constraint gmp stokes_x[i=1:length(mons)] Mom(differentiate(mons[i]*(1-x^2-y^2), x), μ) == 0
+@constraint gmp stokes_y[i=1:length(mons)] Mom(differentiate(mons[i]*(1-x^2-y^2), y), μ) == 0
+
+approximate!(gmp)
 println("Approximation with Stokes: $(objective_value(gmp)*4)")
+println(termination_status(gmp))

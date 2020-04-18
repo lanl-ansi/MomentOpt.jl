@@ -2,34 +2,15 @@
 Reexport.@reexport using MultivariateMoments
 const MM = MultivariateMoments
 
-struct GMPMoment{T} <: MM.AbstractMoment{T}
-    α::T
-    x::MP.AbstractPolynomialLike
-    meas::GMPVariableRef
+function MM.measure(μ::GMPVariableRef{AbstractGMPMeasure})
+    @assert _is_approximated(μ)
+    return approx_vrefs(owner_model(μ))[index(μ)].value
 end
 
-"""
-    moment(monom::AbstractPolynomialLike, meas::GMPVariableRef; value = )
-
-Creates a moment from the input data.
-"""
-function moment(monom::MP.AbstractPolynomialLike, meas::GMPVariableRef; value = approximation(meas, monom))
-    @assert vref_object(meas) isa AbstractGMPMeasure "GMPVariableRef has to refer to an AbstractGMPMeasure."
-    return GMPMoment(value, monom, meas)
-end
-
-MM.moment_value(m::GMPMoment) = m.α
-MP.monomial(m::GMPMoment) = m.x
-
-function MM.moments(μ::GMPVariableRef) 
-    dict = approximation(μ)
-    return map((k, v) -> moment(k, μ; value = v), keys(dict), values(dict))
-end
-
-function MM.moment_matrix(vref::GMPVariableRef, X)
+function MM.moment_matrix(vref::GMPVariableRef{AbstractGMPMeasure}, X)
     function getmom(i, j)
         x = X[i] * X[j]
-        for m in moments(vref)
+        for m in moments(measure(vref))
             if monomial(m) == x
                 return moment_value(m)
             end
@@ -42,4 +23,3 @@ function MM.moment_matrix(vref::GMPVariableRef)
     X = monomials(variables(vref_object(vref)), 0:Int(floor(approximation_info(owner_model(vref)).degree/2))) # TODO should reflect sparsity 
     return moment_matrix(vref, X)
 end
-

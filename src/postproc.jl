@@ -1,29 +1,7 @@
 export moments, atomic, graph, dual_value, christoffel, min_val
-
-function JuMP.objective_value(gmp::GMPModel)
-	return objective_value(gmp.dual)
-end
-
-function MultivariateMoments.moment_matrix(gmp::GMPModel, measure::Measure)
-    return moment_matrix(gmp.cref[measure])
-end
-
-function SumOfSquares.moments(gmp::GMPModel, measure::Measure)
-	return(SumOfSquares.moments(gmp.cref[measure]))
-end
-
-function dual_value(gmp::GMPModel, momcon::JuMP.ConstraintRef)
-    return JuMP.value(gmp.dref[momcon.index])
-end
-
-function JuMP.value(gmp::GMPModel, mom::Mom{<:Number})
-	moms = moments(gmp, mom.meas)
-    return dot(moms, constantterm(mom.mon, eltype(monomials(moms))))
-end
-
-function JuMP.value(gmp::GMPModel, mom::Mom)
-	moms = moments(gmp,mom.meas)
-    return dot(moms, mom.mon)
+function MultivariateMoments.moment_matrix(gmp::GMPModel, vref::GMPVariableRef{AbstractGMPMeasure})
+    @assert is_approximated(vref)
+    return moment_matrix(approx_vrefs[index(vref)])
 end
 
 function atomic(gmp::GMPModel, measure::Measure; tol=1e-3, print_level = 1)

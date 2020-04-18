@@ -50,7 +50,7 @@ function lebesgue_box(
                       variables_with_domain::VariableBox, 
                       f::AbstractMonomial)
     m = 1
-    for (v,e) in zip(variables(f), exponents(f))
+    for (v, e) in zip(variables(f), exponents(f))
         m *= lebesgue_line(variables_with_domain.dict[v]..., e)
     end
     return m
@@ -66,9 +66,9 @@ lebesgue measure on the box is scaled to be a probability measure.
 function lebesgue_box(
                       variables_with_domain::VariableBox, 
                       f::MP.AbstractPolynomialLike; normalize = false)
-    mom = sum( c*lebesgue_box(variables_with_domain, m) for (c,m) in zip(coefficients(f), monomials(f)))
+    mom = sum( c*lebesgue_box(variables_with_domain, m) for (c, m) in zip(coefficients(f), monomials(f)))
     if normalize
-        factor = prod( last(r)-first(r) for (k,r) in variables_with_domain.dict)
+        factor = prod( last(r)-first(r) for (k, r) in variables_with_domain.dict)
         return mom/factor
     else
         return mom

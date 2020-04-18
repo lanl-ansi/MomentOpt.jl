@@ -46,17 +46,19 @@ set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
 set_optimizer(gmp, Mosek.Optimizer)
 approximate!(gmp)
 
-println("Relaxation order: $(2)")
+println("Relaxation degree: 6")
 println("Lower bound: $(objective_value(gmp))")
 # We try to extract atoms from the relaxed moment sequence of μ
-opt = atomic( μ, tol = 1e-03)
+opt = atomic( μ, tol = 1e-06)
 println()
 
 # As we could not extract atoms from the solution, we increase the relaxation order
-relax!(gmp, 3, with_optimizer(Mosek.Optimizer))
 
-println("Relaxation order: $(3)")
+set_approximation_degree(gmp, 8)
+approximate!(gmp)
+
+println("Relaxation degree: 8")
 println("Lower bound: $(objective_value(gmp))")
-opt = atomic(gmp, μ, tol = 1e-03)
+opt = atomic( μ, tol = 1e-04)
 
 # This time the atom extraction succeeds, which proves optimality of the moment relaxation. 

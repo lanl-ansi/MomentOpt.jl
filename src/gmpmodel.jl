@@ -51,21 +51,23 @@ struct PRIMAL_RELAXATION_MODE <: AbstractPrimalMode end
 struct DUAL_STRENGTHEN_MODE <: AbstractDualMode end
 struct DUAL_RELAXATION_MODE <: AbstractDualMode end
 
-struct PrimalDualRef
-    primal
-    dual
+struct RefApprox{S, T, U}
+    value::S
+    dual::T
+    justification::U
+    function RefApprox(value::S, dual::T, justification::U) where {S, T, U}
+        new{S,T,U}(value, dual, justification)
+    end
 end
-pref(pdref::PrimalDualRef) = pdref.primal
-dref(pdref::PrimalDualRef) = pdref.dual
 
 mutable struct ApproximationInfo
     mode::AbstractApproximationMode
     degree::Int
     solver::Union{Nothing, Function}
-    approx_vrefs::Dict{Int, PrimalDualRef}
-    approx_crefs::Dict{Int, PrimalDualRef}
+    approx_vrefs::Dict{Int, RefApprox}
+    approx_crefs::Dict{Int, RefApprox}
     function ApproximationInfo()
-        new(PRIMAL_RELAXATION_MODE(), 0, nothing, Dict{Int, PrimalDualRef}(), Dict{Int, PrimalDualRef}())
+        new(PRIMAL_RELAXATION_MODE(), 0, nothing, Dict{Int, RefApprox}(), Dict{Int, RefApprox}())
     end
 end
 
@@ -103,40 +105,6 @@ JuMP.object_dictionary(model::GMPModel) = model.model_info.obj_dict
 JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
 model_degree(model::GMPModel) = model_data(model).max_degree
 approximation_degree(model::GMPModel) = approximation_info(model).degree
-
-function JuMP.objective_value(model::GMPModel) 
-    if approximation_mode(model) isa AbstractPrimalMode
-        return objective_value(approximation_model(model))
-    elseif  approximation_mode(model) isa AbstractDualMode
-        return dual_objective_value(approximation_model(model))
-    end
-end
-function JuMP.dual_objective_value(model::GMPModel) 
-    if approximation_mode(model) isa AbstractPrimalMode
-        return dual_objective_value(approximation_model(model))
-    elseif  approximation_mode(model) isa AbstractDualMode
-        return objective_value(approximation_model(model))
-    end
-end
-function JuMP.primal_status(model::GMPModel) 
-    if approximation_mode(model) isa AbstractPrimalMode
-        return primal_status(approximation_model(model))
-    elseif  approximation_mode(model) isa AbstractDualMode
-        return dual_status(approximation_model(model))
-    end
-end
-function JuMP.dual_status(model::GMPModel) 
-    if approximation_mode(model) isa AbstractPrimalMode
-        return dual_status(approximation_model(model))
-    elseif  approximation_mode(model) isa AbstractDualMode
-        return primal_status(approximation_model(model))
-    end
-end
-
-
-function JuMP.termination_status(model::GMPModel)
-    return termination_status(approximation_model(model))
-end
 
 function JuMP.set_optimizer(model::GMPModel, optimizer::Function)
     approximation_info(model).solver = optimizer
