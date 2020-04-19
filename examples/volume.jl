@@ -58,7 +58,7 @@ gmp = GMPModel()
 con = @constraint gmp μ + ν == λ
 
 # In order to relax the problem, we need to specify the relaxation order and a solver factory:
-set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
+#set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
 set_optimizer(gmp, Mosek.Optimizer)
 set_approximation_degree(gmp, 2*order)
 optimize!(gmp)
