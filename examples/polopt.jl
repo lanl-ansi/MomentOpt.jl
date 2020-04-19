@@ -44,7 +44,7 @@ gmp = GMPModel()
 # We solve the relaxation of order 
 set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
 set_optimizer(gmp, Mosek.Optimizer)
-approximate!(gmp)
+optimize!(gmp)
 
 println("Relaxation degree: 6")
 println("Lower bound: $(objective_value(gmp))")
@@ -55,7 +55,7 @@ println()
 # As we could not extract atoms from the solution, we increase the relaxation order
 
 set_approximation_degree(gmp, 8)
-approximate!(gmp)
+optimize!(gmp)
 
 println("Relaxation degree: 8")
 println("Lower bound: $(objective_value(gmp))")

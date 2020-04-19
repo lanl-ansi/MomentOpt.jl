@@ -169,7 +169,7 @@ function approx(p::Union{Number, AbstractJuMPScalar}, m::AnalyticGMPObject)
     return p*approx_function(m)(first(monomials(covering_basis(m, p))))
 end
 
-function approx(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
+function approx(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
     @assert variables(p) ⊆ variables(m)
     return approx_function(m)(p)
 end
@@ -180,7 +180,7 @@ end
 
 Returns the integral of p with respect to m. 
 """
-const integrate = approx
+const integrate =  approx
 
 export partial_integrate, partial_approx
 

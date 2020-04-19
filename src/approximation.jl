@@ -12,7 +12,7 @@ struct ApproximationFunction{BT <: MB.AbstractPolynomialBasis} <: AbstractApprox
 end
 
 function (x::ApproximationFunction)(p::AbstractPolynomialLike)
-    basis = maxdegree_basis(x.basis, x.vars,maxdegree(p))
+    basis = maxdegree_basis(x.basis, x.vars, maxdegree(p))
     coefs, basis = MB.change_basis(p, basis)
     return dot(coefs, x.func.(basis))
 end

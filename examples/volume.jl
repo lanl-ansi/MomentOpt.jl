@@ -61,7 +61,7 @@ con = @constraint gmp μ + ν == λ
 set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
 set_optimizer(gmp, Mosek.Optimizer)
 set_approximation_degree(gmp, 2*order)
-approximate!(gmp)
+optimize!(gmp)
 
 # The optimal value is an approximation to the volume of K (which is π in this case)
 println("Volume of approximation: $(objective_value(gmp)*4)")
@@ -89,6 +89,6 @@ mons = monomials([x,y],0:2*order-1)
 @constraint gmp stokes_x[i=1:length(mons)] Mom(differentiate(mons[i]*(1-x^2-y^2), x), μ) == 0
 @constraint gmp stokes_y[i=1:length(mons)] Mom(differentiate(mons[i]*(1-x^2-y^2), y), μ) == 0
 
-approximate!(gmp)
+optimize!(gmp)
 println("Approximation with Stokes: $(objective_value(gmp)*4)")
 println(termination_status(gmp))

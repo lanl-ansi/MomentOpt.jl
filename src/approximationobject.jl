@@ -31,26 +31,23 @@ Base.length(ms::ApproximationSequence) = length(ms. dict)
 
 function Base.getindex(ms::ApproximationSequence, m::MP.AbstractPolynomialLike)
     if !haskey(ms.dict, m) 
-        if MOI.get(gmp_object(ms), ApproximationType()) isa EXACT_APPROXIMATION
-            ms.dict[m] = integrate(m, gmp_object(ms))
+        cc, mm = MB.change_basis(m, approx_basis(gmp_object(ms)))
+        if length(cc) == 1 && mm[1] == m
+            ms.dict[m] = @variable ms.model
         else
-            cc, mm = MB.change_basis(m, MOI.get(gmp_object(ms), ApproximationBasis()))
-            if length(cc) == 1 && mm[1] == m
-                ms.dict[m] = @variable ms.model
-            else
-                ms.dict[m] = 0
-                for i in 1:length(cc)
-                    haskey(ms.dict, mm[i]) ? nothing : ms.dict[mm[i]] = @variable ms.model 
-                    ms.dict[m] += cc[i] * ms.dict[mm[i]]
-                end
+            ms.dict[m] = 0
+            for i in 1:length(cc)
+                haskey(ms.dict, mm[i]) ? nothing : ms.dict[mm[i]] = @variable ms.model 
+                ms.dict[m] += cc[i] * ms.dict[mm[i]]
             end
         end
+
     end
     return ms.dict[m]
 end
 
 function Base.getindex(ms::ApproximationSequence, m::Number)
-    return getindex(ms::ApproximationSequence, m*_mono_one(MOI.get(gmp_object(ms), Variables())))
+    return getindex(ms::ApproximationSequence, m*_mono_one(variables(gmp_object(ms))))
 end
 
 Base.getindex(ms::ApproximationSequence, v::AbstractArray) = getindex.(ms, v)
@@ -62,6 +59,7 @@ function approximation_sequence(model::JuMP.Model, o::AbstractGMPObject, degree:
     return ms
 end
 
+#=
 export GMPObjectApproximation
 """
     GMPObjectApproximation
@@ -76,17 +74,16 @@ end
 function Base.show(io::IO, ap::GMPObjectApproximation)
     print(io, "Approximation with $(length(ap.justification)) crefs")
 end
+=#
 
 function init_approximation(model::GMPModel, degree::Int)
     m = approximation_model(model)
-    for (i, o) in gmp_variables(model)
-        approx_vrefs(model)[i] = PrimalDualRef(GMPObjectApproximation(approximation_sequence(m, o.v, degree), GMPConstraintRef[]), nothing)
-    end
-    return nothing
-end
+    return Dict( i => approximation_sequence(m, o.v, degree)  for (i, o) in gmp_variables(model))
 
+end
+#=
 function approximation_sequence(model::GMPModel, index::Int)
-    return approx_vrefs(model)[index].primal.approx
+    return approx_vrefs(model)[index].value.approximation
 end
 
 """
@@ -96,18 +93,18 @@ end
 Evaluates a moment expression with respect to the corresponding moment sequences.
 """
 function riesz(m::GMPModel, index::Int, p::MP.AbstractPolynomialLike)
-    cc, mm = MB.change_basis(p, MOI.get(gmp_variables(m)[index].v, ApproximationBasis()))
+    cc, mm = MB.change_basis(p, approx_basis(gmp_variables(m)[index].v))
     ms = approximation_sequence(m, index)
     return sum( cc[i]*ms[mm[i]] for i in 1:length(cc))
 end
 
 function riesz(ms::GMPModel, index::Int, m::Number)
-    return riesz(ms, index, m*_mono_one(MOI.get(gmp_variables(ms)[index].v, Variables())))
+    return riesz(ms, index, m*_mono_one(variables(gmp_variables(ms)[index].v)))
 end
 
 function riesz(model::GMPModel, me::MomentExpr)
     return sum(c*riesz(model, index(m), cv) for (cv, mv) in me for (c, m) in mv)
 end
 
-riesz(ms::GMPModel, me::AffMomentExpr) = constant(me) + riesz(expr(me))
-
+riesz(ms::GMPModel, me::AffMomentExpr) = constant(me) + riesz(ms, expr(me))
+=#

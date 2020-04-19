@@ -51,7 +51,8 @@ struct PRIMAL_RELAXATION_MODE <: AbstractPrimalMode end
 struct DUAL_STRENGTHEN_MODE <: AbstractDualMode end
 struct DUAL_RELAXATION_MODE <: AbstractDualMode end
 
-struct RefApprox{S, T, U}
+#TODO make immutable again
+mutable struct RefApprox{S, T, U}
     value::S
     dual::T
     justification::U

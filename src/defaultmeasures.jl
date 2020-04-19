@@ -92,5 +92,5 @@ function lebesgue_measure_box(variables_with_domain::VariableBox; normalize = fa
                           )
 end
 
-
+lebesgue_measure_box(args...; kwargs...) = lebesgue_measure_box(variable_box(args...); kwargs...)
 # TODO add gaussian

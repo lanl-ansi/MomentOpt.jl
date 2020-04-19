@@ -212,6 +212,10 @@ function Base.sum(mev::Vector{MomentExpr{T, S}}) where {T, S}
     return MomentExpr(coefs[index], vars[index])
 end
 
+function integrate(me::MomentExpr)
+    throw(ErrorException("To integrate with respect to an approximated measure use `integrate(::GMPModel, ::MomentExpr)."))
+end
+
 function JuMP.function_string(io, e::MomentExpr)
     str = ""
     if length(e) == 0
