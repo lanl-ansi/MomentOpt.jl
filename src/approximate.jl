@@ -220,8 +220,16 @@ function approximate_putinar!(model::GMPModel, ::AbstractPrimalMode)
    for i in keys(gmp_variables(model))
        approx_vrefs(model)[i] = RefApprox(MM.Measure(value.(pvar[i].a), pvar[i].x), nothing, value.(just[i]))
     end
-    for i in keys(gmp_constraints(model))
-        approx_crefs(model)[i] = RefApprox(value.(pcon[i]), dual.(pcon[i]), nothing)
+    for (i, con) in gmp_constraints(model)
+        if shape(con) isa MeasureConstraintShape
+refmeas = MOI.constant(moi_set(con))
+        mons = monomials(maxdegree_basis(approx_basis(refmeas), variables(refmeas), approximation_degree(model)))
+
+        #todo check whether minus has something to do with objective sense
+        approx_crefs(model)[i] = RefApprox(value.(pcon[i]), -dot(dual.(pcon[i]), mons), nothing)
+        else
+            approx_crefs(model)[i] = RefApprox(value.(pcon[i]), dual.(pcon[i]), nothing)
+        end
     end
 
     return nothing

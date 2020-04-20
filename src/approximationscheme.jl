@@ -31,10 +31,21 @@ function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{MOI.
     return cref
 end
 
+function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike, moment_vars::MM.Measure)
+    data = zeros(JuMP.AffExpr, length(mons), length(mons))
+    mons = monomials(mons)
+    for (i, moni) in enumerate(mons)
+        for j in i:length(mons)
+            data[i,j] = integrate(moni*mons[j]*poly, moment_vars)
+        end
+    end
+    return Symmetric(data)
+end
 function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{PSDCone}, moment_vars::MM.Measure)
     #this must be solved more intelligently
-    cref = @constraint model integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars) in sp.moi_set
-    return cref
+    cref = @constraint model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) in sp.moi_set
+   # cref = @constraint model localization_matrix(sp.monomials, sp.polynomial, moment_vars) in sp.moi_set
+   return cref
 end
 
 export PutinarScheme
