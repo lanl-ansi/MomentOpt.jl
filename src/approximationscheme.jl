@@ -27,7 +27,7 @@ function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{PSDCone})
 end
 
 function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{MOI.EqualTo, MOI.GreaterThan}}, moment_vars::MM.Measure)
-    cref = @constraint model integrate.(sp.monomials.*sp.polynomial, moment_vars) in sp.moi_set
+    cref = @constraint model integrate(first(monomials(sp.monomials))*sp.polynomial, moment_vars) in sp.moi_set
     return cref
 end
 
@@ -90,7 +90,6 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
         mons = maxdegree_basis(scheme.basis_type, vars, deg)
         if length(mons) == 1 
             moiset = MOI.GreaterThan(0.0)
-            mons = first(mons)
         else
             moiset = PSDCone()
         end

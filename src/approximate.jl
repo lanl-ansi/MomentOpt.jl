@@ -203,7 +203,6 @@ function approximate_putinar!(model::GMPModel, ::AbstractPrimalMode)
     for (i, con) in gmp_constraints(model)
         if shape(con) isa MomentConstraintShape
             cref = @constraint approximation_model(model) integrate(jump_function(con), pvar) in moi_set(con)            
-            @info cref
             pcon[i] = [cref]
         elseif shape(con) isa MeasureConstraintShape
         # add measure constraints
