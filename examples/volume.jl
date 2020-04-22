@@ -34,7 +34,7 @@ using MosekTools
 
 
 # relaxation order for the Generalized Moment Problem
-order = 8
+order = 10
 
 # polnomial variables
 @polyvar x y

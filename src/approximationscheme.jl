@@ -16,8 +16,13 @@ set_type(::SchemePart{T}) where T = T
 
 approximation_scheme(model::JuMP.AbstractModel, v) = approximation_scheme(approx_scheme(v.v), bsa_set(v.v), variables(v.v), approximation_degree(model))
 
-function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{<:Union{MOI.EqualTo, MOI.GreaterThan}})
+function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{<:MOI.EqualTo})
     vref = @variable model variable_type = Poly(sp.monomials)
+    return vref
+end
+
+function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{<:MOI.GreaterThan})
+    vref = @variable model lower_bound = 0.0
     return vref
 end
 

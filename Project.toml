@@ -27,6 +27,7 @@ SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 SemialgebraicSets = "8e049039-38e8-557d-ae3a-bc521ccf6204"
 SumOfSquares = "4b9e565b-77fc-50a5-a571-1244f986bda1"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TypedPolynomials = "afbbf031-7a57-5f58-a1b9-b774a0fad08d"
 
 [compat]
 DynamicPolynomials = "0.3.3"

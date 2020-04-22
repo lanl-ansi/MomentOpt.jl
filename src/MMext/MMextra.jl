@@ -1,5 +1,5 @@
 function MM.measure(μ::GMPVariableRef{AbstractGMPMeasure})
-    @assert _is_approximated(μ)
+    @assert _is_approximated(μ) "Measure is only available after optimize! has been called." 
     return approx_vrefs(owner_model(μ))[index(μ)].value
 end
 

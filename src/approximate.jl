@@ -180,7 +180,6 @@ function moments_variable(model::JuMP.Model, v::GMPVariable{AbstractGMPMeasure},
     return measure(c, monomials(X))
 end
 
-
 function approximate_putinar!(model::GMPModel, ::AbstractPrimalMode)
     degree = approximation_info(model).degree
     # initiate moments 
