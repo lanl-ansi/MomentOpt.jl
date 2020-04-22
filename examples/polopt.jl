@@ -20,7 +20,7 @@ The optimal measure in the Generalized Moment Problem above will be atomic and e
 using MomentOpt
 
 # Load an implementation of MultivariatePolynomials. Here we use DynamicPolynomials.
-using TypedPolynomials
+using DynamicPolynomials
 
 # In order to solve the optimization problem we also need to load an SDP solver.
 using MosekTools

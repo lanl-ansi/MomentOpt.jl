@@ -70,7 +70,7 @@ export graph
 """
     graph(vref::GMPVariable, indep_vars::Vector{MP.AbstractVariable})
 
-Tries to extract the graph of a scalar function f such that [indep_vars_with_domain, f(indep_vars_with_domain] is the support of vref.
+    Tries to extract the graph of a scalar function f such that [indep_vars, f(indep_vars)] is the support of vref.
 """
 function graph(vref::GMPVariableRef, indep_vars::Vector{<:MP.AbstractVariable}; regpar = 1e-8)
     ch =  christoffel(vref; regpar = regpar)

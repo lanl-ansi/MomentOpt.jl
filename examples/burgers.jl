@@ -48,22 +48,22 @@ Y = [0,1]
 gmp = GMPModel()
 # Add measures
 
-@measure gmp μ  [t,x,y] support=@set((t-T[1])*(T[2]-t)>=0 && (x-X[1])*(X[2]-x)>=0 && (y-Y[1])*(Y[2]-y)>=0)
-@measure gmp μT [t,x,y] support=@set(t==1 && (x-X[1])*(X[2]-x)>=0 && (y-Y[1])*(Y[2]-y)>=0)
-@measure gmp μR [t,x,y] support=@set((t-T[1])*(T[2]-t)>=0 && x==1/2 && (y-Y[1])*(Y[2]-y)>=0)
+@variable gmp μ Meas([t,x,y], support=@set((t-T[1])*(T[2]-t)>=0 && (x-X[1])*(X[2]-x)>=0 && (y-Y[1])*(Y[2]-y)>=0))
+@variable gmp μT Meas([t,x,y], support=@set(t==1 && (x-X[1])*(X[2]-x)>=0 && (y-Y[1])*(Y[2]-y)>=0))
+@variable gmp μR Meas([t,x,y], support=@set((t-T[1])*(T[2]-t)>=0 && x==1/2 && (y-Y[1])*(Y[2]-y)>=0))
 
 # As T×X×Y is compact we can use the monomials as testfunctions φ. 
 # We define the values for the right hand side of the constraint of the dynamic
 rhs(i,j) = 0^i*(-(-1/2)^(j+1))/(j+1)+ (-1/2)^j/((i+1)*4)
 
 # DynamicPolynomials.jl provides the possibility to define a monomial vector.
-mons = monomials([t,x],0:2*order-1)
+mons = monomials([t,x],0:2*order-2)
 # The monomial vector is not of a polynomial type, we need to convert it first.
 pons = polynomial.(mons)
 wpde = vec(differentiate(pons,[t]))*y + vec(differentiate(pons,[x]))*flux(y) 
 
 # The fiels mons.Z provides the exponents of the monomials of mons (and pons)
-@constraint gmp Mom.(pons*y,μT)+Mom.(pons*flux(y),μR)-Mom.(wpde,μ) .== [rhs(mons.Z[i]...) for i = 1:length(mons.Z)] 
+@constraint gmp [i = 1:length(pons)] Mom(pons[i]*y,μT)+Mom(pons[i]*flux(y),μR)-Mom(wpde[i],μ) == rhs(mons.Z[i]...) 
 
 # Right hand sides for the marginal constraints
 lebt(i) = (T[2]^(i+1)-T[1]^(i+1))/(i+1)
@@ -87,14 +87,9 @@ trace = mmons'*mmons
 
 @objective gmp Min Mom(trace,μ)+Mom(trace,μT)+Mom(trace,μR)
 
-
-relax!(gmp,order,with_optimizer(Mosek.Optimizer))
-
-ch = christoffel(gmp, μ)
-
-T = range(0, stop = 1, length = 10)
-X = range(-1/2, stop = 1/2, length = 10)
-
+set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
+set_optimizer(gmp, Mosek.Optimizer)
+optimize!(gmp)
 
 println(
 """
@@ -102,6 +97,9 @@ The approximated function can be plotted, e.g., using the following commands:
 
 using Plots
 pyplot()
-f(tt,xx) = min_val(([t,x]=>[tt,xx]), ch)
-plot(T, X, f, st=:surface,camera=(-40,30))
+
+T = range(0 , stop = 1, length = 10)
+X = range(-1/2, stop = 1/2, length = 10)
+f = graph(μ, [t,x]; regpar = 1e-6)
+plot(T, X, (tt, xx) -> f([tt, xx]) , st=:surface,camera=(-40,30))
 """)

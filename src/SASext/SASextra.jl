@@ -7,6 +7,6 @@ function polynomials(s::AbstractSemialgebraicSet)
 end
 
 function MultivariatePolynomials.maxdegree(s::AbstractSemialgebraicSet)
-    pol = polynomials(s)
-    return isempty(pol) ? 0 : maximum(maxdegree.(pols))
+    pols = polynomials(s)
+    return isempty(pols) ? 0 : maximum(maxdegree.(pols))
 end
