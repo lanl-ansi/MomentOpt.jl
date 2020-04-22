@@ -132,7 +132,7 @@ Manually set the degree of the approximation to a custom value. The value cannot
 """
 function set_approximation_degree(model::GMPModel, degree::Int)
     if approximation_info(model).degree > degree && model_data(model).max_degree > degree
-        approximation_info(model).degree = maximum([approximation_info(model).degree, 2*ceil(model_data(model).degree/2)])
+        approximation_info(model).degree = maximum([approximation_info(model).degree, 2*ceil(model_data(model).max_degree/2)])
 
         @warn "Requested approximation degree $degree is too low to cover all data. The approximation degree has been set to the minimal value possible and now is $(approximation_info(model).degree)  "
     else

@@ -64,7 +64,7 @@
         set_approximation_degree(m, -1)
         @test MO.approximation_degree(m) == 0
         set_approximation_degree(m, 1)
-        @test MO.approximation_degree(m) == 1
+        @test MO.approximation_degree(m) == 2
 
         @test MO.approximation_mode(m) isa MO.PRIMAL_RELAXATION_MODE
         set_approximation_mode(m, MO.DUAL_STRENGTHEN_MODE())
