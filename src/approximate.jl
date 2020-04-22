@@ -185,18 +185,22 @@ function approximate_putinar!(model::GMPModel, ::AbstractPrimalMode)
     # initiate moments 
     pvar = Dict(i => moments_variable(approximation_model(model), v, degree) for (i,v) in gmp_variables(model))
     # add substitutions
-    
+
     # add measure condition on moments
     just =  Dict{Int, Vector{ConstraintRef}}()
     for (i, v) in gmp_variables(model)
         just[i] = ConstraintRef[]
         scheme_parts = approximation_scheme(model, v)
-       for sp in scheme_parts
-           cref = primal_scheme_constraint(approximation_model(model), sp, pvar[i])
-           push!(just[i], cref)
+        for sp in scheme_parts
+            cref = primal_scheme_constraint(approximation_model(model), sp, pvar[i])
+            if cref isa AbstractVector
+                append!(just[i], cref)
+            else
+                push!(just[i], cref)
+            end
         end
     end
- 
+
     # add constraints
     pcon = Dict{Int, Vector{ConstraintRef}}()
     for (i, con) in gmp_constraints(model)

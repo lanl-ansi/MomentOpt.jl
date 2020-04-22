@@ -11,6 +11,8 @@ Reexport.@reexport using JuMP
 
 using LinearAlgebra
 
+using MultivariatePolynomials
+const MP = MultivariatePolynomials
 Reexport.@reexport using SemialgebraicSets
 include("SASext/SASextra.jl")
 
@@ -21,8 +23,6 @@ const MM = MultivariateMoments
 
 
 
-using MultivariatePolynomials
-const MP = MultivariatePolynomials
 Reexport.@reexport using MultivariateBases
 const MB = MultivariateBases
 include("MBext/MBextra.jl")

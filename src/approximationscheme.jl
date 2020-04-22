@@ -31,10 +31,18 @@ function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{PSDCone})
     return vref
 end
 
-function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{MOI.EqualTo, MOI.GreaterThan}}, moment_vars::MM.Measure)
-    cref = @constraint model integrate(first(monomials(sp.monomials))*sp.polynomial, moment_vars) in sp.moi_set
+function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{MOI.EqualTo}}, moment_vars::MM.Measure)
+    cref = @constraint model integrate.(monomials(sp.monomials)*sp.polynomial, moment_vars) .== 0
     return cref
 end
+
+
+function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{ MOI.GreaterThan}}, moment_vars::MM.Measure)
+    cref = @constraint model integrate(monomials(sp.monomials)[1]*sp.polynomial, moment_vars) in sp.moi_set
+    return cref
+end
+
+
 
 function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike, moment_vars::MM.Measure)
     data = zeros(JuMP.AffExpr, length(mons), length(mons))
@@ -48,8 +56,9 @@ function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.Abstract
 end
 function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{PSDCone}, moment_vars::MM.Measure)
     #this must be solved more intelligently
-    cref = @constraint model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) in sp.moi_set
-   # cref = @constraint model localization_matrix(sp.monomials, sp.polynomial, moment_vars) in sp.moi_set
+#    cref = @constraint model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) in sp.moi_set
+   #cref = @constraint model localization_matrix(sp.monomials, sp.polynomial, moment_vars) in sp.moi_set
+   cref = @SDconstraint  model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) >= zeros(length(monomials(sp.monomials)),length(monomials(sp.monomials)) )
    return cref
 end
 

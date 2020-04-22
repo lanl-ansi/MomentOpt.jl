@@ -120,7 +120,7 @@ end
 function update_degree(m::GMPModel, degree::Int)
     if model_data(m).max_degree < degree
         model_data(m).max_degree = degree
-        approximation_info(m).degree = maximum([approximation_info(m).degree, degree])
+        approximation_info(m).degree = maximum([approximation_info(m).degree, 2*ceil(degree/2)])
     end
 end
 
@@ -132,10 +132,11 @@ Manually set the degree of the approximation to a custom value. The value cannot
 """
 function set_approximation_degree(model::GMPModel, degree::Int)
     if approximation_info(model).degree > degree && model_data(model).max_degree > degree
-        approximation_info(model).degree = model_data(model).max_degree
-        @warn "Requested approximation degree $degree is too low to cover all data. The approximation degree has been set to the minimal value possible and now is $(model_data(model).max_degree)  "
+        approximation_info(model).degree = maximum([approximation_info(model).degree, 2*ceil(model_data(model).degree/2)])
+
+        @warn "Requested approximation degree $degree is too low to cover all data. The approximation degree has been set to the minimal value possible and now is $(approximation_info(model).degree)  "
     else
-        approximation_info(model).degree = degree
+        approximation_info(model).degree = maximum([approximation_info(model).degree, 2*ceil(degree/2)])
     end
     return nothing
 end
@@ -194,6 +195,7 @@ function JuMP.add_variable(m::GMPModel, v::AbstractGMPVariable, name::String = "
     vref = GMPVariableRef(m, v)
     gmp_variables(m)[index(vref)] = v
     push!(variable_names(m), name)
+    update_degree(m, maxdegree(bsa_set(v.v)))
     return vref
 end
 
