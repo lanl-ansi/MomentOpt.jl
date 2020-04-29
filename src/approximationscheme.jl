@@ -57,8 +57,8 @@ end
 function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{PSDCone}, moment_vars::MM.Measure)
     #this must be solved more intelligently
 #    cref = @constraint model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) in sp.moi_set
-   #cref = @constraint model localization_matrix(sp.monomials, sp.polynomial, moment_vars) in sp.moi_set
-   cref = @SDconstraint  model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) >= zeros(length(monomials(sp.monomials)),length(monomials(sp.monomials)) )
+   cref = @constraint model localization_matrix(sp.monomials, sp.polynomial, moment_vars) in sp.moi_set
+   #cref = @SDconstraint  model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) >= zeros(length(monomials(sp.monomials)),length(monomials(sp.monomials)) )
    return cref
 end
 
