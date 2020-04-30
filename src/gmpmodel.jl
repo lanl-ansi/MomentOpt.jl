@@ -68,7 +68,7 @@ mutable struct ApproximationInfo
     approx_vrefs::Dict{Int, RefApprox}
     approx_crefs::Dict{Int, RefApprox}
     function ApproximationInfo()
-        new(PRIMAL_RELAXATION_MODE(), 0, nothing, Dict{Int, RefApprox}(), Dict{Int, RefApprox}())
+        new(DUAL_STRENGTHEN_MODE(), 0, nothing, Dict{Int, RefApprox}(), Dict{Int, RefApprox}())
     end
 end
 
