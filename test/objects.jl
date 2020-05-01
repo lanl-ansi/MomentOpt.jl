@@ -81,4 +81,56 @@
 
         @test integrate(x, DiracMeasure([x], [1])/2) == 0.5
     end
+
+    @testset "Lebesgue Marginal" begin
+        @polyvar x y
+        λ = lebesgue_measure_box(variable_box(x => [0, 1], y => [-1, 1]))
+        λx = marginal(λ, [x])
+
+        @test variables(λx) == [x]
+        @test approx_basis(λx) == approx_basis(λ)
+
+        for i = 0:10
+            @test integrate(x^i, λ) == integrate(x^i, λx) 
+        end
+
+        ν  = 2*lebesgue_measure_box(variable_box(x => [0, 1]))
+
+        for i = 0:10
+            @test integrate(x^i, ν) == integrate(x^i, λx) 
+        end
+
+    end
+    
+    @testset "Lebesgue Prod" begin
+        @polyvar x y
+        
+        λx = lebesgue_measure_box(variable_box(x => [0, 1]))
+        λy = lebesgue_measure_box(variable_box(y => [-1, 1]))
+        λxy = lebesgue_measure_box(variable_box(x => [0, 1], y => [-1, 1]))
+        λ = prod_meas(λy, λx)
+
+        @test variables(λ) == [x,y]
+        @test approx_basis(λ) == approx_basis(λx)
+
+        for mon in monomials([x,y],  0:10)
+            @test integrate(mon, λ) == integrate(mon, λxy)
+        end
+
+    end
+
+    @testset "Moment Measure" begin
+        m = GMPModel()
+        @variable m μ Meas([x, y])
+        vals = [1, 0, 2, 3]
+        mons = [x^2*y^2, y*x^2, x*y*x^2, x*y^2]
+        MomentOpt.approx_vrefs(m)[1] = MomentOpt.RefApprox(MultivariateMoments.measure(vals, mons), nothing, nothing)
+        
+        mu = moment_measure(μ)
+        for i in 1:4
+            @test integrate(mons[i], mu) == vals[i]
+        end
+    end
+
+
 end

@@ -93,4 +93,23 @@ function lebesgue_measure_box(variables_with_domain::VariableBox; normalize = fa
 end
 
 lebesgue_measure_box(args...; kwargs...) = lebesgue_measure_box(variable_box(args...); kwargs...)
+
+
+export moment_measure
+
+"""
+    moment_measure(μ::MM.measure)
+
+Convenient way to define an anlytic measure based on precomputed values.
+"""
+                           
+function moment_measure(μ::GMPVariableRef{AbstractGMPMeasure})
+    return AnalyticMeasure(
+                           variables(μ),
+                           approx_basis(μ),
+                           ApproximationFunction(p -> integrate(p, measure(μ)), variables(μ),approx_basis(μ))
+                          )
+end
+
 # TODO add gaussian
+# TODO add lebesgue on circle

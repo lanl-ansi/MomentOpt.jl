@@ -193,13 +193,48 @@ function partial_approx(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
     end
 end
 
-
 """
      partial_integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
 
 Returns the integral of p with respect to m, in case m does not cover all variables of p. The result is a polynomial in the remaining variables.  
 """
 const partial_integrate = partial_approx
+
+
+export marginal
+"""
+    marginal(μ::AnalyticMeasure, vars::Vector{MP.AbstractVariable})
+
+Returns the marginal of μ with respect to vars. 
+"""
+function marginal(μ::AnalyticMeasure, vars::Vector{<:MP.AbstractVariable})
+    sort!(vars, rev = true)
+    @assert vars ⊆ variables(μ)
+    return AnalyticMeasure(vars, approx_basis(μ), approx_function(μ))
+end
+
+
+_filter(μ::AnalyticMeasure) = x -> x in variables(μ) ? x : 1
+
+export prod_meas
+"""
+    prod_meas(μ::AnalyticMeasure, ν::AnalyticMeasure)
+
+Returns the product measure of μ and ν assuming they act on different spaces but same approximation_basis. The variables of the resulting measure are sorted in the rev = true order.
+"""
+function prod_meas(μ::AnalyticMeasure, ν::AnalyticMeasure)
+    @assert isempty(intersect(variables(μ), variables(ν)))
+    @assert approx_basis(μ) == approx_basis(ν)
+    vars = sort!([variables(μ)..., variables(ν)...], rev = true)
+    function approxfunction(p::AbstractPolynomialLike)
+        pμ = p([ x => _filter(μ)(x) for x in variables(p)]...)
+        pν = p([ x => _filter(ν)(x) for x in variables(p)]...)
+        return approx_function(μ)(pμ)*approx_function(ν)(pν)
+    end
+    return AnalyticMeasure(vars, approx_basis(μ), ApproximationFunction(approxfunction, vars, approx_basis(μ)))
+end
+
+
 
 #
 const VariableGMPObject = Union{VariableMeasure, VariableContinuous}
