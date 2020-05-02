@@ -189,7 +189,8 @@ end
 
 function Base.sum(mev::Vector{MomentExpr{T, S}}) where {T, S}
     # TODO add early compatibiliy check: for now the sum is computed 
-    # and an assertion error is generated when buildinf the GMPExpr in the return. 
+    # and an assertion error is generated when building the GMPExpr in the return. 
+    
     if T <: Number
         coefs = T[]
     else

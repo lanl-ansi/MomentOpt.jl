@@ -64,7 +64,7 @@ function AnalyticMeasure(variables::Vector{V}, moment_basis::T, moment_function:
 end
 
 constructor(::Type{AnalyticMeasure{S,T}}) where {S, T} = (x, y, z) -> AnalyticMeasure(x, y, z)
-Base.show(io::IO, ::AnalyticMeasure) = print(io, "AnalyticMeasure")
+Base.show(io::IO, μ::AnalyticMeasure) = print(io, "AnalyticMeasure")
 
 export VariableMeasure
 

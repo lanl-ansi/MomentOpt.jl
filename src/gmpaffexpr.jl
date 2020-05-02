@@ -24,7 +24,7 @@ function Base.getindex(e::AbstractGMPExpr, s)
 end
 
 Base.length(e::AbstractGMPExpr) = length(gmp_coefficients(e))
-Base.iterate(e::AbstractGMPExpr) = ((first(gmp_coefficients(e)), first(gmp_variables(e))), 1)
+Base.iterate(e::AbstractGMPExpr) = (length(e) == 0) ? nothing : ((first(gmp_coefficients(e)), first(gmp_variables(e))), 1)
 Base.iterate(e::AbstractGMPExpr, s) = (s >= length(e)) ? nothing : ((gmp_coefficients(e)[s+1], gmp_variables(e)[s+1]), s + 1)
 
 function Base.:(==)(me1::AbstractGMPExpr, me2::AbstractGMPExpr)

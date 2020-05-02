@@ -38,33 +38,11 @@ function JuMP.function_string(mode, mc::MomentConstraint)
     return string(mc.func)
 end
 
+JuMP.in_set_string(mode, m::AnalyticMeasure) = "= "*sprint(show, m)
+
 function Base.show(io::IO, con::MomentConstraint)
     print(io, JuMP.constraint_string(JuMP.REPLMode, con))
 end
-
-function JuMP.build_constraint(_error::Function, ae::AffMomentExpr, set::MOI.AbstractScalarSet)
-    return MomentConstraint(ae, set)
-end
-
-# MeasureConstraints
-"""
-    EqualToMeasure <: AbstractGMPSet
-
-The set consiting of only a single measure.
-"""
-struct EqualToMeasure <: AbstractGMPSet
-    measure::AnalyticMeasure
-end
-
-MOI.constant(set::EqualToMeasure) = set.measure
-#MOI.Utilities.shift_constant(set::EqualToMeasure, m::AnalyticMeasure) = EqualToMeasure(constant(set) - m)
-function JuMP.in_set_string(print_mode, set::EqualToMeasure)
-    return "= "*sprint(show, MOI.constant(set))
-end
-
-
-
-# TODO MOI.dual_set for EqualToMeasure (GreaterThenContinuous)
 
 """
     MeasureConstraintShape 
@@ -73,7 +51,7 @@ end
 struct MeasureConstraintShape <: AbstractGMPShape end
 
 JuMP.reshape_vector(expr::ObjectExpr, ::MeasureConstraintShape) = expr
-JuMP.reshape_set(set::EqualToMeasure, ::MeasureConstraintShape) = set
+JuMP.reshape_set(set::AnalyticMeasure, ::MeasureConstraintShape) = set
 
 #TODO dual shape for MeasureConstraintShape
 
@@ -84,16 +62,15 @@ JuMP.reshape_set(set::EqualToMeasure, ::MeasureConstraintShape) = set
 """
 struct MeasureConstraint <: AbstractGMPConstraint
     func::ObjectExpr
-    set::EqualToMeasure
-        function MeasureConstraint(func::ObjectExpr, set::EqualToMeasure)
-            new(func, set)
-        end
+    set::AnalyticMeasure
 end
+
+MeasureConstraint(o::ObjectExpr) = MeasureConstraint(o, ZeroMeasure(variables(o)))
+MeasureConstraint(ae::AffObjectExpr) = MeasureConstraint(expr(ae), -constant(ae))
 
 JuMP.jump_function(con::MeasureConstraint) = con.func
 JuMP.moi_set(con::MeasureConstraint) = con.set
 JuMP.shape(con::MeasureConstraint) = MeasureConstraintShape()
-
 
 function JuMP.function_string(mode, mc::MeasureConstraint)
     return string(mc.func)
@@ -103,20 +80,6 @@ function Base.show(io::IO, con::MeasureConstraint)
     print(io, JuMP.constraint_string(JuMP.REPLMode, con))
 end
 
-function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::MOI.EqualTo)
-    return MeasureConstraint(expr(ae), EqualToMeasure(-constant(ae))) 
-end
-
-
-function JuMP.build_constraint(_error::Function, e::ObjectExpr, s::EqualToMeasure)
-    return MeasureConstraint(e, s) 
-end
-#=
-function JuMP.build_constraint(_error::Function, ae::AffObjectExpr, s::EqualToMeasure)
-
-    return MeasureConstraint(expr(ae), MOIU.shift_constant(s, -constant(ae))) 
-end
-=#
 """
     GMPConstraintRef.
 

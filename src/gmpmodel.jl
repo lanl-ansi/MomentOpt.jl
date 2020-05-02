@@ -134,7 +134,7 @@ function set_approximation_degree(model::GMPModel, degree::Int)
     if approximation_info(model).degree > degree && model_data(model).max_degree > degree
         approximation_info(model).degree = maximum([approximation_info(model).degree, 2*ceil(model_data(model).max_degree/2)])
 
-        @warn "Requested approximation degree $degree is too low to cover all data. The approximation degree has been set to the minimal value possible and now is $(approximation_info(model).degree)  "
+        @warn "Requested approximation degree $degree is too low to cover all data. The approximation degree has been set to the minimal value possible and now is $(approximation_info(model).degree)."
     else
         approximation_info(model).degree = maximum([approximation_info(model).degree, 2*ceil(degree/2)])
     end
@@ -287,10 +287,14 @@ function JuMP.add_constraint(m::GMPModel, c::AbstractGMPConstraint,
     return cref
 end
 
-function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{MomentOpt.ObjectExpr{S}, MOI.EqualTo{T}}, name::String = "") where {S, T}
-    @assert(MOI.constant(moi_set(c)) == 0, "Affine measure constraints are not supported.")    
-    con = MeasureConstraint(jump_function(c), EqualToMeasure(ZeroMeasure()))
-    return add_constraint(m, con, name)
+function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{<:Union{AffMomentExpr, MomentExpr}, <:MOI.AbstractScalarSet}, name::String = "") where {S}
+    add_constraint(m, MomentConstraint(jump_function(c), moi_set(c)), name)
+end
+
+function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{<:Union{AffObjectExpr, ObjectExpr}, <:MOI.AbstractScalarSet}, name::String = "")
+    @assert moi_set(c) isa MOI.EqualTo "Only support equality measure constraints."
+    @assert MOI.constant(moi_set(c)) == 0 "A measure cannot be equal to a number. "
+    return add_constraint(m, MeasureConstraint(jump_function(c)), name)
 end
 
 function JuMP.delete(m::GMPModel, cref::GMPConstraintRef)

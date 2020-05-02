@@ -38,7 +38,7 @@
         m = GMPModel()
         mus = @variable m [1:2] Meas([x,y]) 
         JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
-        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64,Int64}\nConstraints: 0\nApproxmation mode: PRIMAL_RELAXATION_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: "
+        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64,Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: "
         
         @constraint m Mom(1, mus[1]) <= 1
         @constraint m c2 Mom(1, mus[2]) >= 1
@@ -61,14 +61,14 @@
         JuMP.set_optimizer(m, opt)
         @test MO.approximation_info(m).solver == opt
         @test MO.approximation_degree(m) == MO.model_degree(m)
-        set_approximation_degree(m, -1)
+        @test_logs (:warn, "Requested approximation degree -1 is too low to cover all data. The approximation degree has been set to the minimal value possible and now is 0.") set_approximation_degree(m, -1)
         @test MO.approximation_degree(m) == 0
         set_approximation_degree(m, 1)
         @test MO.approximation_degree(m) == 2
 
-        @test MO.approximation_mode(m) isa MO.PRIMAL_RELAXATION_MODE
-        set_approximation_mode(m, MO.DUAL_STRENGTHEN_MODE())
         @test MO.approximation_mode(m) isa MO.DUAL_STRENGTHEN_MODE
+        set_approximation_mode(m, MO.PRIMAL_RELAXATION_MODE())
+        @test MO.approximation_mode(m) isa MO.PRIMAL_RELAXATION_MODE
 
     end
 

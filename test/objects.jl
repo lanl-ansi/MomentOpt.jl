@@ -121,6 +121,7 @@
 
     @testset "Moment Measure" begin
         m = GMPModel()
+        @polyvar x y
         @variable m μ Meas([x, y])
         vals = [1, 0, 2, 3]
         mons = [x^2*y^2, y*x^2, x*y*x^2, x*y^2]

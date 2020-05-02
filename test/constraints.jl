@@ -20,9 +20,8 @@
         @test sprint(show, con1) == sprint(show, con2)
 
         _err = x -> ""
-        con3 = JuMP.build_constraint(_err, me+1, MOI.EqualTo(1))
-        @test JuMP.jump_function(con3) == JuMP.jump_function(con2) 
-        @test JuMP.moi_set(con3) == JuMP.moi_set(con2) 
+        con3 = JuMP.build_constraint(_err, me + 1, MOI.EqualTo(1))
+        @test JuMP.jump_function(con3) == JuMP.jump_function(con2) + 1
 
     end
 
@@ -33,18 +32,17 @@
         @variable m ν Meas([x,y], basis = ChebyshevBasis)
         @variable m σ Meas([x])
 
-        @test MOI.constant(MO.EqualToMeasure(ZeroMeasure([x, y]))) isa AnalyticMeasure
         @test JuMP.reshape_vector(μ + ν , MO.MeasureConstraintShape()) == μ + ν
-        @test  JuMP.reshape_set(MO.EqualToMeasure(ZeroMeasure([x])), MO.MeasureConstraintShape()) isa MO.EqualToMeasure
+        @test  JuMP.reshape_set(ZeroMeasure([x]), MO.MeasureConstraintShape()) isa AnalyticMeasure
 
-        mc = MO.MeasureConstraint(μ + ν, MO.EqualToMeasure(ZeroMeasure([x,y]))) 
+        mc = MO.MeasureConstraint(μ + ν) 
         @test sprint(show, mc) == "μ + ν = AnalyticMeasure"
         @test JuMP.jump_function(mc) == μ + ν
-        @test JuMP.moi_set(mc) isa MO.EqualToMeasure
+        @test JuMP.moi_set(mc) isa AnalyticMeasure
         @test JuMP.shape(mc) isa MO.MeasureConstraintShape
 
         _err = x -> ""
-        @test JuMP.build_constraint(_err, μ + ν, MO.EqualToMeasure(ZeroMeasure([x, y]))) isa MO.MeasureConstraint
+        @test JuMP.build_constraint(_err, μ + ν, MOI.EqualTo(0)) isa JuMP.ScalarConstraint 
      end
 
     @testset "GMPConstraintRef" begin
@@ -52,7 +50,7 @@
         m = GMPModel()
         @variable m μ Meas([x,y])
         @constraint m c1 Mom(1, μ) == 1
-        @constraint m c2 μ == ZeroMeasure([x,y]) 
+        @constraint m c2 μ == ZeroMeasure([x, y]) 
         @test !iszero(c1)
         @test !JuMP.isequal_canonical(c1, c2)
         @test JuMP.isequal_canonical(c1, c1) 
@@ -79,7 +77,7 @@
         @test sprint(show, JuMP.constraint_object(c2)) == "μ = AnalyticMeasure"
 
         @test JuMP.jump_function(c2) == MO.ObjectExpr(1, μ)
-        @test JuMP.moi_set(c2) isa MO.EqualToMeasure
+        @test JuMP.moi_set(c2) isa AnalyticMeasure
         @test JuMP.name(c1) == "c1"
         @test JuMP.name(c2) == "c2"
 
