@@ -35,6 +35,7 @@ f = x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1
 K = @set(1-x^2 >=0 && 1-y^2 >=0)
 
 gmp = GMPModel()
+set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
 # Add a variable measure to the model
 @variable gmp μ Meas([x,y], support = K)
 

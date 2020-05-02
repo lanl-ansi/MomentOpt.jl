@@ -58,7 +58,6 @@ gmp = GMPModel()
 con = @constraint gmp μ + ν == λ
 
 # In order to relax the problem, we need to specify the relaxation order and a solver factory:
-set_approximation_mode(gmp, DUAL_STRENGTHEN_MODE())
 set_optimizer(gmp, Mosek.Optimizer)
 set_approximation_degree(gmp, 2*order)
 optimize!(gmp)
@@ -66,7 +65,7 @@ optimize!(gmp)
 # The optimal value is an approximation to the volume of K (which is π in this case)
 println("Volume of approximation: $(objective_value(gmp)*4)")
 println(termination_status(gmp))
-#=
+
 # The polynomial over approximation of the indicator function can be defined
 # from the dual solution as follows:
 poly = MomentOpt.approx_crefs(gmp)[index(con)].dual
@@ -92,4 +91,4 @@ mons = monomials([x,y],0:2*order-1)
 optimize!(gmp)
 println("Approximation with Stokes: $(objective_value(gmp)*4)")
 println(termination_status(gmp))
-=#
+

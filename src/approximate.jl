@@ -62,7 +62,7 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
             for v in gmp_variables(jump_function(con))
                 dlhs[index(v)] = MA.add!(dlhs[index(v)], dvar[i])
             end
-            d_obj = MA.add!(d_obj, integrate(dvar[i], MOI.constant(moi_set(con))))
+            d_obj = MA.add!(d_obj, integrate(dvar[i], moi_set(con)))
         elseif con isa MomentConstraint
             mcon = momexp_by_measure(jump_function(con))
             for (c, v) in mcon
@@ -209,7 +209,7 @@ function approximate_putinar!(model::GMPModel, ::AbstractPrimalMode)
             pcon[i] = [cref]
         elseif shape(con) isa MeasureConstraintShape
         # add measure constraints
-        refmeas = MOI.constant(moi_set(con))
+        refmeas = moi_set(con)
         mons = monomials(maxdegree_basis(approx_basis(refmeas), variables(refmeas), approximation_degree(model)))
         pcon[i] = @constraint approximation_model(model) sum(c.*(integrate.(mons, pvar[index(v)])) for (c,v) in jump_function(con)) .== integrate.(mons, refmeas) 
         end
