@@ -1,14 +1,8 @@
 
 function JuMP.optimize!(model::GMPModel)
-    model.approximation_model = Model()
-    optimizer = approximation_info(model).solver
-
-    if optimizer isa MOI.OptimizerWithAttributes
-        set_optimizer_with_attributes(approximation(model), optimizer)
-    else
-        set_optimizer(approximation_model(model), optimizer) 
-    end
-
+    # TODO instead of creating a new model we should rather call empty!
+    # We can than remove the solver field of approximation_info and make set_optimizer/ optimizer_with_attributes, set_optimizer_attribute(s), get_optimizer_attribute, pass directly to the jumo model. 
+    model.approximation_model = Model(approximation_info(model).solver)
     return approximate!(model, approximation_mode(model))
 end
 
