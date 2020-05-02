@@ -64,7 +64,7 @@ end
 mutable struct ApproximationInfo
     mode::AbstractApproximationMode
     degree::Int
-    solver::Union{Nothing, Function}
+    solver::Any
     approx_vrefs::Dict{Int, RefApprox}
     approx_crefs::Dict{Int, RefApprox}
     function ApproximationInfo()
@@ -107,8 +107,8 @@ JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
 model_degree(model::GMPModel) = model_data(model).max_degree
 approximation_degree(model::GMPModel) = approximation_info(model).degree
 
-function JuMP.set_optimizer(model::GMPModel, optimizer::Function)
-    approximation_info(model).solver = optimizer
+function JuMP.set_optimizer(model::GMPModel, optimizer)
+        approximation_info(model).solver = optimizer
     return nothing
 end
 

@@ -1,28 +1,20 @@
 
 function JuMP.optimize!(model::GMPModel)
     model.approximation_model = Model()
-    set_optimizer(approximation_model(model), approximation_info(model).solver) 
+    optimizer = approximation_info(model).solver
+
+    if optimizer isa MOI.OptimizerWithAttributes
+        set_optimizer_with_attributes(approximation(model), optimizer)
+    else
+        set_optimizer(approximation_model(model), optimizer) 
+    end
+
     return approximate!(model, approximation_mode(model))
 end
 
-function approximate!(model::GMPModel, mode::AbstractPrimalMode)
+function approximate!(model::GMPModel, mode::AbstractPrimalMode)i
+    #TODO clean up
     approximate_putinar!(model, mode)
-    # init approx objects
-    # substitutions/delete JuMP variables (better when creating) (substitutions should only work with objects, that are already defined)
-    # if measure 
-    #   add justification constraints justify(vref, Approximationtype, mode)
-    # else
-    #   for continuous functions the approximation is not justified
-    # end
-    #
-    # add constraints
-    # if nonneg constraint 
-    #   add justification
-    # end
-    # add objective
-    # optimize!(approximation_model(model))
-
-    # set dual justifications 
     return nothing
 end
 
@@ -129,51 +121,6 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
     return nothing
 end
 
-# inner approximations of positive polynomials
-#=
-function QuadraticModuleMonomials(o::AbstractGMPObject, degree::Int)
-    eqs = equalities(bsa_set(o))
-    ineqs = [_mono_one(variables(o)), inequalities(bsa_set(o))...]
-    QM = Dict(:eq => Dict(), :ineq => Dict())
-    # TODO reflect basis of Approximation
-    for eq in eqs
-        QM[:eq][eq] = monomials(variabels(o), 0:degree-maxdegree(eq))
-    end
-    for ineq in ineqs 
-        QM[:ineq][ineq] = monomials(variables(o), 0:Int(floor((degree-maxdegree(ineq))/2)))
-    end
-    return QM
-end
-
-function MomentPutinar(model::GMPModel, degree::Int)
-    just = Dict{Int, Vector{ConstraintRef}}()
-    for (i, v_approx) in approx_vrefs(model)
-        just[i] = ConstraintRef[]
-        if approx_scheme(gmp_variables(model)[i].v) isa MomentOpt.PutinarScheme
-            qm = QuadraticModuleMonomials(gmp_variables(model)[i].v, degree)
-            for (eq, mults) in qm[:eq]
-                for mult in mults
-                    cref =  @constraint approximation_model(model) riesz(model, i, eq*mult) == 0
-                    push!(just[i], cref)
-                end
-            end
-            for (ineq, mult) in qm[:ineq]
-                if length(mult) == 1
-                    moiset = MOI.GreaterThan(0.0)
-                    mult = first(mult)
-                else
-                    moiset = PSDCone()
-                end
-                cref = @constraint approximation_model(model) integrate.(model, i, ineq*mult*transpose(mult)) in moiset
-                push!(just[i], cref)
-            end
-        end
-    end
-    return just
-end
-
-include("approximationobject.jl")
-=#
 function moments_variable(model::JuMP.Model, v::GMPVariable{AbstractGMPMeasure}, deg::Int)
     X = maxdegree_basis(approx_basis(v.v), variables(v.v), deg)
     c = @variable model [1:length(X)] 
