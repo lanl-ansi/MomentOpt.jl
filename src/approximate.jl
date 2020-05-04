@@ -6,7 +6,7 @@ function JuMP.optimize!(model::GMPModel)
     return approximate!(model, approximation_mode(model))
 end
 
-function approximate!(model::GMPModel, mode::AbstractPrimalMode)i
+function approximate!(model::GMPModel, mode::AbstractPrimalMode)
     #TODO clean up
     approximate_putinar!(model, mode)
     return nothing
@@ -165,7 +165,7 @@ function approximate_putinar!(model::GMPModel, ::AbstractPrimalMode)
     end
     for (i, con) in gmp_constraints(model)
         if shape(con) isa MeasureConstraintShape
-refmeas = MOI.constant(moi_set(con))
+        refmeas = moi_set(con)
         mons = monomials(maxdegree_basis(approx_basis(refmeas), variables(refmeas), approximation_degree(model)))
 
         #todo check whether minus has something to do with objective sense

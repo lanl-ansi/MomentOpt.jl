@@ -23,6 +23,10 @@ end
 
 Base.broadcastable(m::MM.Measure) = Ref(m)
 
+function integrate(p::Union{Number, AbstractPolynomialLike}, moms::MM.Measure)
+    return MM.expectation(p, moms)
+end
+#=
 function integrate(p::Number, moms::MM.Measure)
     @assert moms.x[end] == 1
     return p * moms.a[end]
@@ -36,7 +40,7 @@ function integrate(p::MP.AbstractPolynomialLike, moms::MM.Measure)
     end
     return integral
 end
-
+=#
 function integrate(model::GMPModel, me::MomentExpr)
     integral = 0
     for (c, m) in momexp_by_measure(me)
