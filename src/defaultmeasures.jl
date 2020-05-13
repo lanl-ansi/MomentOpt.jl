@@ -45,13 +45,23 @@ function variable_box(args...)
     return VariableBox(Dict(first(a) => convert(Vector{T}, last(a)) for a in args))
 end
 
-lebesgue_line(lb, ub, deg) = (ub^(deg+1) - lb^(deg+1))/(deg+1)
+function lebesgue_line(lb, ub, deg, normalize)
+    if normalize
+        return (ub^(deg+1) - lb^(deg+1))/(deg+1)/(ub-lb)
+
+    else
+        return (ub^(deg+1) - lb^(deg+1))/(deg+1)
+    end
+end
+
+
 function lebesgue_box(
                       variables_with_domain::VariableBox, 
-                      f::AbstractMonomial)
+                      f::AbstractMonomial;
+                     normalize = false)
     m = 1
     for (v, e) in zip(variables(f), exponents(f))
-        m *= lebesgue_line(variables_with_domain.dict[v]..., e)
+        m *= lebesgue_line(variables_with_domain.dict[v]..., e, normalize)
     end
     return m
 end
@@ -66,13 +76,8 @@ lebesgue measure on the box is scaled to be a probability measure.
 function lebesgue_box(
                       variables_with_domain::VariableBox, 
                       f::MP.AbstractPolynomialLike; normalize = false)
-    mom = sum( c*lebesgue_box(variables_with_domain, m) for (c, m) in zip(coefficients(f), monomials(f)))
-    if normalize
-        factor = prod( last(r)-first(r) for (k, r) in variables_with_domain.dict)
-        return mom/factor
-    else
-        return mom
-    end
+    mom = sum( c*lebesgue_box(variables_with_domain, m; normalize = normalize) for (c, m) in zip(coefficients(f), monomials(f)))
+    return mom
 end
 
 export lebesgue_measure_box
