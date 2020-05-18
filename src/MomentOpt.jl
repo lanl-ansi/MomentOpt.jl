@@ -30,7 +30,6 @@ include("MBext/MBextra.jl")
 
 abstract type AbstractGMPModel <: JuMP.AbstractModel end
 
-
 include("approximation.jl")
 include("objects.jl")
 include("variables.jl")
