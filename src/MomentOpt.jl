@@ -7,10 +7,12 @@ const MOI = MathOptInterface
 
 using MutableArithmetics
 const MA = MutableArithmetics
+
 using LinearAlgebra
+
 using MultivariatePolynomials
 const MP = MultivariatePolynomials
-
+include("MPext/MPextra.jl")
 
 Reexport.@reexport using JuMP
 
@@ -24,9 +26,11 @@ const MM = MultivariateMoments
 
 Reexport.@reexport using MultivariateBases
 const MB = MultivariateBases
-
 include("MBext/MBextra.jl")
-include("MPext/MPextra.jl")
+
+abstract type AbstractGMPModel <: JuMP.AbstractModel end
+
+
 include("approximation.jl")
 include("objects.jl")
 include("variables.jl")
@@ -37,7 +41,6 @@ include("approximationscheme.jl")
 
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution
-# define IntegralSubstitution
 
 include("constraints.jl")
 #

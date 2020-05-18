@@ -15,37 +15,29 @@ function MM.moment_matrix(vref::GMPVariableRef{AbstractGMPMeasure}, X)
     return MM.MomentMatrix{Float64}(getmom, X)
 end
 
-function MM.moment_matrix(vref::GMPVariableRef)
-    X = monomials(variables(vref_object(vref)), 0:Int(floor(approximation_info(owner_model(vref)).degree/2))) # TODO should reflect sparsity 
+function MM.moment_matrix(vref::GMPVariableRef; basis = MonomialBasis)
+    X = monomials(maxdegree_basis(basis, variables(vref_object(vref)), Int(floor(approximation_info(owner_model(vref)).degree/2))))
     return moment_matrix(vref, X)
 end
 
+Base.broadcastable(moms::MM.Measure) = Ref(moms)
 
-Base.broadcastable(m::MM.Measure) = Ref(m)
-
-function integrate(p::Union{Number, AbstractPolynomialLike}, moms::MM.Measure)
-    return MM.expectation(p, moms)
+function MM.expectation(p::Number, moms::MM.Measure)
+    return p*MM.expectation(_mono_one(variables(moms)), moms)
 end
-#=
-function integrate(p::Number, moms::MM.Measure)
-    @assert moms.x[end] == 1
-    return p * moms.a[end]
+function integrate(p::Number, vref::GMPVariableRef{AbstractGMPMeasure})
+    return p*MM.expectation(_mono_one(variables(vref)), measure(vref))
 end
 
-function integrate(p::MP.AbstractPolynomialLike, moms::MM.Measure)
-    integral = 0.0
-    for (c, m) in zip(coefficients(p), monomials(p))
-        idx = findfirst(x -> x==m, monomials(moms))
-        integral += c*moms.a[idx]
-    end
-    return integral
+function integrate(p::AbstractPolynomialLike, vref::GMPVariableRef{AbstractGMPMeasure})
+    return MM.expectation(p, measure(vref))
 end
-=#
+
 function integrate(model::GMPModel, me::MomentExpr)
     integral = 0
     for (c, m) in momexp_by_measure(me)
         for (k, meas) in m
-            integral += integrate(c*k, approx_vrefs(model)[index(meas)].value)
+            integral += integrate(c*k, meas)
         end
     end
     return integral
@@ -57,13 +49,11 @@ function integrate(me::MomentExpr, ref::Dict)
     integral = 0
     for (c, m) in momexp_by_measure(me)
         for (k, meas) in m
-            integral += integrate(c*k, ref[index(meas)])
+            integral += MM.expectation(c*k, ref[index(meas)])
         end
     end
     return integral
 end
 
 integrate(me::AffMomentExpr, ref::Dict) = constant(me) + integrate(expr(me), ref)
-
-
 

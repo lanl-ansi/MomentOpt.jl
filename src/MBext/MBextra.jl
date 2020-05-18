@@ -19,3 +19,11 @@ function MB.change_basis(p::MP.AbstractPolynomialLike, basis::MB.AbstractPolynom
     idx = findall(!iszero, coeffs)
     return coeffs[idx], mons[idx]
 end
+
+function MP.monomials(basis::MB.AbstractPolynomialBasis)
+    if basis isa MB.AbstractMonomialBasis
+        return basis.monomials
+    else
+        return basis.polynomials
+    end
+end

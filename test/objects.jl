@@ -14,7 +14,7 @@
 
         @polyvar x y
         p1 = x^2 + 4*x + 1
-        p2 = x*y + 2*(x + y) +1
+        p2 = x*y + 2*(x + y) + 1
         S1 = @set x^2 <= 1
         S2 = @set x^2 <= 1 && y == x
 
@@ -56,8 +56,8 @@
 
         @polyvar x y
 
-        @test MO.lebesgue_line(-1, 1, 0) == 2
-        @test MO.lebesgue_line(0, 1, 1) == 1/2
+        @test MO.lebesgue_line(-1, 1, 0, false) == 2
+        @test MO.lebesgue_line(0, 1, 1, false) == 1/2
 
         box = variable_box( x => [0, 1], y => [-1/2, 1/2])
         @test MO.lebesgue_box(box, x*y) == 0

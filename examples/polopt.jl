@@ -34,7 +34,7 @@ f = x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1
 # Define semi algebraic support for the measure 
 K = @set(1-x^2 >=0 && 1-y^2 >=0)
 
-gmp = GMPModel()
+gmp = GMPModel(Mosek.Optimizer)
 set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
 # Add a variable measure to the model
 @variable gmp μ Meas([x,y], support = K)
@@ -44,9 +44,6 @@ set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
  
 # Constrain μ to be a probablity measure
 @constraint gmp Mom(1, μ) == 1
-
-# Set the optimizer to be our SDP-solver
-set_optimizer(gmp, Mosek.Optimizer)
 
 # The optimize! call generates a relaxation an solves it.
 optimize!(gmp)

@@ -2,7 +2,7 @@
 function JuMP.optimize!(model::GMPModel)
     # TODO instead of creating a new model we should rather call empty!
     # We can than remove the solver field of approximation_info and make set_optimizer/ optimizer_with_attributes, set_optimizer_attribute(s), get_optimizer_attribute, pass directly to the jumo model. 
-    model.approximation_model = Model(approximation_info(model).solver)
+    empty!(approximation_model(model))
     return approximate!(model, approximation_mode(model))
 end
 
@@ -98,7 +98,7 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
     # store values and duals
     for i in keys(gmp_variables(model))
         moms = dual(dcon[i])
-        approx_vrefs(model)[i] = RefApprox(moms, value(dcon[i]), value.(integrate.(just[i], moms)))
+        approx_vrefs(model)[i] = RefApprox(moms, value(dcon[i]), value.(MM.expectation.(just[i], moms)))
     end
     for (i, con) in gmp_constraints(model)
         if dvar[i] isa MP.AbstractPolynomialLike

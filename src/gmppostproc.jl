@@ -1,4 +1,4 @@
-function JuMP.objective_value(model::GMPModel) 
+    function JuMP.objective_value(model::GMPModel) 
     if approximation_mode(model) isa AbstractPrimalMode
         return objective_value(approximation_model(model))
     elseif  approximation_mode(model) isa AbstractDualMode

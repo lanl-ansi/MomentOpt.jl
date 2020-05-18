@@ -32,33 +32,28 @@ function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{PSDCone})
 end
 
 function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{MOI.EqualTo}}, moment_vars::MM.Measure)
-    cref = @constraint model integrate.(monomials(sp.monomials)*sp.polynomial, moment_vars) .== 0
+    cref = @constraint model expectation.(monomials(sp.monomials)*sp.polynomial, moment_vars) .== 0
     return cref
 end
 
 
 function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{ MOI.GreaterThan}}, moment_vars::MM.Measure)
-    cref = @constraint model integrate(monomials(sp.monomials)[1]*sp.polynomial, moment_vars) in sp.moi_set
+    cref = @constraint model expectation(monomials(sp.monomials)[1]*sp.polynomial, moment_vars) in sp.moi_set
     return cref
 end
-
-
 
 function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike, moment_vars::MM.Measure)
     data = zeros(JuMP.AffExpr, length(mons), length(mons))
     mons = monomials(mons)
     for (i, moni) in enumerate(mons)
         for j in i:length(mons)
-            data[i,j] = integrate(moni*mons[j]*poly, moment_vars)
+            data[i, j] = MM.expectation(moni*mons[j]*poly, moment_vars)
         end
     end
     return Symmetric(data)
 end
 function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{PSDCone}, moment_vars::MM.Measure)
-    #this must be solved more intelligently
-#    cref = @constraint model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) in sp.moi_set
    cref = @constraint model localization_matrix(sp.monomials, sp.polynomial, moment_vars) in sp.moi_set
-   #cref = @SDconstraint  model Symmetric(integrate.(monomials(sp.monomials)*transpose(monomials(sp.monomials)).*sp.polynomial, moment_vars)) >= zeros(length(monomials(sp.monomials)),length(monomials(sp.monomials)) )
    return cref
 end
 

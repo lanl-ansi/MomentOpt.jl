@@ -57,9 +57,6 @@
         
         @test JuMP.termination_status(m) == MOI.OPTIMIZE_NOT_CALLED
 
-        opt = x -> ""
-        JuMP.set_optimizer(m, opt)
-        @test MO.approximation_info(m).solver == opt
         @test MO.approximation_degree(m) == MO.model_degree(m)
         @test_logs (:warn, "Requested approximation degree -1 is too low to cover all data. The approximation degree has been set to the minimal value possible and now is 0.") set_approximation_degree(m, -1)
         @test MO.approximation_degree(m) == 0

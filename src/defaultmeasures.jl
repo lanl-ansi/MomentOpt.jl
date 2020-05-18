@@ -112,9 +112,17 @@ function moment_measure(μ::GMPVariableRef{AbstractGMPMeasure})
     return AnalyticMeasure(
                            variables(μ),
                            approx_basis(μ),
-                           ApproximationFunction(p -> integrate(p, measure(μ)), variables(μ),approx_basis(μ))
+                           ApproximationFunction(p -> integrate(p, μ), variables(μ), approx_basis(μ))
                           )
 end
 
+function moment_measure(μ::MM.Measure)
+    
+    return AnalyticMeasure(
+                           variables(μ),
+                           MonomialBasis,
+                           ApproximationFunction(p -> MM.expectation(p, μ), variables(μ), MonomialBasis)
+                          )
+end
 # TODO add gaussian
 # TODO add lebesgue on circle

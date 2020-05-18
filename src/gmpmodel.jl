@@ -42,14 +42,12 @@ Defines whether the primal or the dual of a problem should be used for a conic a
 """
 abstract type AbstractApproximationMode end
 
-export PRIMAL_RELAXATION_MODE, DUAL_RELAXATION_MODE, PRIMAL_STRENGTHEN_MODE, DUAL_STRENGTHEN_MODE
+export PRIMAL_RELAXATION_MODE, DUAL_STRENGTHEN_MODE
 
 abstract type AbstractPrimalMode <: AbstractApproximationMode end
 abstract type AbstractDualMode <: AbstractApproximationMode end
-struct PRIMAL_STRENGTHEN_MODE <: AbstractPrimalMode end 
 struct PRIMAL_RELAXATION_MODE <: AbstractPrimalMode end 
 struct DUAL_STRENGTHEN_MODE <: AbstractDualMode end
-struct DUAL_RELAXATION_MODE <: AbstractDualMode end
 
 #TODO make immutable again
 mutable struct RefApprox{S, T, U}
@@ -80,7 +78,7 @@ export GMPModel
 
 This JuMP.AbstractModel is able to model linear obtimization problems where the variables are abstract measures or continuous functions.
 """
-mutable struct GMPModel <: JuMP.AbstractModel
+mutable struct GMPModel <: AbstractGMPModel
     model_info::ModelInfo
     model_data::ModelData    
     approximation_info::ApproximationInfo
@@ -102,20 +100,47 @@ gmp_variables(model::GMPModel) = model_data(model).variables
 gmp_constraints(model::GMPModel) = model_data(model).constraints
 variable_names(model::GMPModel) = model_info(model).variable_names
 constraint_names(model::GMPModel) = model_info(model).constraint_names
-JuMP.object_dictionary(model::GMPModel) = model.model_info.obj_dict
-JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
 model_degree(model::GMPModel) = model_data(model).max_degree
 approximation_degree(model::GMPModel) = approximation_info(model).degree
 
 function JuMP.set_optimizer(model::GMPModel, optimizer)
-        approximation_info(model).solver = optimizer
-    return nothing
+    set_optimizer(approximation_model(model), optimizer)
 end
 
-function JuMP.set_optimizer_attribute(model::GMPModel, name::String, value)
-    set_optimizer_attribute(approximation_model(model), name, value)
+function GMPModel(optimizer_factory)
+    model = GMPModel()
+    set_optimizer(model, optimizer_factory)
+    return model
 end
 
+JuMP.solver_name(model::GMPModel) = solver_name(approximation_model(model))
+JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
+JuMP.num_nl_constraints(::GMPModel) = 0
+JuMP.object_dictionary(model::GMPModel) = model_info(model).obj_dict
+JuMP.raw_status(model::GMPModel) = raw_status(approximation_model(model))
+JuMP.set_optimize_hook(model::GMPModel, f) = (approximation_model(model).optimize_hook = f)
+JuMP.solve_time(model::GMPModel) = solve_time(approximation_model(model))
+
+function JuMP.set_optimizer_attribute(model::GMPModel, args...)
+    set_optimizer_attribute(approximation_model(model), args...)
+end
+function JuMP.set_optimizer_attributes(model::GMPModel, args...)
+    set_optimizer_attributes(approximation_model(model), args...)
+end
+
+function JuMP.get_optimizer_attribute(model::GMPModel, name::String)
+    return get_optimizer_attribute(approximation_model(model), MOI.RawParameter(name))
+end
+
+function JuMP.set_silent(model::GMPModel)
+    return MOI.set(approximation_model(model), MOI.Silent(), true)
+end
+
+function JuMP.unset_silent(model::GMPModel)
+    return MOI.set(approximation_model(model), MOI.Silent(), false)
+end
+
+JuMP.time_limit_sec(model::GMPModel) = time_limit_sec(approximation_model(model))
 
 function update_degree(m::GMPModel, degree::Int)
     if model_data(m).max_degree < degree
