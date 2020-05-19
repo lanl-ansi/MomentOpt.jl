@@ -1,20 +1,14 @@
 using Test
-
 using MomentOpt
-
+const MO = MomentOpt
 using DynamicPolynomials
-using SemialgebraicSets
-using SumOfSquares
-using OrderedCollections
-using LinearAlgebra
 
-using SCS
-factory =  with_optimizer(SCS.Optimizer, verbose = 0, eps = 1e-16)
+include("objects.jl")
+include("variables.jl")
+include("affexpr.jl")
+include("constraints.jl")
 
-include("meas.jl")
-include("momexpr.jl")
-include("momcon.jl")
-include("model.jl")
-include("macros.jl")
-include("show.jl")
-include("relax.jl")
+include("gmpmodel.jl")
+include("approximate.jl")
+include("postproc.jl")
+

@@ -2,61 +2,67 @@
  Solve a global optimization problem with MomentOpt.jl 
  For theortic background see : https://epubs.siam.org/doi/10.1137/S1052623400366802
 
- Let K be a basic semialgebraic compact set and f a polynomial function. We are intersted in 
- the global optimization problem
+ Let K be a basic semialgebraic compact set and f a polynomial function. We are interested in  the global optimization problem
  
  min f(x)
-     x∈K
+     x∈ K.
 
 An equivalent formulation of this problem as Generalized Moment Problem is given by
 
 min <μ,f>
     <μ,1> = 1
-     μ∈M(K)
+     μ∈ M_+(K)
 
-The optimal measure in the Generalized Moment Problem above will be atomic and each atom will be a global minimizer 
-of f on K. 
+The optimal measure in the Generalized Moment Problem above will be atomic and each atom will be a global minimizer of f on K. 
 """
 
-using DynamicPolynomials
+# Load MomentOpt
 using MomentOpt
+
+# Load an implementation of MultivariatePolynomials. Here we use DynamicPolynomials.
+using DynamicPolynomials
+
+# In order to solve the optimization problem we also need to load an SDP solver.
 using MosekTools
 
-# Define polnomial variables
+# Define polynomial variables
 @polyvar x y
 
 # Polynomial to optimize 
 f = x^4*y^2 + x^2*y^4 -3x^2*y^2 + 1 
 
 # Define semi algebraic support for the measure 
-K = @set(1-x>=0 && x+1>=0 && 1-y>=0 && y+1>=0)
+K = @set(1-x^2 >=0 && 1-y^2 >=0)
 
-gmp = GMPModel()
-# Add measure to the model
-@measure gmp μ [x,y] support=K
+gmp = GMPModel(Mosek.Optimizer)
+set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
+# Add a variable measure to the model
+@variable gmp μ Meas([x,y], support = K)
 
 # Define the objective 
-@objective gmp Min Mom(f,μ)
-# This notation is a shorthand for 
-# @mobjective gmp :Min Mom(f,μ)
+@objective gmp Min Mom(f, μ)
  
 # Constrain μ to be a probablity measure
-@constraint gmp Mom(1,μ) == 1
+@constraint gmp Mom(1, μ) == 1
 
-# We solve the relaxation of order 2 with CSDP
-relax!(gmp, 2, with_optimizer(Mosek.Optimizer))
+# The optimize! call generates a relaxation an solves it.
+optimize!(gmp)
 
-println("Relaxation order: $(2)")
+# By default the relaxation degree is the maximal degree of the registered data. In this case the objective function Mom(f, μ) has degree 6.
+println("Relaxation degree: 6")
 println("Lower bound: $(objective_value(gmp))")
+
 # We try to extract atoms from the relaxed moment sequence of μ
-opt = atomic(gmp, μ, tol = 1e-03)
+opt = atomic( μ, tol = 1e-03)
 println()
 
-# As we could not extract atoms from the solution, we increase the relaxation order
-relax!(gmp, 3, with_optimizer(Mosek.Optimizer))
+# As we could not extract atoms from the solution, we increase the relaxation degree
 
-println("Relaxation order: $(3)")
+set_approximation_degree(gmp, 8)
+optimize!(gmp)
+
+println("Relaxation degree: 8")
 println("Lower bound: $(objective_value(gmp))")
-opt = atomic(gmp, μ, tol = 1e-03)
+opt = atomic( μ, tol = 1e-03)
 
 # This time the atom extraction succeeds, which proves optimality of the moment relaxation. 

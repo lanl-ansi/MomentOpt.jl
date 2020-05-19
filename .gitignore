@@ -4,3 +4,5 @@ Manifest.toml
 *.jl.mem
 *.swp
 deps/deps.jl
+docs/build/*
+TODO
