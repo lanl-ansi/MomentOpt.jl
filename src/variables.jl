@@ -25,6 +25,7 @@ end
 
 # define GMPVariableRef
 
+export GMPVariableRef
 """
     GMPVariableRef
 

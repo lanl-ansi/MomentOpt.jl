@@ -7,8 +7,10 @@ makedocs(
                                   prettyurls = get(ENV, "CI", nothing) == "true"
                                  ),
          pages = [
-                  "Index" => "index.md",
+                  "Introduction" => "index.md",
+                  "Getting started" => "started.md",
                   "The Generalized Moment Problem" => "gmp.md",
+                  "What's in the box?" => "blackbox.md"
                  ],
          modules = [MomentOpt]
         )

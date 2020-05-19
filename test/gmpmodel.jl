@@ -38,7 +38,7 @@
         m = GMPModel()
         mus = @variable m [1:2] Meas([x,y]) 
         JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
-        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64,Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: "
+        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64,Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: No optimizer attached."
         
         @constraint m Mom(1, mus[1]) <= 1
         @constraint m c2 Mom(1, mus[2]) >= 1

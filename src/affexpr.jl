@@ -40,8 +40,6 @@ Base.:*(a::Number, vref::GMPVariableRef) = ObjectExpr([a], [vref])
 Base.:*(a::Number, e::ObjectExpr) = ObjectExpr(a.*gmp_coefficients(e), gmp_variables(e))
 
 function Base.sum(mev::Vector{ObjectExpr{C, S}}) where {C, S}
-    # TODO add early compatibiliy check: for now the sum is computed 
-    # and an assertion error is generated when buildinf the GMPExpr in the return. 
     coefs = C[]
     vars = GMPVariableRef{S}[]
     for me in mev
@@ -61,8 +59,6 @@ function Base.sum(mev::Vector{ObjectExpr{C, S}}) where {C, S}
 end
 
 function Base.sum(mev::Vector{GMPVariableRef{S}}) where S
-    # TODO add early compatibiliy check: for now the sum is computed 
-    # and an assertion error is generated when buildinf the GMPExpr in the return. 
     coefs = Int[]
     vars = GMPVariableRef{S}[]
     for m in mev
@@ -125,7 +121,6 @@ degree(e::ObjectExpr) = 0
 Type representing an affine linear combination of GMPObjects.
 """
 const AffObjectExpr{S, T <: Number, U} = GMPAffExpr{S, ObjectExpr{T, U}}
-#Base.:-(e::ObjectExpr, a::AnalyticGMPObject) = AffObjectExpr(e, -a)
 
 # MomentExpr
 function all_vars_measures(mv::Vector{<:ObjectExpr})
@@ -235,23 +230,7 @@ function JuMP.function_string(io, e::MomentExpr)
 end
 
 # compatibility
-#=
-function Base.promote_rule(::Type{MomentExpr{T, S}}, ::Type{GMPVariableRef}) where {T, S}
-    return MomentExpr{T, S}
-end
 
-function Base.convert(::Type{MomentExpr{T, S}}, m::GMPVariableRef) where {T, S}
-    return MomentExpr([one(T)], [convert(ObjectExpr{S, AbstractGMPMeasure}, m)])
-end
-
-function Base.promote_rule(::Type{MomentExpr{T, S1}}, ::Type{ObjectExpr{S2, AbstractGMPMeasure}}) where {T, S1, S2}
-    return MomentExpr{T, promote_type(S1, S2)}
-end
-
-function Base.convert(::Type{MomentExpr{T, S}}, m::ObjectExpr) where {T, S}
-    return MomentExpr([one(T)], [convert(ObjectExpr{S, AbstractGMPMeasure}, m)])
-end
-=#
 function Base.promote_rule(::Type{MomentExpr{C1, V1}}, ::Type{MomentExpr{C2, V2}}) where {C1, C2, V1, V2}
     return MomentExpr{promote_type(C1, C2), promote_type(V1, V2)}
 end
@@ -260,13 +239,16 @@ function Base.convert(::Type{MomentExpr{C, V}}, m::MomentExpr) where {C, V}
     return MomentExpr(convert.(C, gmp_coefficients(m)), convert.(ObjectExpr{V, AbstractGMPMeasure}, gmp_variables(m)))
 end
 
-
 export Mom
 const Mom = MomentExpr
 """
-    AffMomentExpr{S, T}
+    AffMomentExpr{S, T, U}
 
 Type representing an affine linear combination of Moments.
 """
 const AffMomentExpr{T <: Union{Number, MP.AbstractPolynomialLike}, S <: Number, U <: Number} = 
 GMPAffExpr{U, MomentExpr{T, S}}
+
+function Base.convert(::Type{GMPAffExpr{T1, MomentExpr{VT, T2}}}, m::MomentExpr) where {T1, T2, VT<:MP.AbstractPolynomialLike}
+    return GMPAffExpr(convert(MomentExpr{VT, T2}, m), zero(T1))
+end

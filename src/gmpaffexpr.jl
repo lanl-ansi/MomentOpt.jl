@@ -4,6 +4,7 @@ Base.broadcastable(t::AbstractGMPScalar) = Ref(t)
 
 abstract type AbstractGMPExpressionLike <: AbstractGMPScalar end
 struct GMPEmptyExpr <: AbstractGMPExpressionLike end
+JuMP.function_string(mode, ::MomentOpt.GMPEmptyExpr) = "No objective"
 
 """
     abstract type AbstractGMPExpr <: AbstractGMPExpressionLike
@@ -121,14 +122,22 @@ function _prep_coef(c::Number)
     end
 end
 
-function _prep_coef(c::AnalyticMeasure)
+function _prep_coef_with_one(c::Number)
+    if c > 0
+        return " + ", string(abs(c))
+    elseif c < 0
+        return " - ", string(abs(c))
+    else
+        return "", ""
+
+    end
+end
+
+function _prep_coef_with_one(c::AnalyticMeasure)
     return " + ", sprint(show, c)
 end
 
 function JuMP.function_string(mode, ae::GMPAffExpr)
-    s, c = _prep_coef(constant(ae))
-    if constant(ae) == 1
-        c = string(constant(ae))
-    end
+    s, c = _prep_coef_with_one(constant(ae)) 
     return function_string(mode, expr(ae))*s*c
 end

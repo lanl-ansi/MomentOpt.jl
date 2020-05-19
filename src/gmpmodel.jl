@@ -62,11 +62,10 @@ end
 mutable struct ApproximationInfo
     mode::AbstractApproximationMode
     degree::Int
-    solver::Any
     approx_vrefs::Dict{Int, RefApprox}
     approx_crefs::Dict{Int, RefApprox}
     function ApproximationInfo()
-        new(DUAL_STRENGTHEN_MODE(), 0, nothing, Dict{Int, RefApprox}(), Dict{Int, RefApprox}())
+        new(DUAL_STRENGTHEN_MODE(), 0, Dict{Int, RefApprox}(), Dict{Int, RefApprox}())
     end
 end
 
@@ -157,7 +156,7 @@ Manually set the degree of the approximation to a custom value. The value cannot
 """
 function set_approximation_degree(model::GMPModel, degree::Int)
     if approximation_info(model).degree > degree && model_data(model).max_degree > degree
-        approximation_info(model).degree = maximum([approximation_info(model).degree, 2*ceil(model_data(model).max_degree/2)])
+        approximation_info(model).degree = minimum([approximation_info(model).degree, 2*ceil(model_data(model).max_degree/2)])
 
         @warn "Requested approximation degree $degree is too low to cover all data. The approximation degree has been set to the minimal value possible and now is $(approximation_info(model).degree)."
     else
@@ -416,11 +415,7 @@ function JuMP.show_backend_summary(io::IO, model::GMPModel)
     println(io, "Maximum degree of data: ", model_degree(model))
     println(io, "Degree for approximation ", approximation_degree(model))
     # The last print shouldn't have a new line
-    if approximation_info(model).solver isa Nothing
-        print(io, "Solver for approximation: ")
-    else
-        print(io, "Solver for approximation: ", approximation_info(model).solver)
-    end
+    print(io, "Solver for approximation: ", solver_name(model))
 end
 
 # get value
@@ -472,6 +467,9 @@ function JuMP.dual(cref::GMPConstraintRef, ::MomentConstraintShape)
     return JuMP.dual(approximation_info(owner_model(cref)).approx_crefs[index(cref)])
 end
 
+function JuMP.dual(cref::GMPConstraintRef, ::MeasureConstraintShape)
+    return approx_crefs(owner_model(cref))[index(cref)].dual
+end
 
 export Justification
 """
