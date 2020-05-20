@@ -16,6 +16,8 @@
 
         @test JuMP.jump_function(con1) == JuMP.jump_function(con2) 
         @test JuMP.moi_set(con1) == JuMP.moi_set(con2) 
+        @test con1 == con2
+        @test con1 == con1
         @test JuMP.shape(con1) isa MO.MomentConstraintShape
         @test sprint(show, con1) == sprint(show, con2)
 

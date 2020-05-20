@@ -19,7 +19,6 @@ end
 
 This type contains the data of the model.
 """
-
 mutable struct ModelData
     variables::Dict{Int, AbstractGMPVariable}
     constraints::Dict{Int, AbstractGMPConstraint}
@@ -49,6 +48,17 @@ abstract type AbstractDualMode <: AbstractApproximationMode end
 struct PRIMAL_RELAXATION_MODE <: AbstractPrimalMode end 
 struct DUAL_STRENGTHEN_MODE <: AbstractDualMode end
 
+struct VarApprox{S, T}
+    value::MM.Measure
+    p_just::S
+    d_just::T
+end
+
+struct ConApprox{S, T}
+    p_res::S
+    dual::T
+end
+#=
 #TODO make immutable again
 mutable struct RefApprox{S, T, U}
     value::S
@@ -58,14 +68,14 @@ mutable struct RefApprox{S, T, U}
         new{S,T,U}(value, dual, justification)
     end
 end
-
+=#
 mutable struct ApproximationInfo
     mode::AbstractApproximationMode
     degree::Int
-    approx_vrefs::Dict{Int, RefApprox}
-    approx_crefs::Dict{Int, RefApprox}
+    approx_vrefs::Dict{Int, VarApprox}
+    approx_crefs::Dict{Int, ConApprox}
     function ApproximationInfo()
-        new(DUAL_STRENGTHEN_MODE(), 0, Dict{Int, RefApprox}(), Dict{Int, RefApprox}())
+        new(DUAL_STRENGTHEN_MODE(), 0, Dict{Int, VarApprox}(), Dict{Int, ConApprox}())
     end
 end
 
@@ -91,15 +101,18 @@ Base.broadcastable(model::GMPModel) = Ref(model)
 model_info(model::GMPModel) = model.model_info
 model_data(model::GMPModel) = model.model_data
 approximation_info(model::GMPModel) = model.approximation_info
+export approximation_mode
 approximation_mode(model::GMPModel) = approximation_info(model).mode
 approx_vrefs(model::GMPModel) = approximation_info(model).approx_vrefs
 approx_crefs(model::GMPModel) = approximation_info(model).approx_crefs
+export approximation_model
 approximation_model(model::GMPModel) = model.approximation_model
 gmp_variables(model::GMPModel) = model_data(model).variables
 gmp_constraints(model::GMPModel) = model_data(model).constraints
 variable_names(model::GMPModel) = model_info(model).variable_names
 constraint_names(model::GMPModel) = model_info(model).constraint_names
 model_degree(model::GMPModel) = model_data(model).max_degree
+export approximation_degree
 approximation_degree(model::GMPModel) = approximation_info(model).degree
 
 function JuMP.set_optimizer(model::GMPModel, optimizer)
@@ -428,15 +441,27 @@ function _is_approximated(vref::GMPVariableRef)
     end
 end
 
-export approximation
 """
-approximation(vref::GMPVariableRef)
+    value(vref::GMPVariableRef)
 
 Returns the approximation sequence of the referenced GMPObject.
 """
-function approximation(vref::GMPVariableRef)
+function JuMP.value(vref::GMPVariableRef)
     @assert _is_approximated(vref) "$vref has not been approximated yet"
-    return Dict(k => value(v) for (k, v) in approximation_sequence(owner_model(vref), index(vref)).dict)
+    return approx_vrefs(owner_model(vref))[index(vref)].value 
+end
+
+export primal_justification
+function primal_justification(vref::GMPVariableRef)
+    @assert _is_approximated(vref) "$vref has not been approximated yet"
+
+    return approx_vrefs(owner_model(vref))[index(vref)].p_just
+end
+
+export dual_justification
+function dual_justification(vref::GMPVariableRef)
+    @assert _is_approximated(vref) "$vref has not been approximated yet"    
+    return approx_vrefs(owner_model(vref))[index(vref)].d_just
 end
 
 """
@@ -445,7 +470,6 @@ approximation(vref::GMPVariableRef, m::AbstractPolynomialLike)
 Return the approximation of the ⟨vref, m⟩. 
 """
 function approximation(vref::GMPVariableRef, m::MP.AbstractPolynomialLike)
-    #TODO check whether approximation is available
     @assert MP.variables(m) ⊆ MP.variables(vref) "$vref does not act on $m."
     @assert _is_approximated(vref) "$vref has not been approximated yet"
     as = approximation_sequence(owner_model(vref), index(vref)).dict
@@ -463,19 +487,9 @@ end
 
 JuMP.value(me::MomentExpr) = sum(c*approximation(m, cv) for (cv, mv) in me for (c, m) in mv)
 
-function JuMP.dual(cref::GMPConstraintRef, ::MomentConstraintShape)
-    return JuMP.dual(approximation_info(owner_model(cref)).approx_crefs[index(cref)])
-end
+export residual
+residual(cref::GMPConstraintRef) = approx_crefs(owner_model(cref))[index(cref)].p_res
 
-function JuMP.dual(cref::GMPConstraintRef, ::MeasureConstraintShape)
+function JuMP.dual(cref::GMPConstraintRef, ::Union{MomentConstraintShape, MeasureConstraintShape})
     return approx_crefs(owner_model(cref))[index(cref)].dual
 end
-
-export Justification
-"""
-    Justification{T <: AbstractApproximationMode, S <: AbstractApproximationType}
-
-This type holds a justification, why the ApproximationSequence approximates the corresponding GMPObject.
-"""
-# for Putinar the primal justification for a measure should be a bunch of psd matrices corresponding to the constraints of the bsa_set. the dual justification should be an element of the quadratic module corresponding to a polynomial constructed from the constraints
-# when the approximation mode is primal, the matrices in the primal justification will be the matrices constrained to be psd, i.e., crefs? 

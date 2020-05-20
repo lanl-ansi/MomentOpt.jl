@@ -80,7 +80,11 @@
             @test eltype([Mom(1, μ + ν), μ]) == AbstractJuMPScalar
             @test eltype([Mom(1, μ + ν), μ + ν]) == MO.AbstractGMPExpr
             @test eltype([Mom(1, μ + ν), Mom(one(Int8), μ + ν)]) == MomentExpr{Int, Int}
-
+            
+            @test_throws ErrorException integrate(m5)
+            z = zero(m5)
+            @test isempty(MO.gmp_coefficients(z))
+            @test isempty(MO.gmp_variables(z))
         end
 
     end
