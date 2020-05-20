@@ -1,10 +1,11 @@
+abstract type AbstractApproximationScheme end
+
+
 export KeepEquality, ReduceEquality, SplitEquality
 abstract type AbstractEqualityHandler end
 struct KeepEquality <: AbstractEqualityHandler end
 struct ReduceEquality <: AbstractEqualityHandler end
 struct SplitEquality <: AbstractEqualityHandler end
-
-
 
 struct SchemePart{T<:Union{JuMP.PSDCone, MOI.AbstractSet}}
     polynomial::MP.AbstractPolynomialLike
@@ -129,9 +130,11 @@ end
 function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialgebraicSet, vars::Vector{<: MP.AbstractVariable}, d::Int)
 
     ineqs = [prod(vars.^0)]
+
     if !isempty(inequalities(K))
         ineqs = [ineqs..., inequalities(K)...]
     end
+
     if scheme.equality isa SplitEquality
         for eq in equalities(K)
             append!(ineqs, [eq, -eq])
@@ -142,15 +145,25 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
     else
         eqs = equalities(K)
     end
-    schemeparts = SchemePart[]
 
-    for i = 1:length(ineqs)
+    schemeparts = SchemePart[]
+    i = 1
         ineq = ineqs[i]
         deg = Int(floor((d-maxdegree(ineq))/2))
         mons = maxdegree_basis(scheme.basis_type, vars, deg) 
-        if length(mons) ==1
-            moiset = MOI.GreaterThan(0.0)
-            mons = first(mons)
+        if length(mons) == 1
+            moiset = MOI.Nonnegatives(1)
+        else
+            moiset = PSDCone()
+        end
+        push!(schemeparts, SchemePart(ineq, mons, moiset))
+
+    for i = 2:length(ineqs)
+        ineq = ineqs[i]
+        deg = Int(floor((d-maxdegree(ineq))/2))
+        mons = maxdegree_basis(scheme.basis_type, vars, deg) 
+        if length(mons) == 1
+            moiset = MOI.Nonnegatives(1)
         else
             moiset = PSDCone()
         end
@@ -162,8 +175,7 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
                 deg = Int(floor((d-maxdegree(ineq))/2))
                 mons = maxdegree_basis(scheme.basis_type, vars, deg)
                 if length(mons) == 1
-                    moiset = MOI.GreaterThan(0.0)
-                    mons = first(mons)
+                    moiset = MOI.Nonnegatives(1)
                 else
                     moiset = PSDCone()
                 end
@@ -171,9 +183,11 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
             end
         end
     end
+
     for eq in eqs
         deg = d-maxdegree(eq)
-        push!(schemeparts, SchemePart(eq, maxdegree_basis(scheme.basis_type, vars, deg), MOI.EqualTo(0.0)))
+        mons = maxdegree_basis(scheme.basis_type, vars, deg)
+        push!(schemeparts, SchemePart(eq, mons, MOI.Zeros(length(mons))))
     end
     return schemeparts
 end
