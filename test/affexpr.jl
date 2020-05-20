@@ -12,9 +12,6 @@
             @test_throws AssertionError MO.same_variables([μ, σ])
             @test MO.same_variables([μ, ν]) isa Nothing
             @test MO.same_vref_type([μ, σ]) isa Nothing
-            @variable m f Cont([x])
-            @test MO.same_variables([μ, f]) isa Nothing
-            @test_throws AssertionError MO.same_vref_type([μ, f])
 
             oe1 = μ + ν
 

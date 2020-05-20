@@ -35,23 +35,6 @@
         @test monomials(MO.covering_basis(μ, 2)) == Polynomial{true, typeof(1.0)}[1.0]
     end
 
-    @testset "AbstractGMPContinuous" begin
-        # Base.:(==)(m1::AbstractGMPObject, m2::AbstractGMPObject)
-        # MO.covering_basis(t::AbstractGMPObject, p::MP.AbstractPolynomialLike)
-
-        #  approximate(f::AbstractGMPContinuous, max_degree::Int)
-        # SymbolicContinuous(variables::Vector{V}, domain::S, monom_basis) where {S <: AbstractBasicSemialgebraicSet, V <: MP.AbstractVariable} 
-        # AnalyticContinuous(variables::Vector{V}, monom_basis, monom_function::Function) where {V <: MP.AbstractVariable} 
-        # ConstantContinuous(a::Number)
-        # ZeroContinuous()
-        # OneContinuous()
-        # approximate(f::ConstantContinuous, ::Int)
-        # Cont(vars; domain = FullSpace(), basis = MonomialBasis, approx = DefaultApproximation())
-        # MB.maxdegree_basis(t::AbstractGMPObject, d::Int)
-        # MO.eval_vector(basis::MB.AbstractPolynomialBasis, m::AbstractGMPObject)
-
-    end
-
     @testset "DefaultMeasures" begin
 
         @polyvar x y
