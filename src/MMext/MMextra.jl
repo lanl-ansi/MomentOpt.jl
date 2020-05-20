@@ -45,7 +45,7 @@ end
 
 integrate(m::GMPModel, me::AffMomentExpr) = constant(me) + integrate(m, expr(me))
 
-function integrate(me::MomentExpr, ref::Dict)
+function integrate(ref::Dict, me::MomentExpr)
     integral = 0
     for (c, m) in momexp_by_measure(me)
         for (k, meas) in m
@@ -55,5 +55,5 @@ function integrate(me::MomentExpr, ref::Dict)
     return integral
 end
 
-integrate(me::AffMomentExpr, ref::Dict) = constant(me) + integrate(expr(me), ref)
+integrate(ref::Dict, me::AffMomentExpr) = constant(me) + integrate(ref, expr(me))
 

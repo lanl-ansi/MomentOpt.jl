@@ -16,13 +16,13 @@ set_type(::SchemePart{T}) where T = T
 
 approximation_scheme(model::JuMP.AbstractModel, v) = approximation_scheme(approx_scheme(v.v), bsa_set(v.v), variables(v.v), approximation_degree(model))
 
-function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{<:MOI.EqualTo})
-    vref = @variable model variable_type = Poly(sp.monomials)
+function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{<:MOI.Nonnegatives})
+    vref = @variable model lower_bound = 0
     return vref
 end
 
-function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{<:MOI.GreaterThan})
-    vref = @variable model lower_bound = 0.0
+function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{<:MOI.Zeros})
+    vref = @variable model variable_type = Poly(sp.monomials)
     return vref
 end
 
@@ -31,15 +31,8 @@ function dual_scheme_variable(model::JuMP.Model, sp::SchemePart{PSDCone})
     return vref
 end
 
-function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{MOI.EqualTo}}, moment_vars::MM.Measure)
-    cref = @constraint model expectation.(monomials(sp.monomials)*sp.polynomial, moment_vars) .== 0
-    return cref
-end
-
-
-function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{<:Union{ MOI.GreaterThan}}, moment_vars::MM.Measure)
-    cref = @constraint model expectation(monomials(sp.monomials)[1]*sp.polynomial, moment_vars) in sp.moi_set
-    return cref
+function primal_scheme_part(sp::SchemePart{<:Union{MOI.Nonnegatives, MOI.Zeros}}, moment_vars::MM.Measure)
+    return MM.expectation.(monomials(sp.monomials)*sp.polynomial, moment_vars)
 end
 
 function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike, moment_vars::MM.Measure)
@@ -52,9 +45,14 @@ function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.Abstract
     end
     return Symmetric(data)
 end
-function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart{PSDCone}, moment_vars::MM.Measure)
-   cref = @constraint model localization_matrix(sp.monomials, sp.polynomial, moment_vars) in sp.moi_set
-   return cref
+
+function primal_scheme_part(sp::SchemePart{PSDCone}, moment_vars::MM.Measure)
+    return localization_matrix(sp.monomials, sp.polynomial, moment_vars)
+end
+
+function primal_scheme_constraint(model::JuMP.Model, sp::SchemePart, moment_vars::MM.Measure)
+    cref = @constraint model primal_scheme_part(sp, moment_vars) in sp.moi_set
+    return cref
 end
 
 export PutinarScheme
@@ -98,7 +96,7 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
         deg = Int(floor((d-maxdegree(ineq))/2))
         mons = maxdegree_basis(scheme.basis_type, vars, deg)
         if length(mons) == 1 
-            moiset = MOI.GreaterThan(0.0)
+            moiset = MOI.Nonnegatives(1)
         else
             moiset = PSDCone()
         end
@@ -106,7 +104,8 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
     end
     for eq in eqs
         deg = d-maxdegree(eq)
-        push!(schemeparts, SchemePart(eq, maxdegree_basis(scheme.basis_type, vars, deg), MOI.EqualTo(0.0)))
+        mons = maxdegree_basis(scheme.basis_type, vars, deg)
+        push!(schemeparts, SchemePart(eq, mons, MOI.Zeros(length(mons))))
     end
     return schemeparts
 end

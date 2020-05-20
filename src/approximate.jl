@@ -1,22 +1,11 @@
-
-function JuMP.optimize!(model::GMPModel)
-    # TODO instead of creating a new model we should rather call empty!
-    # We can than remove the solver field of approximation_info and make set_optimizer/ optimizer_with_attributes, set_optimizer_attribute(s), get_optimizer_attribute, pass directly to the jumo model. 
+function JuMP.optimize!(model::GMPModel) 
     empty!(approximation_model(model))
     return approximate!(model, approximation_mode(model))
 end
 
-function approximate!(model::GMPModel, mode::AbstractPrimalMode)
-    #TODO clean up
-    approximate_putinar!(model, mode)
-    return nothing
-end
-
 function dual_variable(model::JuMP.Model, con::AbstractGMPConstraint, sense::MOI.OptimizationSense, deg::Int)
     if con isa MeasureConstraint
-        # for measure constraints the basis of the first registered measure is used to test equality. it should probably be moved to the analytic measure in the moiset
-        v = vref_object(first(gmp_variables(jump_function(con))))
-        variable = @variable(model, variable_type = Poly(maxdegree_basis(v, deg)))
+        variable = @variable(model, variable_type = Poly(maxdegree_basis(moi_set(con), deg)))
     elseif moi_set(con) isa MOI.EqualTo
         variable = @variable(model)
     elseif xor(moi_set(con) isa MOI.LessThan, sense == MOI.MIN_SENSE)
@@ -27,13 +16,13 @@ function dual_variable(model::JuMP.Model, con::AbstractGMPConstraint, sense::MOI
     return variable
 end
 
-function approximate!(model::GMPModel, mode::AbstractDualMode)
+function approximate!(model::GMPModel, ::AbstractDualMode)
     # init dual variables
     dvar = Dict()
     for (i, con) in gmp_constraints(model)
         dvar[i] = dual_variable(approximation_model(model), con, objective_sense(model), approximation_degree(model))
     end
-    
+
     # init dual constraints
     PT = polynomialtype(eltype(variables(gmp_variables(model)[1].v)), JuMP.AffExpr)
     dlhs = Dict{Int, PT}()
@@ -74,6 +63,7 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
     obj_expr = momexp_by_measure(expr(obj))
     dcon = Dict()
     just = Dict()
+    scheme_parts = Dict()
     for (i, v) in gmp_variables(model)
         p = dlhs[i]
         if primal_sense == MOI.MIN_SENSE
@@ -83,8 +73,9 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
         if !(idx isa Nothing)
             p = MA.add!(p, gmp_coefficients(obj_expr)[idx])
         end
-        scheme_parts = approximation_scheme(model, v)
-        just[i] = [dual_scheme_variable(approximation_model(model), sp)*sp.polynomial for sp in scheme_parts]
+        scheme_parts[i] = approximation_scheme(model, v)
+        just[i] = [dual_scheme_variable(approximation_model(model), sp)*sp.polynomial for sp in scheme_parts[i]]
+
         p = MA.sub!(p, sum(just[i] )) 
         dcon[i] = @constraint approximation_model(model) p == 0
     end
@@ -97,20 +88,28 @@ function approximate!(model::GMPModel, mode::AbstractDualMode)
 
     # store values and duals
     for i in keys(gmp_variables(model))
-        moms = dual(dcon[i])
-        approx_vrefs(model)[i] = RefApprox(moms, value(dcon[i]), value.(MM.expectation.(just[i], moms)))
+
+        approx_vrefs(model)[i] = VarApprox(
+                                dual(dcon[i]), 
+                                convert.(Array{Float64}, 
+                                         primal_scheme_part.(scheme_parts[i], dual(dcon[i]))), 
+                                sum(value.(just[i])))
     end
     for (i, con) in gmp_constraints(model)
-        if dvar[i] isa MP.AbstractPolynomialLike
-            pvalue =  0 #integrate.(dvar[i], jump_function(con))
-        elseif has_lower_bound(dvar[i])
-            pvalue = dual(LowerBoundRef(dvar[i]))
-        elseif has_upper_bound(dvar[i])
-            pvalue = dual(UpperBoundRef(dvar[i]))
+        if shape(con) isa MomentConstraintShape
+            approx_crefs(model)[i] = ConApprox(
+                                     [integrate(Dict(i => dual(dcon[i]) for i in keys(gmp_variables(model))), 
+                                                jump_function(con)) - MOI.constant(moi_set(con))], 
+                                     [value.(dvar[i])])
         else
-            pvalue = 0
-        end
-        approx_crefs(model)[i] = RefApprox(pvalue, value(dvar[i]), nothing)
+            dpol = value.(dvar[i])
+            mons = monomials(dpol)
+            approx_crefs(model)[i] = ConApprox(
+                   [integrate(Dict(i => dual(dcon[i]) for i in keys(gmp_variables(model))), 
+                              Mom.(mon, jump_function(con))) for mon in mons]
+                   .- integrate.(mons, moi_set(con)),
+            value.(dvar[i]))
+        end    
     end
     return nothing
 end
@@ -121,57 +120,65 @@ function moments_variable(model::JuMP.Model, v::GMPVariable{AbstractGMPMeasure},
     return measure(c, monomials(X))
 end
 
-function approximate_putinar!(model::GMPModel, ::AbstractPrimalMode)
+function approximate!(model::GMPModel, ::AbstractPrimalMode)
     degree = approximation_info(model).degree
     # initiate moments 
     pvar = Dict(i => moments_variable(approximation_model(model), v, degree) for (i,v) in gmp_variables(model))
     # add substitutions
 
     # add measure condition on moments
-    just =  Dict{Int, Vector{ConstraintRef}}()
+    just = Dict{Int, Any}()
+    scheme_parts = Dict{Int, Vector{SchemePart}}()
     for (i, v) in gmp_variables(model)
-        just[i] = ConstraintRef[]
-        scheme_parts = approximation_scheme(model, v)
-        for sp in scheme_parts
+        just[i] = []
+        scheme_parts[i] = approximation_scheme(model, v)
+        for sp in scheme_parts[i]
             cref = primal_scheme_constraint(approximation_model(model), sp, pvar[i])
-            if cref isa AbstractVector
-                append!(just[i], cref)
-            else
-                push!(just[i], cref)
-            end
+            push!(just[i], cref)
         end
     end
-
     # add constraints
     pcon = Dict{Int, Vector{ConstraintRef}}()
     for (i, con) in gmp_constraints(model)
         if shape(con) isa MomentConstraintShape
-            cref = @constraint approximation_model(model) integrate(jump_function(con), pvar) in moi_set(con)            
+            cref = @constraint approximation_model(model) integrate(pvar, jump_function(con)) in moi_set(con)            
             pcon[i] = [cref]
         elseif shape(con) isa MeasureConstraintShape
-        # add measure constraints
-        refmeas = moi_set(con)
-        mons = monomials(maxdegree_basis(approx_basis(refmeas), variables(refmeas), approximation_degree(model)))
-        pcon[i] = @constraint approximation_model(model) sum(c.*(integrate.(mons, pvar[index(v)])) for (c,v) in jump_function(con)) .== integrate.(mons, refmeas) 
+            # add measure constraints
+            refmeas = moi_set(con)
+            mons = monomials(maxdegree_basis(approx_basis(refmeas), variables(refmeas), approximation_degree(model))) 
+
+
+            pcon[i] = @constraint approximation_model(model) sum(c.*(MM.expectation.(mons, pvar[index(v)])) for (c, v) in jump_function(con)) .== integrate.(mons, refmeas) 
         end
     end
-       # add objective
-    @objective approximation_model(model) objective_sense(model) integrate(objective_function(model), pvar)
+
+    # add objective
+    @objective approximation_model(model) objective_sense(model) integrate(pvar, objective_function(model))
 
     optimize!(approximation_model(model))
 
-   for i in keys(gmp_variables(model))
-       approx_vrefs(model)[i] = RefApprox(MM.Measure(value.(pvar[i].a), pvar[i].x), nothing, value.(just[i]))
+    for i in keys(gmp_variables(model))
+        p = 0
+        for (ju, part) in zip(just[i], scheme_parts[i])
+            if set_type(part) == PSDCone
+                q =  dot(monomials(part.monomials), dual(ju)*monomials(part.monomials))*part.polynomial
+            else
+                q = dot(dual(ju), monomials(part.monomials)).*part.polynomial
+            end
+            p = MA.add!(p, q)
+        end
+        approx_vrefs(model)[i] = VarApprox(MM.Measure(value.(pvar[i].a), pvar[i].x), convert.(Array{Float64}, value.(just[i])), p)
     end
     for (i, con) in gmp_constraints(model)
         if shape(con) isa MeasureConstraintShape
-        refmeas = moi_set(con)
-        mons = monomials(maxdegree_basis(approx_basis(refmeas), variables(refmeas), approximation_degree(model)))
+            refmeas = moi_set(con)
+            mons = monomials(maxdegree_basis(approx_basis(refmeas), variables(refmeas), approximation_degree(model)))
+            #TODO, does minus depend on optimization sense?
+            approx_crefs(model)[i] = ConApprox(value.(pcon[i]).-MOI.constant.(JuMP.moi_set.(constraint_object.(pcon[i]))), -dot(dual.(pcon[i]), mons))
 
-        #todo check whether minus has something to do with objective sense
-        approx_crefs(model)[i] = RefApprox(value.(pcon[i]), -dot(dual.(pcon[i]), mons), nothing)
         else
-            approx_crefs(model)[i] = RefApprox(value.(pcon[i]), dual.(pcon[i]), nothing)
+            approx_crefs(model)[i] = ConApprox(value.(pcon[i]) .- MOI.constant(moi_set(con)), dual.(pcon[i]))
         end
     end
 

@@ -50,10 +50,8 @@
         @polyvar x y
         m = GMPModel()
         @variable m mu Meas([x])     
-        @test_throws AssertionError approximation(mu)
-        @test_throws AssertionError approximation(mu, x)
-        @test_throws AssertionError approximation(mu, y)
-        @test_throws AssertionError JuMP.value(Mom(x, mu))
+        @test_throws AssertionError value(mu)
+        @test_throws AssertionError value(Mom(x, mu))
         
         @test JuMP.termination_status(m) == MOI.OPTIMIZE_NOT_CALLED
 
