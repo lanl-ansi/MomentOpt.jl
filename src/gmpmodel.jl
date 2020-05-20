@@ -172,12 +172,10 @@ export set_approximation_mode
 """
     set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode) 
 
-Set the approximation mode of m to mode. Possible values for mode are:
-  * NO_APPROXIMATION_MODE()
-  * PRIMAL_STRENGTHEN_MODE() 
-  * PRIMAL_RELAXATION_MODE() (default)
-  * DUAL_STRENGTHEN_MODE()
-  * DUAL_RELAXATION_MODE() 
+Set the approximation mode of m to mode. Depending on the solver either the primal or the dual formulation might be more efficient. It might also be interesting to change the mode when numerical issues are encountered.
+Possible values for mode are:
+  * PRIMAL_RELAXATION_MODE()
+  * DUAL_STRENGTHEN_MODE() (default)
   """
 function set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode) 
     approximation_info(m).mode = mode
