@@ -15,4 +15,8 @@ include("gmpmodel.jl")
 include("approximate.jl")
 include("postproc.jl")
 
-
+@testset "Examples" begin
+    include("../examples/polopt.jl")
+    include("../examples/volume.jl")
+    include("../examples/burgers.jl")
+end
