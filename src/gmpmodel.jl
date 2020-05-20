@@ -58,17 +58,7 @@ struct ConApprox{S, T}
     p_res::S
     dual::T
 end
-#=
-#TODO make immutable again
-mutable struct RefApprox{S, T, U}
-    value::S
-    dual::T
-    justification::U
-    function RefApprox(value::S, dual::T, justification::U) where {S, T, U}
-        new{S,T,U}(value, dual, justification)
-    end
-end
-=#
+
 mutable struct ApproximationInfo
     mode::AbstractApproximationMode
     degree::Int
