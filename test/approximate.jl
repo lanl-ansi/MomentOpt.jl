@@ -47,7 +47,7 @@ end
         @test value(mu) isa MultivariateMoments.Measure
         @test primal_justification(mu) isa Array{Array{Float64,N} where N, 1}
         @test dual_justification(mu) isa Polynomial{true, Float64}
-        @test all(isapprox.(residual(con), 0.0; atol = 1e-6))
+        @test all(isapprox.(residual(con), 0.0; atol = 1e-3))
         @test dual(con) isa Vector{Float64}
 
         m, mu, con = testproblem2(SCS.Optimizer)
@@ -57,7 +57,7 @@ end
         @test value(mu) isa MultivariateMoments.Measure
         @test primal_justification(mu) isa Array{Array{Float64,2}, 1}
         @test dual_justification(mu) isa Polynomial{true, Float64}
-        @test all(isapprox.(residual(con), 0.0; atol = 1e-6))
+        @test all(isapprox.(residual(con), 0.0; atol = 1e-3))
         @test dual(con) isa Polynomial{true, Float64}
 
     end
@@ -69,7 +69,7 @@ end
         @test value(mu) isa MultivariateMoments.Measure
         @test primal_justification(mu) isa Array{Array{Float64,N} where N, 1}
         @test dual_justification(mu) isa Polynomial{true, Float64}
-        @test all(isapprox.(residual(con), 0.0; atol = 1e-6))
+        @test all(isapprox.(residual(con), 0.0; atol = 1e-3))
         @test dual(con) isa Vector{Float64}
 
         m, mu, con = testproblem2(SCS.Optimizer)
@@ -80,7 +80,7 @@ end
         @test value(mu) isa MultivariateMoments.Measure
         @test primal_justification(mu) isa Array{Array{Float64,2}, 1}
         @test dual_justification(mu) isa Polynomial{true, Float64}
-        @test all(isapprox.(residual(con), 0.0; atol = 1e-6))
+        @test all(isapprox.(residual(con), 0.0; atol = 1e-3))
         @test dual(con) isa Polynomial{true, Float64}
 
     end
