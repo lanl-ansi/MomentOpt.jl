@@ -2,7 +2,7 @@ name = "MomentOpt"
 uuid = "5036cc39-ae6e-5f00-bcd6-dacb213bf05a"
 authors = ["Tillmann Weisser"]
 repo = "https://github.com/lanl-ansi/MomentOpt.jl"
-version = "0.1.0"
+version = "0.22.0"
 
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
