@@ -1,7 +1,8 @@
 # MomentOpt
 
-Release: [![[docs-img]][docs-url] 
-Dev: [![Build Status][build-img]][build-url] [![codecov][codecov-img]][codecov-url] [![[docs-imgi-dev]][docs-url-dev]
+Release: [![docs-img]][docs-url] 
+
+Dev: [![Build Status][build-img]][build-url] [![codecov][codecov-img]][codecov-url] [![docs-imgi-dev]][docs-url-dev]
 
 
 A Julia modeling layer for the Generalized Moment Problem.
