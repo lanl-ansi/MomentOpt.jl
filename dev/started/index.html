@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Getting started · MomentOpt</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">MomentOpt</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li class="is-active"><a class="tocitem" href>Getting started</a><ul class="internal"><li><a class="tocitem" href="#Installation-1"><span>Installation</span></a></li><li><a class="tocitem" href="#First-steps-1"><span>First steps</span></a></li></ul></li><li><a class="tocitem" href="../gmp/">The Generalized Moment Problem</a></li><li><a class="tocitem" href="../nonneg/">Certificates of Non Negativity</a></li><li><a class="tocitem" href="../guide/">A closer look</a></li><li><a class="tocitem" href="../blackbox/">What&#39;s in the box?</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Getting started</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Getting started</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/lanl-ansi/MomentOpt.jl/blob/master/docs/src/started.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Getting-started-1"><a class="docs-heading-anchor" href="#Getting-started-1">Getting started</a><a class="docs-heading-anchor-permalink" href="#Getting-started-1" title="Permalink"></a></h1><h2 id="Installation-1"><a class="docs-heading-anchor" href="#Installation-1">Installation</a><a class="docs-heading-anchor-permalink" href="#Installation-1" title="Permalink"></a></h2><p>MomentOpt is a package for <a href="https://julialang.org/">Julia</a>. In order to use it you need to download and install Julia first. Instructions on how to do this can be found <a href="https://julialang.org/downloads/">here</a>. </p><p>Once Julia is installed, MomentOpt can be added through Julia&#39;s internal package manager.</p><pre><code class="language-julia">$ julia
+               _
+   _       _ _(_)_     |  Documentation: https://docs.julialang.org
+  (_)     | (_) (_)    |
+   _ _   _| |_  __ _   |  Type &quot;?&quot; for help, &quot;]?&quot; for Pkg help.
+  | | | | | | |/ _` |  |
+  | | |_| | | | (_| |  |  Version 1.4.1 (2020-04-1)
+ _/ |\__&#39;_|_|_|\__&#39;_|  |  Official https://julialang.org/ release
+|__/                   |
+
+julia&gt; ]
+
+pkg&gt; add MomentOpt</code></pre><p>MomentOpt uses <a href="https://github.com/JuliaAlgebra/MultivariatePolynomials.jl">MultivariatePolynomials</a> to model polynomial variables. The user can choose between different implementations for this polynomial interface. We recommend DynamicPolynomials:</p><pre><code class="language-julia">pkg&gt; add DynamicPolynomials</code></pre><p>Having installed these two packages we could start modelling with MomentOpt. However, to be able to compute approximations, we need to install at least one solver. A comprehensive list of possible solvers can be found on <a href="https://github.com/JuliaOpt/JuMP.jl">the JuMP website</a>.  As an open source SDP solver we could install CSDP:</p><pre><code class="language-julia">pkg&gt; add CSDP</code></pre><p>Once these packages have been added, they do not need to be added again when starting a new session. In case you are using <a href="https://jupyter.org/">Jupyter notebooks</a> to run Julia, the syntax might slightly vary. Please refer to the <a href="https://github.com/JuliaLang/IJulia.jl">IJulia</a> documentation. </p><h2 id="First-steps-1"><a class="docs-heading-anchor" href="#First-steps-1">First steps</a><a class="docs-heading-anchor-permalink" href="#First-steps-1" title="Permalink"></a></h2><p>To start your session open julia and load MomentOpt, an implementation of MultivariatePolynomials and an SDP solver, e.g.</p><pre><code class="language-julia">julia&gt; using MomentOpt
+julia&gt; using DynamicPolynomials
+julia&gt; using CSDP</code></pre><p>The first thing you would probably want to do, is to define the variables your measures will be acting on. In DynamicPolynomials we can use the <code>@polyvar</code> macro to do so:</p><pre><code class="language-julia">julia&gt; @polyvar x y z
+(x, y, z)</code></pre><p>Now we can start modeling our generalized moment problem. The modeling process is consitent with <a href="https://github.com/JuliaOpt/JuMP.jl">JuMP.jl</a>. In particular, we always start by building a model:</p><pre><code class="language-julia">julia&gt; gmp = GMPModel()
+A JuMP Model
+Feasibility problem with:
+Variables: 0
+Constraints: 0
+Approxmation mode: DUAL_STRENGTHEN_MODE()
+Maximum degree of data: 0
+Degree for approximation 0
+Solver for approximation: No optimizer attached.</code></pre><p>As you can see gmp is an abstract JuMP model that currently represents a feasibility problem without any variables or constraints. The next three lines consider the specifications for the approximation and will be discussed later. Note that no optimizer has been attached to the model. To do so, we can do</p><pre><code class="language-julia">julia&gt; set_optimizer(gmp, CSDP.Optimizer)
+julia&gt; gmp
+A JuMP Model
+Feasibility problem with:
+Variables: 0
+Constraints: 0
+Approxmation mode: DUAL_STRENGTHEN_MODE()
+Maximum degree of data: 0
+Degree for approximation 0
+Solver for approximation: CSDP</code></pre><p>Alternatively, we could have attached the optimizer from the beginning by defining</p><pre><code class="language-julia">julia&gt; gmp = GMPModel(CSDP.Optimizer)
+A JuMP Model
+Feasibility problem with:
+Variables: 0
+Constraints: 0
+Approxmation mode: DUAL_STRENGTHEN_MODE()
+Maximum degree of data: 0
+Degree for approximation 0
+Solver for approximation: CSDP</code></pre><p>The variables of a generalized moment problem are measures. To add a measure to our model, we can do</p><pre><code class="language-julia">julia&gt; @variable gmp mu Meas([x, y])
+mu</code></pre><p>This is following the JuMP syntax, i.e., we first specify the model, than a name for our variable, and then specify that the new variable represents a measure acting on the polynomial variables x and y. It is mandatory to define on which variables a measure is acting. The polynomial variables of a measure variable can be querried via </p><pre><code class="language-julia">julia&gt; variables(mu)
+2-element Array{PolyVar{true},1}:
+ x
+ y</code></pre><p>The most important keyword argument of the <code>Meas()</code> constructor is <code>support</code> which determines the semialgebraic set which contains the support of the measure variable:</p><pre><code class="language-julia">julia&gt; @variable gmp nu Meas([x,y], support = @set(1-x^2-y^2&gt;=0))
+nu
+julia&gt; support(nu)
+Basic semialgebraic Set defined by no equality
+1 inequalitty
+ -x^2 - y^2 + 1 ≥ 0</code></pre><p>For more information on generating semi-algebraic sets via the <code>@set</code> macro we refer to <a href="https://github.com/JuliaAlgebra/SemialgebraicSets.jl">SemiAlgebraicSets.jl</a>. The remaining keywords are discussed in the documentation of <a href="@ref"><code>Meas</code></a>. </p><p>Note that you can create anonymous measure variables or containers of measure variables</p><pre><code class="language-julia">julia&gt; phi = @variable gmp [1:2] Meas([x,y,z])
+2-element Array{GMPVariableRef{MomentOpt.AbstractGMPMeasure},1}:
+ noname
+ noname
+julia&gt; vars = [x, y, z]
+julia&gt; psi = @variable gmp [i = 1:3] Meas([vars[i]]; support = @set(vars[i]^2 &lt;= 1))
+3-element Array{GMPVariableRef{MomentOpt.AbstractGMPMeasure},1}:
+ noname
+ noname
+ noname
+julia&gt; support.(psi)
+3-element Array{BasicSemialgebraicSet{Int64,Polynomial{true,Int64},FullSpace},1}:
+ { (x) | -x^2 + 1 ≥ 0 }
+ { (y) | -y^2 + 1 ≥ 0 }
+ { (z) | -z^2 + 1 ≥ 0 }</code></pre><p>Note that the <code>.</code> behind <code>support</code> broadcasts the function to each element of the vector <code>psi</code>.  If we look at our model again, we find that mu and nu have been registered in the model.</p><pre><code class="language-julia">julia&gt; gmp
+A JuMP Model
+Feasibility problem with:
+Variables: 7
+Constraints: 0
+Approxmation mode: DUAL_STRENGTHEN_MODE()
+Maximum degree of data: 2
+Degree for approximation 2
+Solver for approximation: CSDP
+Names registered in the model: mu, nu</code></pre><p>We cannot add a new object with names that are alrady registered:</p><pre><code class="language-none">julia&gt; @variable gmp mu Meas([x, y])
+ERROR: An object of name mu is already attached to this model. If this is intended, 
+consider using the anonymous construction syntax, e.g., x = @variable(model, [1:N], ...) 
+where the name of the object does not appear inside the macro.</code></pre><p>Also note, that we have registered 6 variables and that the maximum degree of data is 2 now, since the definition of the measure <code>nu</code> involved a polynomial of degree 2. The maximum degree of data will update automatically, when adding variables or constraints. The degree for approximation is always at least as large as the degree of the data and is updated automatically:</p><pre><code class="language-julia">julia&gt; set_approximation_degree(gmp, 4)
+julia&gt; gmp
+A JuMP Model
+Feasibility problem with:
+Variables: 7
+Constraints: 0
+Approxmation mode: DUAL_STRENGTHEN_MODE()
+Maximum degree of data: 2
+Degree for approximation 4
+Solver for approximation: CSDP
+Names registered in the model: mu, nu
+
+julia&gt; set_approximation_degree(gmp, 1)
+┌ Warning: Requested approximation degree 1 is too low to cover all data. 
+The approximation degree has been set to the minimal value possible and now is 2.</code></pre><p>Next we can add constraints to our model. However, we will start with a new model. A typical constraint for generalized moment problems is that the measure variable is a probability measure, which is added as follwos</p><pre><code class="language-julia">julia&gt; gmp = GMPModel(CSDP.Optimizer);
+julia&gt; @variable gmp mu Meas([x], support = @set(x-x^2&gt;=0));
+julia&gt; @constraint gmp Mom(1, mu) == 1
+⟨1, mu⟩ = 1.0</code></pre><p>Here <code>Mom(1, mu)</code> expressed the integral of <code>1</code> with respect to <code>mu</code>. Constraints can have names</p><pre><code class="language-julia">julia&gt; @constraint gmp xcon Mom(x, mu) == 0.5;
+julia&gt; xcon
+xcon : ⟨x, mu⟩ = 0.5
+julia&gt; @constraint gmp xicon[i = 2:4] Mom(x^i, mu) .== 1/(i+1);
+julia&gt; xicon[2]
+⟨x², mu⟩ = 0.3333333333333333
+</code></pre><p>So far we have only considered moment constraints. MomentOpt also supports measure constraints:</p><pre><code class="language-julia">julia&gt; lambda = lebesgue_measure_box(x =&gt; [0, 1])
+AnalyticMeasure</code></pre><p>defines an AnalyticMeasure, representing the Lebesgue measure on [0, 1]. It can be used to integrate polynomials</p><pre><code class="language-julia">julia&gt; integrate(x^2 - x + 1, lambda)
+0.8333333333333333
+julia integrate.(monoimals([x], 0:4), lambda)
+5-element Array{Float64,1}:
+ 0.2
+ 0.25
+ 0.3333333333333333
+ 0.5
+ 1.0</code></pre><p>but it can also be used to define measure constraints:</p><pre><code class="language-julia">julia&gt; gmp = GMPModel(CSDP.Optimizer);
+julia&gt; @variable gmp mu Meas([x,y], support = @set(1-x^2-y^2&gt;=0));
+julia&gt; @variable gmp nu Meas([x,y], support = @set(1-x^2&gt;= 0 &amp;&amp; 1-y^2&gt;=0));
+julia&gt; gmp
+A JuMP Model
+Feasibility problem with:
+Variables: 2
+Constraint: 1
+Approxmation mode: DUAL_STRENGTHEN_MODE()
+Maximum degree of data: 2
+Degree for approximation 2
+Solver for approximation: CSDP
+Names registered in the model: mu, nu
+julia&gt; lambda = lebesgue_measure_box(x =&gt; [-1, 1], y =&gt; [-1, 1]; normalize = true)
+julia&gt; mc = @constraint gmp mu + nu == lambda
+mu + nu = AnalyticMeasure
+julia&gt; gmp
+A JuMP Model
+Feasibility problem with:
+Variables: 2
+Constraint: 1
+Approxmation mode: DUAL_STRENGTHEN_MODE()
+Maximum degree of data: 2
+Degree for approximation 2
+Solver for approximation: CSDP
+Names registered in the model: mu, nu</code></pre><p>Note that <code>mc</code> did not change the degree of data. The degree of a measure constraint is always equal to the approximation degree and determined at the optimization call.</p><p>To finish this introduction on modeling with MomentOpt, we have to set an objective function. This can be done via</p><pre><code class="language-julia">julia&gt; @objective gmp Max Mom(1, mu) 
+⟨1, mu⟩</code></pre><p>The model now can be approximated by setting an approximation order (it defaults to the maximum degree of data). In this example we also suppress the output of CSDP:</p><pre><code class="language-julia">julia&gt; set_approximation_degree(gmp, 10)
+julia&gt; set_silent(gmp);
+julia&gt; optimize!(gmp)</code></pre><p>We can querry the stats of the solved approximation</p><pre><code class="language-julia">julia&gt; objective_value(gmp)
+0.9369024582093924
+julia&gt; termination_status(gmp)
+OPTIMAL::TerminationStatusCode = 1
+julia&gt; raw_status(gmp)
+&quot;Problem solved to optimality.&quot;</code></pre><p>The solution can be expected by calling </p><pre><code class="language-julia">julia&gt; measure(mu)
+MultivariateMoments.Measure{Float64,Monomial{true},MonomialVector{true}}([0.062044293013069955, 1.818408257153911e-19, 0.01273398937697667, 4.4781213912861547e-20, 0.0064424590352839825, 2.0217159884897534e-21, 0.006442459035519992, -4.815750725967947e-20, 0.012733989378712668, -2.0895884615236935e-19  …  -3.8109683913485666e-18, 1.865988294254163e-18, -3.515461570762854e-18, 2.056500523116538e-18, 0.2816658397255027, -7.275476044869635e-21, 0.28166583972970993, -5.312847305918446e-18, 2.8599527338155522e-18, 0.9369024582093924], Monomial{true}[x¹⁰, x⁹y, x⁸y², x⁷y³, x⁶y⁴, x⁵y⁵, x⁴y⁶, x³y⁷, x²y⁸, xy⁹  …  x³, x²y, xy², y³, x², xy, y², x, y, 1])</code></pre><p>This returns a sequence of moments. The dual to our constraint <code>mc</code> is a polynomial of degree 10 in the variables x and y.</p><pre><code class="language-julia">julia&gt; poly = dual(mc);
+julia&gt; maxdegree(poly)
+10
+juila&gt; variables(poly) 
+2-element Array{PolyVar{true},1}:
+ x
+ y</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../gmp/">The Generalized Moment Problem »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 21 May 2020 00:27">Thursday 21 May 2020</span>. Using Julia version 1.4.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
