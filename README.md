@@ -2,9 +2,11 @@
 
 Dev: [![Build Status][build-img]][build-url] [![codecov][codecov-img]][codecov-url]
 
-A Julia modeling layer for the Generalized Moment Problem 
+A Julia modeling layer for the Generalized Moment Problem.
 
-Documentation : [![][docs-img]][docs-url]
+Documentation: [![stable][docs-img]][docs-url]
+Documentation: [![dev][docs-img]][docs-url-dev]
+
 
 ## License
 
@@ -17,3 +19,5 @@ This code is provided under a BSD license as part of the Optimization, Inference
 [codecov-url]: https://codecov.io/gh/lanl-ansi/MomentOpt.jl
 [docs-img]: https://img.shields.io/badge/docs-stable-blue.svg
 [docs-url]: https://lanl-ansi.github.io/MomentOpt.jl/stable/
+[docs-url-dev]: https://lanl-ansi.github.io/MomentOpt.jl/dev/
+
