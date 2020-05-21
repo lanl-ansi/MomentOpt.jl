@@ -30,13 +30,15 @@ include("MBext/MBextra.jl")
 
 abstract type AbstractGMPModel <: JuMP.AbstractModel end
 
-include("approximation.jl")
+include("approximationfunction.jl")
+include("approximationscheme.jl")
+
 include("objects.jl")
 include("variables.jl")
 include("defaultmeasures.jl")
+
 include("gmpaffexpr.jl")
 include("affexpr.jl")
-include("approximationscheme.jl")
 
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution

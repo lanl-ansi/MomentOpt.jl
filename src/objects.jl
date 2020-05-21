@@ -88,57 +88,8 @@ Shortcut to define a VariableMeasure.
 """
 Meas(vars; support = FullSpace(), basis = MonomialBasis, scheme = PutinarScheme()) = VariableMeasure(vars, support, basis, scheme)
 
-"""
-    AbstractGMPContinuous
-
-Under some regularity assumptions one can say that the dual space of measures is the space of continuous functions. This is for example the case if the support of the measure is compact. This abstract type allows to define custom testfunctions.
-"""
-abstract type AbstractGMPContinuous <: AbstractGMPObject end
-
-export AnalyticContinuous
-
-"""
-    AnalyticContinuous{V, T} <: AbstractGMPContinuous
-
-Type representing an analytic continuous function. Its field coef_function allows to compute the coefficients for arbitrary close polynomial approximations.
-"""
-struct AnalyticContinuous{V <: MP.AbstractVariable, BT <: MB.AbstractPolynomialBasis} <: AbstractGMPContinuous
-    variables::Vector{V}
-    approx_basis::Type{BT}
-    approx_function::ApproximationFunction{BT}
-end
-
-function AnalyticContinuous(variables::Vector{V}, monom_basis, monom_function::Function) where {V <: MP.AbstractVariable} 
-    return AnalyticContinuous(variables, monom_basis, ApproximationFunction(monom_function, variables, monom_basis)) 
-end
-
-Base.show(io::IO, ::AnalyticContinuous) = print(io, "AnalyticContinuous")
-constructor(::Type{AnalyticContinuous{S,T}}) where {S, T} = (x, y, z) -> AnayticContinuous(x, y, z)
-
-export VariableContinuous
-
-"""
-    VariableContinuous{V, S, R}
-
-Type representing a continuous funciton that can be stregthend via a conic approximation. 
-"""
-struct VariableContinuous{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, BT <: MB.AbstractPolynomialBasis, R <: AbstractApproximationScheme} <: AbstractGMPContinuous
-    variables::Vector{V}
-    bsa_set::S
-    approx_basis::Type{BT}
-    approx_scheme::R
-end
-
-export Cont
-"""
-    Meas(vars; support = FullSpace(), basis = MonomialBasis, scheme = PutinarScheme())
-
-Shortcut to define a VariableMeasure.
-"""
-Cont(vars; domain = FullSpace(), basis = MonomialBasis, scheme = PutinarScheme()) = VariableContinuous(vars, domain, basis, scheme)
-
 #
-const AnalyticGMPObject = Union{AnalyticMeasure, AnalyticContinuous}
+const AnalyticGMPObject = Union{AnalyticMeasure}
 # we can perform linear operations with analytic measures by performing them on the respective approximation funciton
 #
 compatible(f1::AnalyticGMPObject, f2::AnalyticGMPObject) = variables(f1) == variables(f2) && supertype(typeof(f1)) == supertype(typeof(f2))
@@ -160,46 +111,37 @@ Base.:-(f::AnalyticGMPObject) = (-1)*f
 Base.:-(f1::AnalyticGMPObject, f2::AnalyticGMPObject) = f1 + (-f2)
 
 # functions only available for AnalyticGMPObjects
-
 approx_function(m::AnalyticGMPObject) = m.approx_function
 
-export integrate, approx
-
-function approx(p::Union{Number, AbstractJuMPScalar}, m::AnalyticGMPObject)
-    return p*approx_function(m)(first(monomials(covering_basis(m, p))))
-end
-
-function approx(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
-    @assert variables(p) ⊆ variables(m)
-    return approx_function(m)(p)
-end
-
+export integrate
 """
      integrate(p::Number, m::AnalyticMeasure)
      integrate(p::MP.AbstractPolynomialLike, m::AnalyticMeasure)
 
 Returns the integral of p with respect to m. 
 """
-const integrate =  approx
-
-export partial_integrate, partial_approx
-
-function partial_approx(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
-    if variables(p) ⊆  variables(m)
-        return approx(p, m)
-    else
-       coefs, mons = polypoly(p, variables(m))
-       return dot(coefs, approx.(mons, m))
-    end
+function integrate(p::Union{Number, AbstractJuMPScalar}, m::AnalyticGMPObject)
+    return p*approx_function(m)(first(monomials(covering_basis(m, p))))
 end
 
+function integrate(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
+    @assert variables(p) ⊆ variables(m)
+    return approx_function(m)(p)
+end
+export partial_integrate 
 """
      partial_integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
 
 Returns the integral of p with respect to m, in case m does not cover all variables of p. The result is a polynomial in the remaining variables.  
 """
-const partial_integrate = partial_approx
-
+function partial_integrate(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
+    if variables(p) ⊆  variables(m)
+        return integrate(p, m)
+    else
+       coefs, mons = polypoly(p, variables(m))
+       return dot(coefs, integrate.(mons, m))
+    end
+end
 
 export marginal
 """
@@ -234,10 +176,8 @@ function prod_meas(μ::AnalyticMeasure, ν::AnalyticMeasure)
     return AnalyticMeasure(vars, approx_basis(μ), ApproximationFunction(approxfunction, vars, approx_basis(μ)))
 end
 
-
-
 #
-const VariableGMPObject = Union{VariableMeasure, VariableContinuous}
+const VariableGMPObject = Union{VariableMeasure}
 # functions only available for VariableGMPObjects
 
 bsa_set(v::VariableGMPObject) = v.bsa_set
