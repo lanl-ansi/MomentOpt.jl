@@ -133,7 +133,7 @@ end
 end
 
 
-@testset "atomic" begin 
+@testset "Post Proc" begin 
     @polyvar x y 
     f = x^2*y^2 + x^4 - y^2 + 1
     gmp = GMPModel()
