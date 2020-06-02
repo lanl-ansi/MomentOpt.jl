@@ -23,13 +23,13 @@ mutable struct ModelData
     variables::Dict{Int, AbstractGMPVariable}
     constraints::Dict{Int, AbstractGMPConstraint}
     objective_sense::MOI.OptimizationSense
-    objective_function::AbstractGMPExpressionLike
+    objective_function::AbstractMomentExpressionLike
     max_degree::Int
     function ModelData()
         new(Dict{Int, AbstractGMPVariable}(),
             Dict{Int, AbstractGMPConstraint}(),
             MOI.FEASIBILITY_SENSE,
-            GMPEmptyExpr(), 0)
+            zero(MomentExpr{Int}), 0)
     end
 end
 
@@ -187,10 +187,10 @@ JuMP.variable_type(::GMPModel) = GMPVariableRef
 
 function GMPVariableRef(m::GMPModel, v::AbstractGMPVariable)
     model_info(m).vct += 1
-    return GMPVariableRef(m, model_info(m).vct, supertype(object_type(v)))
+    return GMPVariableRef(m, model_info(m).vct)
 end
 
-JuMP.name(vref::GMPVariableRef) = variable_names(vref.model)[vref.index]
+JuMP.name(vref::GMPVariableRef) = variable_names(owner_model(vref))[index(vref)]
 
 function JuMP.set_name(v::GMPVariableRef, s::String)
     idx = findall(x -> x == JuMP.name(v), variable_names(owner_model(v)))
@@ -316,7 +316,7 @@ function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{<:Union{AffMomentE
     add_constraint(m, MomentConstraint(jump_function(c), moi_set(c)), name)
 end
 
-function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{<:Union{AffObjectExpr, ObjectExpr}, <:MOI.AbstractScalarSet}, name::String = "")
+function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{<:Union{AffMeasExpr, MeasExpr}, <:MOI.AbstractScalarSet}, name::String = "")
     @assert moi_set(c) isa MOI.EqualTo "Only support equality measure constraints."
     @assert MOI.constant(moi_set(c)) == 0 "A measure cannot be equal to a number. "
     return add_constraint(m, MeasureConstraint(jump_function(c)), name)
@@ -377,7 +377,7 @@ end
 
 # Objective
 function JuMP.set_objective(m::GMPModel, sense::MOI.OptimizationSense,
-                            f::AbstractGMPExpressionLike)
+                            f::AbstractMomentExpressionLike)
     model_data(m).objective_sense = sense
     model_data(m).objective_function = f
     update_degree(m, degree(f))    
@@ -473,7 +473,7 @@ function approximation(vref::GMPVariableRef, m::Number)
     return approximation(vref,  m*_mono_one(variables(vref_object(vref))))
 end
 
-JuMP.value(me::MomentExpr) = sum(c*approximation(m, cv) for (cv, mv) in me for (c, m) in mv)
+JuMP.value(me::MomentExpr) = sum(approximation(m, c) for (c, m) in me)
 
 export residual
 residual(cref::GMPConstraintRef) = approx_crefs(owner_model(cref))[index(cref)].p_res

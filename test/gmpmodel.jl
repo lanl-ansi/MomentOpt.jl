@@ -30,19 +30,20 @@
         JuMP.set_objective_sense(m, MOI.MIN_SENSE)
         @test JuMP.objective_sense(m) == MOI.MIN_SENSE
         @test JuMP.objective_function(m) == Mom(1, mus[1]) + Mom(1, mus[2])
-        @test JuMP.objective_function_type(m) == MO.MomentExpr{Int, Int} 
-        @test JuMP.objective_function(m, MO.MomentExpr{Int, Int}) == Mom(1, mus[1]) + Mom(1, mus[2])
-       end
+        @test JuMP.objective_function_type(m) == MO.MomentExpr{Int} 
+        @test JuMP.objective_function(m, MO.MomentExpr{Int}) == Mom(1, mus[1]) + Mom(1, mus[2])
+    end
+
     @testset "Summary" begin
         @polyvar x y
         m = GMPModel()
         mus = @variable m [1:2] Meas([x,y]) 
         JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
-        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64,Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: No optimizer attached."
+        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: No optimizer attached."
         
         @constraint m Mom(1, mus[1]) <= 1
         @constraint m c2 Mom(1, mus[2]) >= 1
-        @test sprint(print, m) == "Max ⟨1, noname⟩ + ⟨1, noname⟩\nSubject to\n ⟨1, noname⟩ ≤ 1.0\n ⟨1, noname⟩ ≥ 1.0\n"
+        @test sprint(print, m) == "Max ⟨1, noname + noname⟩\nSubject to\n ⟨1, noname⟩ ≤ 1.0\n ⟨1, noname⟩ ≥ 1.0\n"
     end
 
     @testset "Get Value" begin
