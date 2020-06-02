@@ -8,7 +8,7 @@ function measure_data(m::GMPModel, id::Int)
                 cons[i] = [mons]
             end
         elseif !(jump_function(con)[vref] isa Nothing)
-                con[i] = monomials(maxdegree_basis(moi_set(con), deg))
+            cons[i] = monomials(maxdegree_basis(moi_set(con), approximation_degree(m)))
         end 
     end
     return MeasureData(objective_function(m)[vref], cons)
@@ -35,7 +35,7 @@ end
 function approximate!(model::GMPModel, ::AbstractDualMode)
     # init dual variables
     meas_data = Dict(i => measure_data(model, i) for i in keys(gmp_variables(model)))
- 
+
     dvar = Dict()
     for (i, con) in gmp_constraints(model)
         dvar[i] = dual_variable(approximation_model(model), con, objective_sense(model), approximation_degree(model))
@@ -108,24 +108,24 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
     for i in keys(gmp_variables(model))
 
         approx_vrefs(model)[i] = VarApprox(
-                                dual(dcon[i]), 
-                                convert.(Array{Float64}, 
-                                         primal_scheme_part.(scheme_parts[i].schemeparts, dual(dcon[i]))), 
-                                sum(value.(just[i])))
+                                           dual(dcon[i]), 
+        convert.(Array{Float64}, 
+                 primal_scheme_part.(scheme_parts[i].schemeparts, dual(dcon[i]))), 
+        sum(value.(just[i])))
     end
     for (i, con) in gmp_constraints(model)
         if shape(con) isa MomentConstraintShape
             approx_crefs(model)[i] = ConApprox(
-                                     [integrate(Dict(i => dual(dcon[i]) for i in keys(gmp_variables(model))), 
-                                                jump_function(con)) - MOI.constant(moi_set(con))], 
-                                     [value.(dvar[i])])
+                                               [integrate(Dict(i => dual(dcon[i]) for i in keys(gmp_variables(model))), 
+                                                          jump_function(con)) - MOI.constant(moi_set(con))], 
+                                               [value.(dvar[i])])
         else
             dpol = value.(dvar[i])
             mons = monomials(dpol)
             approx_crefs(model)[i] = ConApprox(
-                   [integrate(Dict(i => dual(dcon[i]) for i in keys(gmp_variables(model))), 
-                              Mom.(mon, jump_function(con))) for mon in mons]
-                   .- integrate.(mons, moi_set(con)),
+                                               [integrate(Dict(i => dual(dcon[i]) for i in keys(gmp_variables(model))), 
+                                                          Mom.(mon, jump_function(con))) for mon in mons]
+                                               .- integrate.(mons, moi_set(con)),
             value.(dvar[i]))
         end    
     end
@@ -144,7 +144,7 @@ function approximate!(model::GMPModel, ::AbstractPrimalMode)
     for (i, v) in gmp_variables(model)
         scheme_parts[i] = approximation_scheme(model, v, meas_data[i])
     end
-    
+
     # initiate moments 
     pvar = Dict(i => moments_variable(approximation_model(model), scheme_parts[i].monomials) for (i,v) in gmp_variables(model))
     # add substitutions

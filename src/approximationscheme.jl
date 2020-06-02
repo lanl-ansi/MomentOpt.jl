@@ -96,8 +96,8 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
         for (i, con) in md.constraints
             for poly in con
                 if !(poly isa Number)
-                SumOfSquares.Certificate.CEG.add_clique!(G, MP.effective_variables(poly))
-            end
+                    SumOfSquares.Certificate.CEG.add_clique!(G, MP.effective_variables(poly))
+                end
             end
         end
         _, cliques =  SumOfSquares.Certificate.CEG.chordal_extension(G, SumOfSquares.Certificate.CEG.GreedyFillIn())
@@ -139,7 +139,7 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
 end
 
 
-#=
+
 export SchmuedgenScheme
 """
 SchmuedgenScheme(;equality = KeepEquality(), sparsity = NoSparsity(), basis = MonomialBasis)
@@ -148,15 +148,14 @@ Return a Schmuedgen Approximation Scheme.
 
 """
 struct SchmuedgenScheme <: AbstractApproximationScheme
-    equality::AbstractEqualityHandler
     sparsity::SumOfSquares.Sparsity
     basis_type::Type{<:MB.AbstractPolynomialBasis}
-    function SchmuedgenScheme(;equality = KeepEquality(), sparsity = NoSparsity(), basis = MonomialBasis)
-        new(equality, sparsity, basis)
+    function SchmuedgenScheme(; sparsity = NoSparsity(), basis = MonomialBasis)
+        new(sparsity, basis)
     end
 end
 
-function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialgebraicSet, vars::Vector{<: MP.AbstractVariable}, d::Int)
+function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialgebraicSet, vars::Vector{<: MP.AbstractVariable}, d::Int, md::MeasureData)
 
     ineqs = [prod(vars.^0)]
 
@@ -164,28 +163,22 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
         ineqs = [ineqs..., inequalities(K)...]
     end
 
-    if scheme.equality isa SplitEquality
-        for eq in equalities(K)
-            append!(ineqs, [eq, -eq])
-            eqs = typeof(ineqs)()
-        end
-    elseif scheme.equality isa ReduceEquality
-        @error "ask Benoit"
-    else
-        eqs = equalities(K)
-    end
+    eqs = equalities(K)
 
     schemeparts = SchemePart[]
+    monos = [prod(vars.^0)]
+
     i = 1
-        ineq = ineqs[i]
-        deg = Int(floor((d-maxdegree(ineq))/2))
-        mons = maxdegree_basis(scheme.basis_type, vars, deg) 
-        if length(mons) == 1
-            moiset = MOI.Nonnegatives(1)
-        else
-            moiset = PSDCone()
-        end
-        push!(schemeparts, SchemePart(ineq, mons, moiset))
+    ineq = ineqs[i]
+    deg = Int(floor((d-maxdegree(ineq))/2))
+    mons = maxdegree_basis(scheme.basis_type, vars, deg) 
+    if length(mons) == 1
+        moiset = MOI.Nonnegatives(1)
+    else
+        moiset = PSDCone()
+    end
+    push!(schemeparts, SchemePart(ineq, mons, moiset))
+    append!(monos, monomials(maxdegree_basis(scheme.basis_type, vars, 2*deg)))
 
     for i = 2:length(ineqs)
         ineq = ineqs[i]
@@ -198,6 +191,8 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
         end
 
         push!(schemeparts, SchemePart(ineq, mons, moiset))
+        append!(monos, monomials(maxdegree_basis(scheme.basis_type, vars, 2*deg)))
+
         for j = i+1:length(ineqs)
             if maxdegree(ineqs[i]) + maxdegree(ineqs[j]) <= d
                 ineq = ineqs[i]*ineqs[j]
@@ -209,6 +204,7 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
                     moiset = PSDCone()
                 end
                 push!(schemeparts, SchemePart(ineq, mons, moiset))
+                append!(monos, monomials(maxdegree_basis(scheme.basis_type, vars, 2*deg)))
             end
         end
     end
@@ -217,7 +213,8 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
         deg = d-maxdegree(eq)
         mons = maxdegree_basis(scheme.basis_type, vars, deg)
         push!(schemeparts, SchemePart(eq, mons, MOI.Zeros(length(mons))))
+        append!(monos, monomials(mons))
     end
-    return schemeparts
+    return Scheme(schemeparts, one(polynomialtype(eltype(vars))), unique!(monos))
 end
-=#
+
