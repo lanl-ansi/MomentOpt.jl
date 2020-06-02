@@ -20,6 +20,20 @@ function testproblem2(factory)
     return gmp, mu, con
 end
 
+
+function testproblem3(factory, sparsity)
+    @polyvar x y z 
+    gmp = GMPModel(factory)
+    K = @set(1-x^2-y^2>=0 && 1-y^2-z^2>=0)
+    f = x*y + y*z - y^2
+    @variable gmp mu Meas([x,y,z], support = K, scheme = PutinarScheme(sparsity=sparsity))
+    @objective gmp Min Mom(f,mu)
+    @constraint gmp Mom(1,mu) == 1
+    set_silent(gmp)
+    return gmp, mu
+end
+
+
 @testset "Approximate" begin
     @testset "Optimize not called" begin
         m, mu, con = testproblem1(SCS.Optimizer)
@@ -93,6 +107,59 @@ end
         @test dual(con) isa Polynomial{true, Float64}
 
     end
+
+    @testset "Chordal Putinar - dual" begin
+        gmp, mu = testproblem3(SCS.Optimizer, NoSparsity())
+        optimize!(gmp)
+        @test length(monomials(value(mu))) == 10
+        @test length(primal_justification(mu)) == 3
+        @test size(primal_justification(mu)[1]) == (4, 4)
+        @test size(primal_justification(mu)[2]) == (1,)
+        @test size(primal_justification(mu)[3]) == (1,)
+
+        v1 = objective_value(gmp)
+
+        gmp, mu = testproblem3(SCS.Optimizer, VariableSparsity())
+        optimize!(gmp)
+        @test length(monomials(value(mu))) == 9
+        @test length(primal_justification(mu)) == 4
+        @test size(primal_justification(mu)[1]) == (3, 3)
+        @test size(primal_justification(mu)[2]) == (1,)
+        @test size(primal_justification(mu)[3]) == (3, 3)
+        @test size(primal_justification(mu)[4]) == (1,)
+
+        v2 = objective_value(gmp)
+
+        @test abs(v1-v2) < 1e-4
+    end
+
+    @testset "Chordal Putinar - primal" begin
+        gmp, mu = testproblem3(SCS.Optimizer, NoSparsity())
+        set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
+        optimize!(gmp)
+        @test length(monomials(value(mu))) == 10
+        @test length(primal_justification(mu)) == 3
+        @test size(primal_justification(mu)[1]) == (4, 4)
+        @test size(primal_justification(mu)[2]) == (1,)
+        @test size(primal_justification(mu)[3]) == (1,)
+
+        v1 = objective_value(gmp)
+
+        gmp, mu = testproblem3(SCS.Optimizer, VariableSparsity())
+        set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
+        optimize!(gmp)
+        @test length(monomials(value(mu))) == 9
+        @test length(primal_justification(mu)) == 4
+        @test size(primal_justification(mu)[1]) == (3, 3)
+        @test size(primal_justification(mu)[2]) == (1,)
+        @test size(primal_justification(mu)[3]) == (3, 3)
+        @test size(primal_justification(mu)[4]) == (1,)
+
+        v2 = objective_value(gmp)
+
+        @test abs(v1-v2) < 1e-4
+    end
+
 
     @testset "Schmuedgen" begin
         @testset "Dual Schmuedgen" begin
