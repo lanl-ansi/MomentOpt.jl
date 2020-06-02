@@ -20,6 +20,7 @@ Reexport.@reexport using SemialgebraicSets
 include("SASext/SASextra.jl")
 
 using SumOfSquares
+export NoSparsity, VariableSparsity
 
 Reexport.@reexport using MultivariateMoments
 const MM = MultivariateMoments
@@ -39,8 +40,6 @@ include("defaultmeasures.jl")
 
 include("measexpr.jl")
 include("momexpr.jl")
-#include("gmpaffexpr.jl")
-#include("affexpr.jl")
 
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution
