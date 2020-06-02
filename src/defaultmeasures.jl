@@ -108,7 +108,7 @@ export moment_measure
 Convenient way to define an anlytic measure based on precomputed values.
 """
                            
-function moment_measure(μ::GMPVariableRef{AbstractGMPMeasure})
+function moment_measure(μ::GMPVariableRef)
     return AnalyticMeasure(
                            variables(μ),
                            approx_basis(μ),

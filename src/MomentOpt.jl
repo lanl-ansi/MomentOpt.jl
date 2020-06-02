@@ -37,8 +37,10 @@ include("objects.jl")
 include("variables.jl")
 include("defaultmeasures.jl")
 
-include("gmpaffexpr.jl")
-include("affexpr.jl")
+include("measexpr.jl")
+include("momexpr.jl")
+#include("gmpaffexpr.jl")
+#include("affexpr.jl")
 
 abstract type GMPSubstitution <: JuMP.AbstractJuMPScalar end
 # define MomentSubstitution

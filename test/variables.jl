@@ -14,14 +14,13 @@
 
     @testset "GMPVariableRef" begin
         m = GMPModel()
-        vref1 = MO.GMPVariableRef(m, 1, MomentOpt.AbstractGMPMeasure)
-        vref2 = MO.GMPVariableRef(m, 2, MomentOpt.AbstractGMPMeasure)
+        vref1 = MO.GMPVariableRef(m, 1)
+        vref2 = MO.GMPVariableRef(m, 2)
 
         @test !iszero(vref1)
         @test vref1 == vref1
         @test !(vref1 == vref2)
         @test JuMP.isequal_canonical(vref1, vref2) == (vref1 == vref2)
-        @test MO.vref_type(vref1) == MomentOpt.AbstractGMPMeasure
         @test index.([vref1, vref2]) == [1, 2]
 
     end

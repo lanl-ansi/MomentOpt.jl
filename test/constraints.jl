@@ -78,7 +78,7 @@
 
         @test sprint(show, JuMP.constraint_object(c2)) == "μ = AnalyticMeasure"
 
-        @test JuMP.jump_function(c2) == MO.ObjectExpr(1, μ)
+        @test JuMP.jump_function(c2) == MO.MeasExpr(1, μ)
         @test JuMP.moi_set(c2) isa AnalyticMeasure
         @test JuMP.name(c1) == "c1"
         @test JuMP.name(c2) == "c2"

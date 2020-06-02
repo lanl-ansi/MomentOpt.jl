@@ -50,7 +50,7 @@ end
 """
 struct MeasureConstraintShape <: AbstractGMPShape end
 
-JuMP.reshape_vector(expr::ObjectExpr, ::MeasureConstraintShape) = expr
+JuMP.reshape_vector(expr::MeasExpr, ::MeasureConstraintShape) = expr
 JuMP.reshape_set(set::AnalyticMeasure, ::MeasureConstraintShape) = set
 
 #TODO dual shape for MeasureConstraintShape
@@ -61,12 +61,12 @@ JuMP.reshape_set(set::AnalyticMeasure, ::MeasureConstraintShape) = set
 
 """
 struct MeasureConstraint <: AbstractGMPConstraint
-    func::ObjectExpr
+    func::MeasExpr
     set::AnalyticMeasure
 end
 
-MeasureConstraint(o::ObjectExpr) = MeasureConstraint(o, ZeroMeasure(variables(o)))
-MeasureConstraint(ae::AffObjectExpr) = MeasureConstraint(expr(ae), -constant(ae))
+MeasureConstraint(o::MeasExpr) = MeasureConstraint(o, ZeroMeasure(variables(o)))
+MeasureConstraint(ae::AffMeasExpr) = MeasureConstraint(expr(ae), -constant(ae))
 
 JuMP.jump_function(con::MeasureConstraint) = con.func
 JuMP.moi_set(con::MeasureConstraint) = con.set

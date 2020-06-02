@@ -34,14 +34,14 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
     # summing over measures for each constraint. 
     for (i, con) in gmp_constraints(model)
         if con isa MeasureConstraint
-            for v in gmp_variables(jump_function(con))
+            for v in measures(jump_function(con))
                 dlhs[index(v)] = MA.add!(dlhs[index(v)], dvar[i])
             end
             d_obj = MA.add!(d_obj, integrate(dvar[i], moi_set(con)))
         elseif con isa MomentConstraint
-            mcon = momexp_by_measure(jump_function(con))
+            mcon = jump_function(con)
             for (c, v) in mcon
-                idx = index(first(gmp_variables(v)))
+                idx = index(v)
                 dlhs[idx] = MA.add_mul!(dlhs[idx], dvar[i], c)
             end
             d_obj = MA.add_mul!(d_obj, dvar[i], MOI.constant(moi_set(con)))
@@ -60,7 +60,7 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
         dual_sense = MOI.MAX_SENSE
     end
     obj_const = constant(obj)
-    obj_expr = momexp_by_measure(expr(obj))
+    obj_expr = expr(obj)
     dcon = Dict()
     just = Dict()
     scheme_parts = Dict()
@@ -69,9 +69,9 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
         if primal_sense == MOI.MIN_SENSE
             p = -p
         end
-        idx = findfirst(x -> index(first(gmp_variables(x))) == i, gmp_variables(obj_expr))
-        if !(idx isa Nothing)
-            p = MA.add!(p, gmp_coefficients(obj_expr)[idx])
+        ids = findall(x -> index(x) == i, measures(obj_expr))
+        for id in ids
+            p = MA.add!(p, coefficients(obj_expr)[id])
         end
         scheme_parts[i] = approximation_scheme(model, v)
         just[i] = [dual_scheme_variable(approximation_model(model), sp)*sp.polynomial for sp in scheme_parts[i]]
@@ -114,7 +114,7 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
     return nothing
 end
 
-function moments_variable(model::JuMP.Model, v::GMPVariable{AbstractGMPMeasure}, deg::Int)
+function moments_variable(model::JuMP.Model, v::GMPVariable, deg::Int)
     X = maxdegree_basis(approx_basis(v.v), variables(v.v), deg)
     c = @variable model [1:length(X)] 
     return measure(c, monomials(X))
