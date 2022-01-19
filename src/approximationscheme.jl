@@ -32,8 +32,8 @@ function primal_scheme_part(sp::SchemePart{<:Union{MOI.Nonnegatives, MOI.Zeros}}
     return MM.expectation.(monomials(sp.monomials)*sp.polynomial, moment_vars)
 end
 
-function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike, moment_vars::MM.Measure)
-    data = zeros(JuMP.AffExpr, length(mons), length(mons))
+function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike{S}, moment_vars::MM.Measure{T}) where {S,T}
+    data = zeros(MA.promote_sum_mul(S, T), length(mons), length(mons))
     mons = monomials(mons)
     for (i, moni) in enumerate(mons)
         for j in i:length(mons)
