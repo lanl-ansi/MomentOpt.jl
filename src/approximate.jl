@@ -53,16 +53,16 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
     for (i, con) in gmp_constraints(model)
         if con isa MeasureConstraint
             for v in measures(jump_function(con))
-                dlhs[index(v)] = MA.add!(dlhs[index(v)], dvar[i])
+                dlhs[index(v)] = MA.add!!(dlhs[index(v)], dvar[i])
             end
-            d_obj = MA.add!(d_obj, integrate(dvar[i], moi_set(con)))
+            d_obj = MA.add!!(d_obj, integrate(dvar[i], moi_set(con)))
         elseif con isa MomentConstraint
             mcon = jump_function(con)
             for (c, v) in mcon
                 idx = index(v)
-                dlhs[idx] = MA.add_mul!(dlhs[idx], dvar[i], c)
+                dlhs[idx] = MA.add_mul!!(dlhs[idx], dvar[i], c)
             end
-            d_obj = MA.add_mul!(d_obj, dvar[i], MOI.constant(moi_set(con)))
+            d_obj = MA.add_mul!!(d_obj, dvar[i], MOI.constant(moi_set(con)))
         end
     end
 
@@ -89,12 +89,12 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
         end
         ids = findall(x -> index(x) == i, measures(obj_expr))
         for id in ids
-            p = MA.add!(p, coefficients(obj_expr)[id])
+            p = MA.add!!(p, coefficients(obj_expr)[id])
         end
         scheme_parts[i] = approximation_scheme(model, v, meas_data[i])
         just[i] = [dual_scheme_variable(approximation_model(model), sp)*sp.polynomial for sp in scheme_parts[i].schemeparts]
 
-        p = MA.sub!(p, sum(just[i] )) 
+        p = MA.sub!!(p, sum(just[i] )) 
         dcon[i] = @constraint approximation_model(model) scheme_parts[i].denominator*p == 0
     end
 
@@ -187,7 +187,7 @@ function approximate!(model::GMPModel, ::AbstractPrimalMode)
             else
                 q = dot(dual(ju), monomials(part.monomials)).*part.polynomial
             end
-            p = MA.add!(p, q)
+            p = MA.add!!(p, q)
         end
         approx_vrefs(model)[i] = VarApprox(MM.Measure(value.(pvar[i].a), pvar[i].x), convert.(Array{Float64}, value.(just[i])), p)
     end

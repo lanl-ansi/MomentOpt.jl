@@ -45,7 +45,6 @@ end
         @test_throws AssertionError value(mu)
         @test_throws AssertionError primal_justification(mu)
         @test_throws AssertionError dual_justification(mu)
-        @test !unset_silent(m)
 
         m, mu, con = testproblem2(SCS.Optimizer)
         @test approximation_degree(m) == 2
@@ -109,7 +108,7 @@ end
     end
 
     @testset "Chordal Putinar - dual" begin
-        gmp, mu = testproblem3(SCS.Optimizer, NoSparsity())
+        gmp, mu = testproblem3(SCS.Optimizer, Sparsity.NoPattern())
         optimize!(gmp)
         @test length(monomials(value(mu))) == 10
         @test length(primal_justification(mu)) == 3
@@ -119,7 +118,7 @@ end
 
         v1 = objective_value(gmp)
 
-        gmp, mu = testproblem3(SCS.Optimizer, VariableSparsity())
+        gmp, mu = testproblem3(SCS.Optimizer, Sparsity.Variable())
         optimize!(gmp)
         @test length(monomials(value(mu))) == 9
         @test length(primal_justification(mu)) == 4
@@ -134,7 +133,7 @@ end
     end
 
     @testset "Chordal Putinar - primal" begin
-        gmp, mu = testproblem3(SCS.Optimizer, NoSparsity())
+        gmp, mu = testproblem3(SCS.Optimizer, Sparsity.NoPattern())
         set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
         optimize!(gmp)
         @test length(monomials(value(mu))) == 10
@@ -145,7 +144,7 @@ end
 
         v1 = objective_value(gmp)
 
-        gmp, mu = testproblem3(SCS.Optimizer, VariableSparsity())
+        gmp, mu = testproblem3(SCS.Optimizer, Sparsity.Variable())
         set_approximation_mode(gmp, PRIMAL_RELAXATION_MODE())
         optimize!(gmp)
         @test length(monomials(value(mu))) == 9

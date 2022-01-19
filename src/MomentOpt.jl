@@ -20,7 +20,7 @@ Reexport.@reexport using SemialgebraicSets
 include("SASext/SASextra.jl")
 
 using SumOfSquares
-export NoSparsity, VariableSparsity
+export Sparsity
 
 Reexport.@reexport using MultivariateMoments
 const MM = MultivariateMoments

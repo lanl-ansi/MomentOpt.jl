@@ -9,8 +9,8 @@ function MB.change_basis(p::MP.AbstractPolynomialLike, basis::MB.AbstractPolynom
     mons = monomials(basis)
     for i = 1:length(basis)
         c, rem = divrem(rem, mons[i])
-        if c == 0
-            push!(coeffs, 0)
+        if iszero(c)
+            push!(coeffs, zero(eltype(coeffs)))
         else
             @assert length(monomials(c)) == 1 && MP.isconstant(first(monomials(c)))
             push!(coeffs, first(coefficients(c)))
@@ -20,7 +20,7 @@ function MB.change_basis(p::MP.AbstractPolynomialLike, basis::MB.AbstractPolynom
     return coeffs[idx], mons[idx]
 end
 
-function MP.monomials(basis::MB.AbstractPolynomialBasis)
+function MB.monomials(basis::MB.AbstractPolynomialBasis)
     if basis isa MB.AbstractMonomialBasis
         return basis.monomials
     else

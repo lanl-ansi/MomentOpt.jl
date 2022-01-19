@@ -183,8 +183,6 @@ function set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode)
 end
 
 # referencing variables
-JuMP.variable_type(::GMPModel) = GMPVariableRef
-
 function GMPVariableRef(m::GMPModel, v::AbstractGMPVariable)
     model_info(m).vct += 1
     return GMPVariableRef(m, model_info(m).vct)
@@ -275,8 +273,6 @@ function approx_basis(vref::GMPVariableRef)
 end
 
 # referencing constraints 
-JuMP.constraint_type(::GMPModel) = GMPConstraintRef
-
 function JuMP.is_valid(m::GMPModel, cref::GMPConstraintRef)
     return (m === cref.model &&
             cref.index in keys(gmp_constraints(m)))
