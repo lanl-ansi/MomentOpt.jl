@@ -32,8 +32,8 @@ function primal_scheme_part(sp::SchemePart{<:Union{MOI.Nonnegatives, MOI.Zeros}}
     return MM.expectation.(monomials(sp.monomials)*sp.polynomial, moment_vars)
 end
 
-function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike, moment_vars::MM.Measure)
-    data = zeros(JuMP.AffExpr, length(mons), length(mons))
+function localization_matrix(mons::MB.AbstractPolynomialBasis, poly::MP.AbstractPolynomialLike{S}, moment_vars::MM.Measure{T}) where {S,T}
+    data = zeros(MA.promote_sum_mul(S, T), length(mons), length(mons))
     mons = monomials(mons)
     for (i, moni) in enumerate(mons)
         for j in i:length(mons)
@@ -63,14 +63,14 @@ approximation_scheme(model::JuMP.AbstractModel, v, md::MeasureData) = approximat
 
 export PutinarScheme
 """
-PutinarScheme(;sparsity = NoSparsity(), basis = MonomialBasis)
+PutinarScheme(;sparsity = Sparsity.NoPattern(), basis = MonomialBasis)
 
 Return a Putinar Approximation Scheme.
 """
 struct PutinarScheme <: AbstractApproximationScheme
-    sparsity::SumOfSquares.Sparsity
+    sparsity::SumOfSquares.Sparsity.Pattern
     basis_type::Type{<:MB.AbstractPolynomialBasis}
-    function PutinarScheme(; sparsity = NoSparsity(), basis = MonomialBasis)
+    function PutinarScheme(; sparsity = Sparsity.NoPattern(), basis = MonomialBasis)
         new(sparsity, basis)
     end
 end
@@ -86,21 +86,21 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
 
     eqs = equalities(K)
 
-    if scheme.sparsity isa NoSparsity
+    if scheme.sparsity isa Sparsity.NoPattern
         cliques = [vars]
-    elseif scheme.sparsity isa VariableSparsity
-        G = SumOfSquares.Certificate.CEG.LabelledGraph{eltype(vars)}()
+    elseif scheme.sparsity isa Sparsity.Variable
+        G = SumOfSquares.Certificate.Sparsity.CEG.LabelledGraph{eltype(vars)}()
         for mono in MP.monomials(md.objective)
-            SumOfSquares.Certificate.CEG.add_clique!(G, MP.effective_variables(mono))
+            SumOfSquares.Certificate.Sparsity.CEG.add_clique!(G, MP.effective_variables(mono))
         end
         for (i, con) in md.constraints
             for poly in con
                 if !(poly isa Number)
-                    SumOfSquares.Certificate.CEG.add_clique!(G, MP.effective_variables(poly))
+                    SumOfSquares.Certificate.Sparsity.CEG.add_clique!(G, MP.effective_variables(poly))
                 end
             end
         end
-        _, cliques =  SumOfSquares.Certificate.CEG.chordal_extension(G, SumOfSquares.Certificate.CEG.GreedyFillIn())
+        _, cliques =  SumOfSquares.Certificate.Sparsity.CEG.chordal_extension(G, SumOfSquares.Certificate.Sparsity.CEG.GreedyFillIn())
         for clique in cliques
             sort!(clique, rev=true)
             unique!(clique)
@@ -142,15 +142,15 @@ end
 
 export SchmuedgenScheme
 """
-SchmuedgenScheme(;equality = KeepEquality(), sparsity = NoSparsity(), basis = MonomialBasis)
+SchmuedgenScheme(;equality = KeepEquality(), sparsity = Sparsity.NoPattern(), basis = MonomialBasis)
 
 Return a Schmuedgen Approximation Scheme.
 
 """
 struct SchmuedgenScheme <: AbstractApproximationScheme
-    sparsity::SumOfSquares.Sparsity
+    sparsity::SumOfSquares.Sparsity.Pattern
     basis_type::Type{<:MB.AbstractPolynomialBasis}
-    function SchmuedgenScheme(; sparsity = NoSparsity(), basis = MonomialBasis)
+    function SchmuedgenScheme(; sparsity = Sparsity.NoPattern(), basis = MonomialBasis)
         new(sparsity, basis)
     end
 end

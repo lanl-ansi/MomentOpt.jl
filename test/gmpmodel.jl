@@ -10,8 +10,6 @@
         @test MO.variable_names(model) isa Vector{AbstractString}
         @test MO.constraint_names(model) isa Vector{AbstractString}
         @test JuMP.object_dictionary(model) isa Dict{Symbol, Any}
-        @test JuMP.variable_type(model) == MO.GMPVariableRef
-        @test JuMP.constraint_type(model) == MO.GMPConstraintRef
 
         @polyvar x y
         @variable model [1:3] Meas([x,y]) 
@@ -39,7 +37,7 @@
         m = GMPModel()
         mus = @variable m [1:2] Meas([x,y]) 
         JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
-        @test sprint(show, m) == "A JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: No optimizer attached."
+        @test sprint(show, m) == "An Abstract JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: No optimizer attached."
         
         @constraint m Mom(1, mus[1]) <= 1
         @constraint m c2 Mom(1, mus[2]) >= 1
