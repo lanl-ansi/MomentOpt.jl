@@ -282,7 +282,7 @@ function JuMP.constraint_string(print_mode, ref::GMPConstraintRef; in_math_mode 
 end
 
 function Base.show(io::IO, ref::GMPConstraintRef)
-    print(io, constraint_string(REPLMode, ref))
+    print(io, constraint_string(MIME"text/plain"(), ref))
 end
 
 function JuMP.constraint_object(cref::GMPConstraintRef)

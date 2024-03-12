@@ -73,7 +73,7 @@
         ζ = ZeroMeasure([x,y]) 
         @constraint m c2 μ == ζ
         @test JuMP.is_valid(m, c1)
-        @test sprint(show, c1) == "c1 : ⟨1, μ⟩ = 1.0"
+        @test sprint(show, c1) == "c1 : ⟨1, μ⟩ = 1"
         @test sprint(show, c2) == "c2 : μ = AnalyticMeasure"
 
         @test sprint(show, JuMP.constraint_object(c2)) == "μ = AnalyticMeasure"
