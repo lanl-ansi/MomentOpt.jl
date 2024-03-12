@@ -32,6 +32,7 @@ Base.zero(::Type{MomentExpr{T}}) where T = MomentExpr(T[], GMPVariableRef[])
 Base.iszero(me::MomentExpr) = length(me) == 0
 Base.:(==)(me1::MomentExpr, me2::MomentExpr) = all(coefficients(me1) .== coefficients(me2)) && all(measures(me1) == measures(me2))
 
+Base.eltype(::MomentExpr{T}) where {T} = Tuple{T,GMPVariableRef}
 Base.length(me::MomentExpr) = length(coefficients(me))
 Base.iterate(me::MomentExpr) = iszero(me) ? nothing : ((first(coefficients(me)), first(measures(me))), 2)
 Base.iterate(me::MomentExpr, i) = length(me) < i ? nothing : ((coefficients(me)[i], measures(me)[i]), i+1)

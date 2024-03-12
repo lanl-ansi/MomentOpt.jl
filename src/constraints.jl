@@ -41,7 +41,7 @@ end
 JuMP.in_set_string(mode, m::AnalyticMeasure) = "= "*sprint(show, m)
 
 function Base.show(io::IO, con::MomentConstraint)
-    print(io, JuMP.constraint_string(JuMP.REPLMode, con))
+    print(io, JuMP.constraint_string(MIME"text/plain"(), con))
 end
 
 """
@@ -77,7 +77,7 @@ function JuMP.function_string(mode, mc::MeasureConstraint)
 end
 
 function Base.show(io::IO, con::MeasureConstraint)
-    print(io, JuMP.constraint_string(JuMP.REPLMode, con))
+    print(io, JuMP.constraint_string(MIME"text/plain"(), con))
 end
 
 """

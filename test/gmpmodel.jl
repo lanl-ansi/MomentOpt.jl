@@ -41,7 +41,7 @@
         
         @constraint m Mom(1, mus[1]) <= 1
         @constraint m c2 Mom(1, mus[2]) >= 1
-        @test sprint(print, m) == "Max ⟨1, noname + noname⟩\nSubject to\n ⟨1, noname⟩ ≤ 1.0\n ⟨1, noname⟩ ≥ 1.0\n"
+        @test sprint(print, m) == "Max ⟨1, anon + anon⟩\nSubject to\n ⟨1, anon⟩ ≤ 1\n ⟨1, anon⟩ ≥ 1\n"
     end
 
     @testset "Get Value" begin
@@ -67,4 +67,3 @@
     end
 
 end
-

@@ -26,7 +26,7 @@
         #AbstractGMPObjects should check whether support and variables are coherent
         λ = AnalyticMeasure([x], MonomialBasis, p-> sum(c/(1+first(exponents(m))) for (c,m) in zip(coefficients(p), monomials(p))))
         @test λ == λ
-        @test integrate(p1, λ) == 10/3
+        @test integrate(p1, λ) ≈ 10/3
         @test_throws AssertionError integrate(p2, λ)
         @test integrate(1, λ) == 1
         μ = Meas([x, y]; support = S2, basis = ChebyshevBasis)
