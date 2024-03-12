@@ -4,7 +4,7 @@ function MB.change_basis(p::MP.AbstractPolynomialLike, Basis::Type{<:MB.Abstract
 end
 
 function MB.change_basis(p::MP.AbstractPolynomialLike, basis::MB.AbstractPolynomialBasis)
-    coeffs = Vector{promote_type(Float64, coefficienttype(p))}(undef, length(basis))
+    coeffs = Vector{promote_type(Float64, MP.coefficient_type(p))}(undef, length(basis))
     rem = p
     mons = monomials(basis)
     for i in reverse(eachindex(basis))
