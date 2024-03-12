@@ -68,6 +68,7 @@ Base.zero(::MeasExpr{T}) where T = MeasExpr{T}(T[], GMPVariableRef[])
 Base.iszero(me::MeasExpr) = length(me) == 0
 Base.:(==)(me1::MeasExpr, me2::MeasExpr) = all(coefficients(me1) .== coefficients(me2)) && all(measures(me1) == measures(me2))
 
+Base.eltype(::MeasExpr{T}) where {T} = Tuple{T,GMPVariableRef}
 Base.length(me::MeasExpr) = length(coefficients(me))
 Base.iterate(me::MeasExpr) = iszero(me) ? nothing : ((first(coefficients(me)), first(measures(me))), 2)
 Base.iterate(me::MeasExpr, i) = length(me) < i ? nothing : ((coefficients(me)[i], measures(me)[i]), i+1)

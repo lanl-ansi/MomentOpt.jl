@@ -117,7 +117,6 @@ end
 
 JuMP.solver_name(model::GMPModel) = solver_name(approximation_model(model))
 JuMP.num_variables(model::GMPModel) = length(gmp_variables(model))
-JuMP.num_nl_constraints(::GMPModel) = 0
 JuMP.object_dictionary(model::GMPModel) = model_info(model).obj_dict
 JuMP.raw_status(model::GMPModel) = raw_status(approximation_model(model))
 JuMP.set_optimize_hook(model::GMPModel, f) = (approximation_model(model).optimize_hook = f)
@@ -308,7 +307,7 @@ function JuMP.add_constraint(m::GMPModel, c::AbstractGMPConstraint,
     return cref
 end
 
-function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{<:Union{AffMomentExpr, MomentExpr}, <:MOI.AbstractScalarSet}, name::String = "") where {S}
+function JuMP.add_constraint(m::GMPModel, c::ScalarConstraint{<:Union{AffMomentExpr, MomentExpr}, <:MOI.AbstractScalarSet}, name::String = "")
     add_constraint(m, MomentConstraint(jump_function(c), moi_set(c)), name)
 end
 
