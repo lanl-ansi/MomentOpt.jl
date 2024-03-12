@@ -67,8 +67,8 @@
             @test MO.degree(m3) == 0
             @test MO.degree(m4) == 1
 
-            @test sprint(show, m5) == "⟨-x + 0.5, μ⟩ + ⟨0.5, ν⟩"
-            @test sprint(show, m4 - m5) == "⟨1.5x + 0.5, μ⟩ + ⟨0.5x - 0.5, ν⟩"
+            @test sprint(show, m5) == "⟨0.5 - x, μ⟩ + ⟨0.5, ν⟩"
+            @test sprint(show, m4 - m5) == "⟨0.5 + 1.5x, μ⟩ + ⟨-0.5 + 0.5x, ν⟩"
             @test sprint(show, MomentExpr(Int[], MO.GMPVariableRef[])) == "⟨0, 0⟩"
 
             @test eltype([Mom(1, μ + ν), μ]) == AbstractJuMPScalar

@@ -217,4 +217,3 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
     end
     return Scheme(schemeparts, one(polynomialtype(eltype(vars))), unique!(monos))
 end
-

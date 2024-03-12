@@ -1,6 +1,6 @@
 function test_moments(μ::AnalyticMeasure, maxdegree, moments)
     mons = monomials(maxdegree_basis(μ, maxdegree))
-    for (m, mm) in zip(mons, moments)
+    for (m, mm) in zip(mons, reverse(moments))
         @test isapprox(integrate(m, μ), mm; atol = 1e-6)
     end
 end
@@ -46,7 +46,7 @@ end
         mons = monomials([x, y], 0:2);
         z = [1/100*(sum(XX[i]^e[1]*(2*XX[i]-1)^e[2] for i = 1:100)) for e in exponents.(mons)];
         μ = moment_measure(MultivariateMoments.Measure(z, mons))
-        test_moments(μ, 2, z)
+        test_moments(μ, 2, reverse(z))
     end
 
     @testset "(Partial) Integration" begin
@@ -70,4 +70,3 @@ end
         end 
     end
 end
-

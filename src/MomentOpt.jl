@@ -2,8 +2,7 @@ module MomentOpt
 
 using Reexport
 
-using MathOptInterface
-const MOI = MathOptInterface
+import MathOptInterface as MOI
 
 using MutableArithmetics
 const MA = MutableArithmetics

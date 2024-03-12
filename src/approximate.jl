@@ -32,6 +32,11 @@ function dual_variable(model::JuMP.Model, con::AbstractGMPConstraint, sense::MOI
     return variable
 end
 
+# FIXME sometimes we get `GenericAffExpr{BigFloat}` so we need this
+function _fix(p)
+    return convert(MP.similar_type(typeof(p), JuMP.AffExpr), p)
+end
+
 function approximate!(model::GMPModel, ::AbstractDualMode)
     # init dual variables
     meas_data = Dict(i => measure_data(model, i) for i in keys(gmp_variables(model)))
@@ -92,9 +97,14 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
             p = MA.add!!(p, coefficients(obj_expr)[id])
         end
         scheme_parts[i] = approximation_scheme(model, v, meas_data[i])
-        just[i] = [dual_scheme_variable(approximation_model(model), sp)*sp.polynomial for sp in scheme_parts[i].schemeparts]
+        just[i] = [
+            _fix(dual_scheme_variable(approximation_model(model), sp)*sp.polynomial)
+            for sp in scheme_parts[i].schemeparts
+        ]
 
-        p = MA.sub!!(p, sum(just[i] )) 
+        for justi in just[i]
+            p = MA.sub!!(p, justi) 
+        end
         dcon[i] = @constraint approximation_model(model) scheme_parts[i].denominator*p == 0
     end
 
@@ -205,4 +215,3 @@ function approximate!(model::GMPModel, ::AbstractPrimalMode)
 
     return nothing
 end
-
