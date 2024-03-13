@@ -5,7 +5,7 @@
 
         mone = MO._mono_one([x, y])
         @test isone(mone)
-        @test mone isa Monomial{true}
+        @test mone isa Monomial
         @test variables(mone) == [x, y]
 
     end
@@ -31,8 +31,8 @@
         @test integrate(1, λ) == 1
         μ = Meas([x, y]; support = S2, basis = ChebyshevBasis)
         @test_throws MethodError integrate(p2, μ)
-        @test monomials(maxdegree_basis(μ, 2)) == [2.0*x^2 - 1.0, x*y, 2.0*y^2 - 1.0, x, y, 1.0]
-        @test monomials(MO.covering_basis(μ, 2)) == Polynomial{true, typeof(1.0)}[1.0]
+        @test monomials(maxdegree_basis(μ, 2)) == reverse([2.0*x^2 - 1.0, x*y, 2.0*y^2 - 1.0, x, y, 1.0])
+        @test monomials(MO.covering_basis(μ, 2)) == polynomial_type(x, Float64)[1.0]
     end
 
     @testset "DefaultMeasures" begin

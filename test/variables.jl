@@ -4,7 +4,7 @@
         @polyvar x y
         mu = Meas([x, y])
         v = GMPVariable(mu)
-        @test MO.object_type(v) == VariableMeasure{PolyVar{true}, FullSpace, MonomialBasis, PutinarScheme}
+        @test MO.object_type(v) == VariableMeasure{typeof(x), FullSpace, MonomialBasis, PutinarScheme}
 
         _error = _ -> ""
         info = VariableInfo(true, 1, true, 1, true, 1, true, 1, false, false)

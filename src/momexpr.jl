@@ -92,7 +92,7 @@ function Base.sum(mev::Vector{MomentExpr{T}}) where T
     if T <: Number
         coefs = T[]
     else
-        coefs = polynomialtype(T)[]
+        coefs = polynomial_type(T)[]
     end
     vars = GMPVariableRef[]
     for me in mev

@@ -135,7 +135,7 @@ function approximation_scheme(scheme::PutinarScheme, K::AbstractBasicSemialgebra
             end
         end
     end
-    return Scheme(schemeparts, one(polynomialtype(eltype(vars))), unique!(monos))
+    return Scheme(schemeparts, one(polynomial_type(eltype(vars))), unique!(monos))
 end
 
 
@@ -215,6 +215,5 @@ function approximation_scheme(scheme::SchmuedgenScheme, K::AbstractBasicSemialge
         push!(schemeparts, SchemePart(eq, mons, MOI.Zeros(length(mons))))
         append!(monos, monomials(mons))
     end
-    return Scheme(schemeparts, one(polynomialtype(eltype(vars))), unique!(monos))
+    return Scheme(schemeparts, one(polynomial_type(eltype(vars))), unique!(monos))
 end
-

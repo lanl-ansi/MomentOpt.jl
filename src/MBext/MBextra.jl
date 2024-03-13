@@ -4,23 +4,23 @@ function MB.change_basis(p::MP.AbstractPolynomialLike, Basis::Type{<:MB.Abstract
 end
 
 function MB.change_basis(p::MP.AbstractPolynomialLike, basis::MB.AbstractPolynomialBasis)
-    coeffs = promote_type(Float64, coefficienttype(p))[]
+    coeffs = Vector{promote_type(Float64, MP.coefficient_type(p))}(undef, length(basis))
     rem = p
     mons = monomials(basis)
-    for i = 1:length(basis)
+    for i in reverse(eachindex(basis))
         c, rem = divrem(rem, mons[i])
         if iszero(c)
-            push!(coeffs, zero(eltype(coeffs)))
+            coeffs[i] = zero(eltype(coeffs))
         else
             @assert length(monomials(c)) == 1 && MP.isconstant(first(monomials(c)))
-            push!(coeffs, first(coefficients(c)))
+            coeffs[i] = first(coefficients(c))
         end
     end
     idx = findall(!iszero, coeffs)
     return coeffs[idx], mons[idx]
 end
 
-function MB.monomials(basis::MB.AbstractPolynomialBasis)
+function MP.monomials(basis::MB.AbstractPolynomialBasis)
     if basis isa MB.AbstractMonomialBasis
         return basis.monomials
     else
