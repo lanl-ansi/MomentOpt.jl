@@ -38,7 +38,7 @@ export atomic
 Tries to exctract the atomic support of a measure. 
 """
 function atomic(vref::GMPVariableRef; tol = 1e-3)
-	optmeas = extractatoms(moment_matrix(vref), tol)
+	optmeas = atomic_measure(moment_matrix(vref), tol)
 	if typeof(optmeas) == Nothing
         return nothing
 	else
@@ -55,14 +55,14 @@ function min_val(x::Pair{<:Vector{<:MP.AbstractVariable}, <:Vector{<:Number}},
                  poly::AbstractPolynomialLike)
     p = subs(poly, x)
     t = first(variables(p))
-    set = algebraicset([differentiate(p, t)])
+    set = algebraic_set([differentiate(p, t)])
     Y = [sol[1] for sol in set]
     return Y[argmin([p(t => y) for y in Y])]
 end
 
 function christoffel(vref::GMPVariableRef; regpar = 1e-8)
     M = moment_matrix(vref)
-    eva, eve = eigen(MM.getmat(M))
+    eva, eve = eigen(MM.value_matrix(M))
     return sum( (dot(eve[:, i] / √(eva[i] + regpar), M.basis.monomials))^2 for i = 1:length(eva))
 end
 
