@@ -2,7 +2,7 @@ name = "MomentOpt"
 uuid = "5036cc39-ae6e-5f00-bcd6-dacb213bf05a"
 authors = ["Tillmann Weisser"]
 repo = "https://github.com/lanl-ansi/MomentOpt.jl"
-version = "0.2.0"
+version = "0.3.0"
 
 [deps]
 DynamicPolynomials = "7c1d4256-1411-5781-91ec-d7bc3513ac07"
