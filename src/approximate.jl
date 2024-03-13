@@ -47,7 +47,7 @@ function approximate!(model::GMPModel, ::AbstractDualMode)
     end
 
     # init dual constraints
-    PT = polynomialtype(eltype(variables(gmp_variables(model)[1].v)), JuMP.AffExpr)
+    PT = polynomial_type(eltype(variables(gmp_variables(model)[1].v)), JuMP.AffExpr)
     dlhs = Dict{Int, PT}()
     for i in keys(gmp_variables(model))
         dlhs[i] = zero(PT)        
