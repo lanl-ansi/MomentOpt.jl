@@ -45,7 +45,7 @@ export PRIMAL_RELAXATION_MODE, DUAL_STRENGTHEN_MODE
 
 abstract type AbstractPrimalMode <: AbstractApproximationMode end
 abstract type AbstractDualMode <: AbstractApproximationMode end
-struct PRIMAL_RELAXATION_MODE <: AbstractPrimalMode end 
+struct PRIMAL_RELAXATION_MODE <: AbstractPrimalMode end
 struct DUAL_STRENGTHEN_MODE <: AbstractDualMode end
 
 struct VarApprox{S, T}
@@ -75,11 +75,11 @@ export GMPModel
 """
     GMPModel
 
-This JuMP.AbstractModel is able to model linear obtimization problems where the variables are abstract measures or continuous functions.
+This JuMP.AbstractModel is able to model linear optimization problems where the variables are abstract measures or continuous functions.
 """
 mutable struct GMPModel <: AbstractGMPModel
     model_info::ModelInfo
-    model_data::ModelData    
+    model_data::ModelData
     approximation_info::ApproximationInfo
     approximation_model::JuMP.Model
     function GMPModel()
@@ -154,7 +154,7 @@ export set_approximation_degree
 """
     set_approximation_degree(model::GMPModel, degree::Int)
 
-Manually set the degree of the approximation to a custom value. The value cannot be less than the degree of the data. 
+Manually set the degree of the approximation to a custom value. The value cannot be less than the degree of the data.
 """
 function set_approximation_degree(model::GMPModel, degree::Int)
     if approximation_info(model).degree > degree && model_data(model).max_degree > degree
@@ -169,14 +169,14 @@ end
 
 export set_approximation_mode
 """
-    set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode) 
+    set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode)
 
 Set the approximation mode of m to mode. Depending on the solver either the primal or the dual formulation might be more efficient. It might also be interesting to change the mode when numerical issues are encountered.
 Possible values for mode are:
-  * PRIMAL_RELAXATION_MODE()
-  * DUAL_STRENGTHEN_MODE() (default)
+  * `PRIMAL_RELAXATION_MODE()`
+  * `DUAL_STRENGTHEN_MODE()` (default)
   """
-function set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode) 
+function set_approximation_mode(m::GMPModel, mode::AbstractApproximationMode)
     approximation_info(m).mode = mode
     return m
 end
@@ -245,7 +245,7 @@ export support
 """
     support(vref::GMPVariableRef)
 
-Retruns the support a measure is defined on. 
+Returns the support a measure is defined on.
 """
 function support(vref::GMPVariableRef)
     return bsa_set(vref_object(vref))
@@ -255,7 +255,7 @@ export domain
 """
     domain(vref::GMPVariableRef)
 
-Retruns the domain a continuous is defined on. 
+Returns the domain a continuous is defined on.
 """
 function domain(vref::GMPVariableRef)
     return bsa_set(vref_object(vref))
@@ -271,7 +271,7 @@ function approx_basis(vref::GMPVariableRef)
     return approx_basis(vref_object(vref))
 end
 
-# referencing constraints 
+# referencing constraints
 function JuMP.is_valid(m::GMPModel, cref::GMPConstraintRef)
     return (m === cref.model &&
             cref.index in keys(gmp_constraints(m)))
@@ -350,7 +350,7 @@ function JuMP.constraint_by_name(m::GMPModel, name::String)
     elseif length(idx) > 1
         throw(ErrorException("Multiple constraints have the name $name."))
     else
-        c = object_dictionary(m)[Symbol(name)]        
+        c = object_dictionary(m)[Symbol(name)]
         return GMPConstraintRef(m, first(idx), JuMP.shape(c))
     end
 end
@@ -375,7 +375,7 @@ function JuMP.set_objective(m::GMPModel, sense::MOI.OptimizationSense,
                             f::AbstractMomentExpressionLike)
     model_data(m).objective_sense = sense
     model_data(m).objective_function = f
-    update_degree(m, degree(f))    
+    update_degree(m, degree(f))
 end
 
 JuMP.objective_sense(m::GMPModel) = model_data(m).objective_sense
@@ -407,9 +407,9 @@ end
 # Show
 function JuMP.show_backend_summary(io::IO, model::GMPModel)
     println(io)
-    println(io, "Approxmation mode: ", approximation_mode(model))
+    println(io, "Approximation mode: ", approximation_mode(model))
     println(io, "Maximum degree of data: ", model_degree(model))
-    println(io, "Degree for approximation ", approximation_degree(model))
+    println(io, "Degree for approximation: ", approximation_degree(model))
     # The last print shouldn't have a new line
     print(io, "Solver for approximation: ", solver_name(model))
 end
@@ -418,7 +418,7 @@ end
 
 function _is_approximated(vref::GMPVariableRef)
     if haskey(approx_vrefs(owner_model(vref)), index(vref))
-        return true 
+        return true
     else
         return false
     end
@@ -431,7 +431,7 @@ Returns the approximation sequence of the referenced GMPObject.
 """
 function JuMP.value(vref::GMPVariableRef)
     @assert _is_approximated(vref) "$vref has not been approximated yet"
-    return approx_vrefs(owner_model(vref))[index(vref)].value 
+    return approx_vrefs(owner_model(vref))[index(vref)].value
 end
 
 export primal_justification
@@ -443,14 +443,14 @@ end
 
 export dual_justification
 function dual_justification(vref::GMPVariableRef)
-    @assert _is_approximated(vref) "$vref has not been approximated yet"    
+    @assert _is_approximated(vref) "$vref has not been approximated yet"
     return approx_vrefs(owner_model(vref))[index(vref)].d_just
 end
 
 """
 approximation(vref::GMPVariableRef, m::AbstractPolynomialLike)
 
-Return the approximation of the ⟨vref, m⟩. 
+Return the approximation of the ⟨vref, m⟩.
 """
 function approximation(vref::GMPVariableRef, m::MP.AbstractPolynomialLike)
     @assert MP.variables(m) ⊆ MP.variables(vref) "$vref does not act on $m."
@@ -460,7 +460,7 @@ function approximation(vref::GMPVariableRef, m::MP.AbstractPolynomialLike)
         return value(as[m])
     else
         coefs, basis = MB.change_basis(m, approx_basis(vref_object(vref)))
-        return sum( c*value(as[b]) for (c,b) in zip(coefs, basis)) 
+        return sum( c*value(as[b]) for (c,b) in zip(coefs, basis))
     end
 end
 
