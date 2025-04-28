@@ -2,7 +2,7 @@
 
 ## Installation
 
-MomentOpt is a package for [Julia](https://julialang.org/). In order to use it you need to download and install Julia first. Instructions on how to do this can be found [here](https://julialang.org/downloads/). 
+MomentOpt is a package for [Julia](https://julialang.org/). In order to use it you need to download and install Julia first. Instructions on how to do this can be found [here](https://julialang.org/downloads/).
 
 Once Julia is installed, MomentOpt can be added through Julia's internal package manager.
 ```julia
@@ -27,13 +27,13 @@ MomentOpt uses [MultivariatePolynomials](https://github.com/JuliaAlgebra/Multiva
 pkg> add DynamicPolynomials
 ```
 
-Having installed these two packages we could start modelling with MomentOpt. However, to be able to compute approximations, we need to install at least one solver. A comprehensive list of possible solvers can be found on [the JuMP website](https://github.com/JuliaOpt/JuMP.jl). 
+Having installed these two packages we could start modelling with MomentOpt. However, to be able to compute approximations, we need to install at least one solver. A comprehensive list of possible solvers can be found on [the JuMP website](https://github.com/JuliaOpt/JuMP.jl).
 As an open source SDP solver we could install CSDP:
 ```julia
 pkg> add CSDP
 ```
 
-Once these packages have been added, they do not need to be added again when starting a new session. In case you are using [Jupyter notebooks](https://jupyter.org/) to run Julia, the syntax might slightly vary. Please refer to the [IJulia](https://github.com/JuliaLang/IJulia.jl) documentation. 
+Once these packages have been added, they do not need to be added again when starting a new session. In case you are using [Jupyter notebooks](https://jupyter.org/) to run Julia, the syntax might slightly vary. Please refer to the [IJulia](https://github.com/JuliaLang/IJulia.jl) documentation.
 
 
 ## First steps
@@ -50,14 +50,14 @@ julia> @polyvar x y z
 (x, y, z)
 ```
 
-Now we can start modeling our generalized moment problem. The modeling process is consitent with [JuMP.jl](https://github.com/JuliaOpt/JuMP.jl). In particular, we always start by building a model:
+Now we can start modeling our generalized moment problem. The modeling process is consistent with [JuMP.jl](https://github.com/JuliaOpt/JuMP.jl). In particular, we always start by building a model:
 ```julia
 julia> gmp = GMPModel()
 A JuMP Model
 Feasibility problem with:
 Variables: 0
 Constraints: 0
-Approxmation mode: DUAL_STRENGTHEN_MODE()
+Approximation mode: DUAL_STRENGTHEN_MODE()
 Maximum degree of data: 0
 Degree for approximation 0
 Solver for approximation: No optimizer attached.
@@ -72,7 +72,7 @@ A JuMP Model
 Feasibility problem with:
 Variables: 0
 Constraints: 0
-Approxmation mode: DUAL_STRENGTHEN_MODE()
+Approximation mode: DUAL_STRENGTHEN_MODE()
 Maximum degree of data: 0
 Degree for approximation 0
 Solver for approximation: CSDP
@@ -84,7 +84,7 @@ A JuMP Model
 Feasibility problem with:
 Variables: 0
 Constraints: 0
-Approxmation mode: DUAL_STRENGTHEN_MODE()
+Approximation mode: DUAL_STRENGTHEN_MODE()
 Maximum degree of data: 0
 Degree for approximation 0
 Solver for approximation: CSDP
@@ -94,7 +94,7 @@ The variables of a generalized moment problem are measures. To add a measure to 
 julia> @variable gmp mu Meas([x, y])
 mu
 ```
-This is following the JuMP syntax, i.e., we first specify the model, than a name for our variable, and then specify that the new variable represents a measure acting on the polynomial variables x and y. It is mandatory to define on which variables a measure is acting. The polynomial variables of a measure variable can be querried via 
+This is following the JuMP syntax, i.e., we first specify the model, than a name for our variable, and then specify that the new variable represents a measure acting on the polynomial variables x and y. It is mandatory to define on which variables a measure is acting. The polynomial variables of a measure variable can be queried via
 ```julia
 julia> variables(mu)
 2-element Array{PolyVar{true},1}:
@@ -107,11 +107,11 @@ julia> @variable gmp nu Meas([x,y], support = @set(1-x^2-y^2>=0))
 nu
 julia> support(nu)
 Basic semialgebraic Set defined by no equality
-1 inequalitty
+1 inequality
  -x^2 - y^2 + 1 ≥ 0
 ```
 For more information on generating semi-algebraic sets via the `@set` macro we refer to [SemiAlgebraicSets.jl](https://github.com/JuliaAlgebra/SemialgebraicSets.jl).
-The remaining keywords are discussed in the documentation of [`Meas`](@ref). 
+The remaining keywords are discussed in the documentation of [`Meas`](@ref).
 
 Note that you can create anonymous measure variables or containers of measure variables
 ```julia
@@ -131,25 +131,25 @@ julia> support.(psi)
  { (y) | -y^2 + 1 ≥ 0 }
  { (z) | -z^2 + 1 ≥ 0 }
 ```
-Note that the `.` behind `support` broadcasts the function to each element of the vector `psi`. 
+Note that the `.` behind `support` broadcasts the function to each element of the vector `psi`.
 If we look at our model again, we find that mu and nu have been registered in the model.
-```julia 
+```julia
 julia> gmp
 A JuMP Model
 Feasibility problem with:
 Variables: 7
 Constraints: 0
-Approxmation mode: DUAL_STRENGTHEN_MODE()
+Approximation mode: DUAL_STRENGTHEN_MODE()
 Maximum degree of data: 2
 Degree for approximation 2
 Solver for approximation: CSDP
 Names registered in the model: mu, nu
 ```
-We cannot add a new object with names that are alrady registered:
+We cannot add a new object with names that are already registered:
 ```
 julia> @variable gmp mu Meas([x, y])
-ERROR: An object of name mu is already attached to this model. If this is intended, 
-consider using the anonymous construction syntax, e.g., x = @variable(model, [1:N], ...) 
+ERROR: An object of name mu is already attached to this model. If this is intended,
+consider using the anonymous construction syntax, e.g., x = @variable(model, [1:N], ...)
 where the name of the object does not appear inside the macro.
 ```
 
@@ -161,18 +161,18 @@ A JuMP Model
 Feasibility problem with:
 Variables: 7
 Constraints: 0
-Approxmation mode: DUAL_STRENGTHEN_MODE()
+Approximation mode: DUAL_STRENGTHEN_MODE()
 Maximum degree of data: 2
 Degree for approximation 4
 Solver for approximation: CSDP
 Names registered in the model: mu, nu
 
 julia> set_approximation_degree(gmp, 1)
-┌ Warning: Requested approximation degree 1 is too low to cover all data. 
+┌ Warning: Requested approximation degree 1 is too low to cover all data.
 The approximation degree has been set to the minimal value possible and now is 2.
 ```
 
-Next we can add constraints to our model. However, we will start with a new model. A typical constraint for generalized moment problems is that the measure variable is a probability measure, which is added as follwos
+Next we can add constraints to our model. However, we will start with a new model. A typical constraint for generalized moment problems is that the measure variable is a probability measure, which is added as follows
 ```julia
 julia> gmp = GMPModel(CSDP.Optimizer);
 julia> @variable gmp mu Meas([x], support = @set(x-x^2>=0));
@@ -199,7 +199,7 @@ defines an AnalyticMeasure, representing the Lebesgue measure on [0, 1]. It can 
 ```julia
 julia> integrate(x^2 - x + 1, lambda)
 0.8333333333333333
-julia integrate.(monoimals([x], 0:4), lambda)
+julia integrate.(monomials([x], 0:4), lambda)
 5-element Array{Float64,1}:
  0.2
  0.25
@@ -208,7 +208,7 @@ julia integrate.(monoimals([x], 0:4), lambda)
  1.0
 ```
 but it can also be used to define measure constraints:
-```julia 
+```julia
 julia> gmp = GMPModel(CSDP.Optimizer);
 julia> @variable gmp mu Meas([x,y], support = @set(1-x^2-y^2>=0));
 julia> @variable gmp nu Meas([x,y], support = @set(1-x^2>= 0 && 1-y^2>=0));
@@ -217,7 +217,7 @@ A JuMP Model
 Feasibility problem with:
 Variables: 2
 Constraint: 1
-Approxmation mode: DUAL_STRENGTHEN_MODE()
+Approximation mode: DUAL_STRENGTHEN_MODE()
 Maximum degree of data: 2
 Degree for approximation 2
 Solver for approximation: CSDP
@@ -230,7 +230,7 @@ A JuMP Model
 Feasibility problem with:
 Variables: 2
 Constraint: 1
-Approxmation mode: DUAL_STRENGTHEN_MODE()
+Approximation mode: DUAL_STRENGTHEN_MODE()
 Maximum degree of data: 2
 Degree for approximation 2
 Solver for approximation: CSDP
@@ -240,7 +240,7 @@ Note that `mc` did not change the degree of data. The degree of a measure constr
 
 To finish this introduction on modeling with MomentOpt, we have to set an objective function. This can be done via
 ```julia
-julia> @objective gmp Max Mom(1, mu) 
+julia> @objective gmp Max Mom(1, mu)
 ⟨1, mu⟩
 ```
 
@@ -250,7 +250,7 @@ julia> set_approximation_degree(gmp, 10)
 julia> set_silent(gmp);
 julia> optimize!(gmp)
 ```
-We can querry the stats of the solved approximation
+We can query the stats of the solved approximation
 ```julia
 julia> objective_value(gmp)
 0.9369024582093924
@@ -259,7 +259,7 @@ OPTIMAL::TerminationStatusCode = 1
 julia> raw_status(gmp)
 "Problem solved to optimality."
 ```
-The solution can be expected by calling 
+The solution can be expected by calling
 ```julia
 julia> measure(mu)
 MultivariateMoments.Measure{Float64,Monomial{true},MonomialVector{true}}([0.062044293013069955, 1.818408257153911e-19, 0.01273398937697667, 4.4781213912861547e-20, 0.0064424590352839825, 2.0217159884897534e-21, 0.006442459035519992, -4.815750725967947e-20, 0.012733989378712668, -2.0895884615236935e-19  …  -3.8109683913485666e-18, 1.865988294254163e-18, -3.515461570762854e-18, 2.056500523116538e-18, 0.2816658397255027, -7.275476044869635e-21, 0.28166583972970993, -5.312847305918446e-18, 2.8599527338155522e-18, 0.9369024582093924], Monomial{true}[x¹⁰, x⁹y, x⁸y², x⁷y³, x⁶y⁴, x⁵y⁵, x⁴y⁶, x³y⁷, x²y⁸, xy⁹  …  x³, x²y, xy², y³, x², xy, y², x, y, 1])
@@ -269,7 +269,7 @@ This returns a sequence of moments. The dual to our constraint `mc` is a polynom
 julia> poly = dual(mc);
 julia> maxdegree(poly)
 10
-juila> variables(poly) 
+julia> variables(poly)
 2-element Array{PolyVar{true},1}:
  x
  y
