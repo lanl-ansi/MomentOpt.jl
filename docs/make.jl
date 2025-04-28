@@ -12,11 +12,12 @@ makedocs(
                   "The Generalized Moment Problem" => "gmp.md",
                   "Certificates of Non Negativity" => "nonneg.md",
                   "A closer look" => "guide.md",
-                  "What's in the box?" => "blackbox.md"
+                  "What's in the box?" => "blackbox.md",
+                  "API Reference" => "api.md"
                  ],
          modules = [MomentOpt]
         )
 
 deploydocs(
-           repo = "github.com/lanl-ansi/MomentOpt.jl.git", 
+           repo = "github.com/lanl-ansi/MomentOpt.jl.git",
           )

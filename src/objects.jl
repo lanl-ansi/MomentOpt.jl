@@ -10,17 +10,17 @@ approx_basis(m::AbstractGMPObject) = m.approx_basis
     covering_basis(t::AbstractGMPObject, p::MP.AbstractPolynomialLike)
     covering_basis(t::AbstractGMPObject, p::Number)
 
-Returns all monomials in the basis of t covering the monomials of p.    
+Returns all monomials in the basis of t covering the monomials of p.
 """
 function covering_basis(t::AbstractGMPObject, p::MP.AbstractPolynomialLike)
     @assert variables(p) ⊆  variables(t) "Object does not act on $(variables(p))."
-    return MB.basis_covering_monomials(approx_basis(t), monomials(p)) 
+    return MB.basis_covering_monomials(approx_basis(t), monomials(p))
 end
 
 """
     _mono_one(vars)
 
-returns the monomial 1 defined on vars. 
+returns the monomial 1 defined on vars.
 """
 _mono_one(vars::Vector{<:MP.AbstractVariable}) = prod(var^0 for var in vars)
 
@@ -29,21 +29,18 @@ covering_basis(t::AbstractGMPObject, p::Union{Number, AbstractJuMPScalar}) = cov
 """
     maxdegree_basis(t::AbstractGMPObject, d::Int)
 
-Returns all monomials up to degree d in the basis of t.    
+Returns all monomials up to degree d in the basis of t.
 """
 function MB.maxdegree_basis(t::AbstractGMPObject, d::Int)
-    return maxdegree_basis(approx_basis(t), variables(t), d) 
+    return maxdegree_basis(approx_basis(t), variables(t), d)
 end
 
 """
     AbstractGMPMeasure
 
 Abstract type to represent measures in MomentOpt. Implementation of subtypes should implement MOI.get functions for `::Variables`, `::Support`, `::ApproximationType`, and `::GMPBasis`.
-if get(m, ApproximationType()) == EXACT_APPROXIMATION, the measure m should have a field m.moment_function::Function. 
-By default there are four implementations of AbstractGMPMeasure:
-  * [AnalyticMeasure](@ref) :
-  * [VariableMeasure](@ref) :
-
+if get(m, ApproximationType()) == EXACT_APPROXIMATION, the measure m should have a field m.moment_function::Function.
+By default there are two implementations of AbstractGMPMeasure: AnalyticMeasure and VariableMeasure.
 """
 abstract type AbstractGMPMeasure <: AbstractGMPObject end
 
@@ -59,7 +56,7 @@ struct AnalyticMeasure{V <: MP.AbstractVariable, BT <: MB.AbstractPolynomialBasi
     approx_function::ApproximationFunction{BT}
 end
 
-function AnalyticMeasure(variables::Vector{V}, moment_basis::T, moment_function::Function) where  {V <: MP.AbstractVariable, T <: Type{<:MB.AbstractPolynomialBasis}} 
+function AnalyticMeasure(variables::Vector{V}, moment_basis::T, moment_function::Function) where  {V <: MP.AbstractVariable, T <: Type{<:MB.AbstractPolynomialBasis}}
     return AnalyticMeasure(variables, moment_basis, ApproximationFunction(moment_function, variables, moment_basis))
 end
 
@@ -71,7 +68,7 @@ export VariableMeasure
 """
     VariableMeasure{V, S, R, T}
 
-Type representing a measure that can be relaxed via a conic relaxation. 
+Type representing a measure that can be relaxed via a conic relaxation.
 """
 struct VariableMeasure{V <: MP.AbstractVariable, S <: AbstractBasicSemialgebraicSet, BT <: MB.AbstractPolynomialBasis, R <: AbstractApproximationScheme} <: AbstractGMPMeasure
     variables::Vector{V}
@@ -98,13 +95,13 @@ function Base.sum(v::Vector{<:AnalyticGMPObject})
     for f2 in v[2:end]
         @assert compatible(f1, f2) "Cannot add GMPObjects, because they are either acting on different variables or are of different Type."
     end
-    return constructor(typeof(v[1]))(variables(v[1]), approx_basis(v[1]), sum(approx_function.(v))) 
+    return constructor(typeof(v[1]))(variables(v[1]), approx_basis(v[1]), sum(approx_function.(v)))
 end
 function Base.:+(f1::AnalyticGMPObject, f2::AnalyticGMPObject)
 @assert compatible(f1, f2) "Cannot add GMPObjects, because they are either acting on different variables or are of different Type."
     return sum([f1, f2])
 end
-Base.:*(a::Number, f::AnalyticGMPObject) = constructor(typeof(f))(variables(f), approx_basis(f), a*approx_function(f)) 
+Base.:*(a::Number, f::AnalyticGMPObject) = constructor(typeof(f))(variables(f), approx_basis(f), a*approx_function(f))
 Base.:*(f::AnalyticGMPObject, a::Number) = a*f
 Base.:/(f::AnalyticGMPObject, a::Number) = inv(a)*f
 Base.:-(f::AnalyticGMPObject) = (-1)*f
@@ -118,7 +115,7 @@ export integrate
      integrate(p::Number, m::AnalyticMeasure)
      integrate(p::MP.AbstractPolynomialLike, m::AnalyticMeasure)
 
-Returns the integral of p with respect to m. 
+Returns the integral of p with respect to m.
 """
 function integrate(p::Union{Number, AbstractJuMPScalar}, m::AnalyticGMPObject)
     return p*approx_function(m)(first(monomials(covering_basis(m, p))))
@@ -128,11 +125,11 @@ function integrate(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
     @assert variables(p) ⊆ variables(m)
     return approx_function(m)(p)
 end
-export partial_integrate 
+export partial_integrate
 """
      partial_integrate(p::MP.AbstractPolynomialLike, m::AbstractGMPMeasure)
 
-Returns the integral of p with respect to m, in case m does not cover all variables of p. The result is a polynomial in the remaining variables.  
+Returns the integral of p with respect to m, in case m does not cover all variables of p. The result is a polynomial in the remaining variables.
 """
 function partial_integrate(p::MP.AbstractPolynomialLike, m::AnalyticGMPObject)
     if variables(p) ⊆  variables(m)
@@ -147,7 +144,7 @@ export marginal
 """
     marginal(μ::AnalyticMeasure, vars::Vector{MP.AbstractVariable})
 
-Returns the marginal of μ with respect to vars. 
+Returns the marginal of μ with respect to vars.
 """
 function marginal(μ::AnalyticMeasure, vars::Vector{<:MP.AbstractVariable})
     sort!(vars, rev = true)
