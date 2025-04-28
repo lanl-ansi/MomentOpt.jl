@@ -5,7 +5,7 @@
 
         mone = MO._mono_one([x, y])
         @test isone(mone)
-        @test mone isa Monomial
+        @test mone isa DynamicPolynomials.Monomial
         @test variables(mone) == [x, y]
 
     end
