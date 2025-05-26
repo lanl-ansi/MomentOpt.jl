@@ -3,4 +3,4 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 MomentOpt = "5036cc39-ae6e-5f00-bcd6-dacb213bf05a"
 
 [compat]
-Documenter = "~0.27"
+Documenter = "1"

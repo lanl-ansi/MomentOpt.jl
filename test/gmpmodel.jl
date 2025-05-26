@@ -12,7 +12,7 @@
         @test JuMP.object_dictionary(model) isa Dict{Symbol, Any}
 
         @polyvar x y
-        @variable model [1:3] Meas([x,y]) 
+        @variable model [1:3] Meas([x,y])
         @test JuMP.num_variables(model) == 3
 
     end
@@ -21,24 +21,24 @@
 
         @polyvar x y
         m = GMPModel()
-        mus = @variable m [1:2] Meas([x,y]) 
+        mus = @variable m [1:2] Meas([x,y])
         JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
 
         @test JuMP.objective_sense(m) == MOI.MAX_SENSE
         JuMP.set_objective_sense(m, MOI.MIN_SENSE)
         @test JuMP.objective_sense(m) == MOI.MIN_SENSE
         @test JuMP.objective_function(m) == Mom(1, mus[1]) + Mom(1, mus[2])
-        @test JuMP.objective_function_type(m) == MO.MomentExpr{Int} 
+        @test JuMP.objective_function_type(m) == MO.MomentExpr{Int}
         @test JuMP.objective_function(m, MO.MomentExpr{Int}) == Mom(1, mus[1]) + Mom(1, mus[2])
     end
 
     @testset "Summary" begin
         @polyvar x y
         m = GMPModel()
-        mus = @variable m [1:2] Meas([x,y]) 
+        mus = @variable m [1:2] Meas([x,y])
         JuMP.set_objective(m, MOI.MAX_SENSE, sum(Mom.(1, mus)))
-        @test sprint(show, m) == "An Abstract JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64}\nConstraints: 0\nApproxmation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation 0\nSolver for approximation: No optimizer attached."
-        
+        @test sprint(show, m) == "An Abstract JuMP Model\nMaximization problem with:\nVariables: 2\nObjective function type: MomentExpr{Int64}\nConstraints: 0\nApproximation mode: DUAL_STRENGTHEN_MODE()\nMaximum degree of data: 0\nDegree for approximation: 0\nSolver for approximation: No optimizer attached."
+
         @constraint m Mom(1, mus[1]) <= 1
         @constraint m c2 Mom(1, mus[2]) >= 1
         @test sprint(print, m) == "Max ⟨1, anon + anon⟩\nSubject to\n ⟨1, anon⟩ ≤ 1\n ⟨1, anon⟩ ≥ 1\n"
@@ -48,10 +48,10 @@
 
         @polyvar x y
         m = GMPModel()
-        @variable m mu Meas([x])     
+        @variable m mu Meas([x])
         @test_throws AssertionError value(mu)
         @test_throws AssertionError value(Mom(x, mu))
-        
+
         @test JuMP.termination_status(m) == MOI.OPTIMIZE_NOT_CALLED
 
         @test MO.approximation_degree(m) == MO.model_degree(m)

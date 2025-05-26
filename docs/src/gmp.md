@@ -8,18 +8,18 @@ The Generalized Moment Problem (GMP) as described in Lasserre (2009) is a linear
 & \text{supp}({\color{red}\mu_i})\subseteq \{x\in\mathbb{R}^n | {\color{blue}g_i^1}(x)\geq 0,\ldots,{\color{blue}g_i^{m_i}}(x)\geq 0 \}
 \end{array}
 ```
-where ``{\color{red}\mu_i}`` are unkown (finite, positive, Borel) measures, ``\Gamma`` is a countble set, and ``{\color{green}b^\gamma}`` are given numbers.
+where ``{\color{red}\mu_i}`` are unknown (finite, positive, Borel) measures, ``\Gamma`` is a countable set, and ``{\color{green}b^\gamma}`` are given numbers.
 In order to be able to compute approximations to this problem we require ``{\color{blue}f_i}``, ``{\color{blue}h_i^\gamma}``, and ``{\color{blue}g_i^j}`` to be polynomials.
 
 Under some conditions a measure ``{\color{red}\mu}`` supported on some set ``{\color{blue}K}\subseteq \mathbb{R}^n`` is uniquely determined by its sequence of moments, defined by
 ```math
 {\color{red}z_\alpha} = \int_{\color{blue}K} x^\alpha d{\color{red} \mu}(x)
 ```
-where ``x^\alpha := \prod_i x_i^{\alpha_i}``. This is for example the case when ``{\color{blue}K}`` is compact, or when the sequence ``{\color{red}(z_\alpha)_\alpha}`` satisfies the socalled Carleman's condition. Therefore one is often interested in the sequences of moments, rather than the measure itself, motivating the name generalized MOMENT problem. 
+where ``x^\alpha := \prod_i x_i^{\alpha_i}``. This is for example the case when ``{\color{blue}K}`` is compact, or when the sequence ``{\color{red}(z_\alpha)_\alpha}`` satisfies the so-called Carleman's condition. Therefore one is often interested in the sequences of moments, rather than the measure itself, motivating the name generalized MOMENT problem.
 
 ## Example: Polynomial Optimization
 
-Given a polynomial ``{\color{blue}f}`` and a set ``{\color{blue}K} = \{x\in\mathbb{R}^n | {\color{blue}g^1}(x)\geq 0,\ldots,{\color{blue}g^{m}}(x)\geq 0 \}`` one is interested in the global minimum 
+Given a polynomial ``{\color{blue}f}`` and a set ``{\color{blue}K} = \{x\in\mathbb{R}^n | {\color{blue}g^1}(x)\geq 0,\ldots,{\color{blue}g^{m}}(x)\geq 0 \}`` one is interested in the global minimum
 ```math
 \begin{array}{c l}
 \min_{\color{red}x} &  {\color{blue}f}({\color{red}x})\\
@@ -34,9 +34,9 @@ This problem has a GMP formulation in terms, where we optimize over one single m
 & \text{supp}({\color{red}\mu})\subseteq{\color{blue}K}
 \end{array}
 ```
-Note that instead of optimizing over ``{\color{red}x}\in{\color{blue}K}``, the variable of the GMP is the measure ``{\color{red}\mu}``, hence turning a non-linear problem into a linear one. 
+Note that instead of optimizing over ``{\color{red}x}\in{\color{blue}K}``, the variable of the GMP is the measure ``{\color{red}\mu}``, hence turning a non-linear problem into a linear one.
 
-The equivalence of both problems can be seen as follows: First note, that for every ``x\in{\color{blue}K}``, the Dirac measure ``\delta_{x}`` is a probability measure supported in ``{\color{blue}K}`` and hence feasible for the GMP formulation. Together with the equality ``{\color{blue}f}(x) = \int {\color{blue}f}d\delta_x`` this shows that the optimal value of the GMP formulation is always smaller than the one of the polynomial optimization problem. 
+The equivalence of both problems can be seen as follows: First note, that for every ``x\in{\color{blue}K}``, the Dirac measure ``\delta_{x}`` is a probability measure supported in ``{\color{blue}K}`` and hence feasible for the GMP formulation. Together with the equality ``{\color{blue}f}(x) = \int {\color{blue}f}d\delta_x`` this shows that the optimal value of the GMP formulation is always smaller than the one of the polynomial optimization problem.
 
 For the other inequality let ``{\color{red}f^\ast}`` denote the global minimum of ``{\color{blue}f}`` on ``{\color{blue}K}`` and let ``{\color{red}\mu^\ast}`` be the optimal measure for the GMP formulation. Then
 ```math
