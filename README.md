@@ -13,8 +13,8 @@ A Julia modeling layer for the Generalized Moment Problem.
 This code is provided under a BSD license as part of the Optimization, Inference and Learning for Advanced Networks project, C18014.
 
 
-[build-img]: https://travis-ci.org/lanl-ansi/MomentOpt.jl.svg?branch=master
-[build-url]: https://travis-ci.org/lanl-ansi/MomentOpt.jl
+[build-img]: https://github.com/lanl-ansi/MomentOpt.jl/actions/workflows/ci.yml/badge.svg?branch=master
+[build-url]: https://github.com/lanl-ansi/MomentOpt.jl/actions?query=workflow%3ACI
 [codecov-img]: https://codecov.io/gh/lanl-ansi/MomentOpt.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/lanl-ansi/MomentOpt.jl
 [docs-img]: https://img.shields.io/badge/docs-stable-blue.svg
